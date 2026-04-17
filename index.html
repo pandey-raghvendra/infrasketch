@@ -575,6 +575,38 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
 </footer>
 
 <script>
+// ── AWS ARCHITECTURE ICONS (inline SVG) ──
+const AWS_ICONS = {
+  EC2: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#FF9900" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#FF9900" stroke-width="1.2"/><path d="M${s/2-7} ${s/2-5}h14v10h-14z" fill="none" stroke="#FF9900" stroke-width="1.3"/><circle cx="${s/2}" cy="${s/2+1}" r="2.5" fill="#FF9900" opacity="0.6"/></g>`,
+  EKS: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#FF9900" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#FF9900" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="7" fill="none" stroke="#FF9900" stroke-width="1.4"/><circle cx="${s/2}" cy="${s/2}" r="3" fill="#FF9900" opacity="0.5"/><line x1="${s/2}" y1="${s/2-7}" x2="${s/2}" y2="${s/2-3}" stroke="#FF9900" stroke-width="1.2"/><line x1="${s/2+6}" y1="${s/2+3.5}" x2="${s/2+2.6}" y2="${s/2+1.5}" stroke="#FF9900" stroke-width="1.2"/><line x1="${s/2-6}" y1="${s/2+3.5}" x2="${s/2-2.6}" y2="${s/2+1.5}" stroke="#FF9900" stroke-width="1.2"/></g>`,
+  ECS: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#FF9900" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#FF9900" stroke-width="1.2"/><rect x="${s/2-6}" y="${s/2-6}" width="12" height="12" rx="2" fill="none" stroke="#FF9900" stroke-width="1.3"/><line x1="${s/2-2}" y1="${s/2-4}" x2="${s/2-2}" y2="${s/2+4}" stroke="#FF9900" stroke-width="0.9"/><line x1="${s/2+2}" y1="${s/2-4}" x2="${s/2+2}" y2="${s/2+4}" stroke="#FF9900" stroke-width="0.9"/></g>`,
+  Lambda: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#FF9900" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#FF9900" stroke-width="1.2"/><text x="${s/2}" y="${s/2+5}" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="16" font-weight="700" fill="#FF9900">λ</text></g>`,
+  ASG: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#FF9900" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#FF9900" stroke-width="1.2"/><rect x="${s/2-6}" y="${s/2-3}" width="8" height="8" rx="1.5" fill="none" stroke="#FF9900" stroke-width="1"/><rect x="${s/2-2}" y="${s/2-6}" width="8" height="8" rx="1.5" fill="none" stroke="#FF9900" stroke-width="1"/></g>`,
+  ECR: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#FF9900" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#FF9900" stroke-width="1.2"/><rect x="${s/2-6}" y="${s/2-4}" width="12" height="9" rx="1.5" fill="none" stroke="#FF9900" stroke-width="1.3"/></g>`,
+  VPC: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#248814" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#248814" stroke-width="1.2"/><rect x="${s/2-8}" y="${s/2-6}" width="16" height="12" rx="3" fill="none" stroke="#248814" stroke-width="1.4"/><path d="M${s/2-4} ${s/2}h8M${s/2} ${s/2-3}v6" stroke="#248814" stroke-width="1"/></g>`,
+  Subnet: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#248814" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#248814" stroke-width="1.2"/><rect x="${s/2-7}" y="${s/2-5}" width="14" height="10" rx="2" fill="none" stroke="#248814" stroke-width="1.2" stroke-dasharray="3 2"/></g>`,
+  IGW: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#248814" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#248814" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="6" fill="none" stroke="#248814" stroke-width="1.3"/><path d="M${s/2} ${s/2-4}v8M${s/2-4} ${s/2}h8" stroke="#248814" stroke-width="1.4"/></g>`,
+  NAT: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#248814" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#248814" stroke-width="1.2"/><text x="${s/2}" y="${s/2+4}" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" font-weight="600" fill="#248814">NAT</text></g>`,
+  EIP: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#248814" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#248814" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="5" fill="none" stroke="#248814" stroke-width="1.3"/><text x="${s/2}" y="${s/2+3}" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" font-weight="600" fill="#248814">IP</text></g>`,
+  RDS: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#3B48CC" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#3B48CC" stroke-width="1.2"/><ellipse cx="${s/2}" cy="${s/2-3}" rx="7" ry="3" fill="none" stroke="#3B48CC" stroke-width="1.3"/><path d="M${s/2-7} ${s/2-3}v7c0 1.8 3.1 3 7 3s7-1.2 7-3v-7" fill="none" stroke="#3B48CC" stroke-width="1.3"/></g>`,
+  DDB: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#3B48CC" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#3B48CC" stroke-width="1.2"/><path d="M${s/2-6} ${s/2-5}h12l-2.5 10h-7z" fill="none" stroke="#3B48CC" stroke-width="1.3"/><line x1="${s/2-4}" y1="${s/2}" x2="${s/2+4}" y2="${s/2}" stroke="#3B48CC" stroke-width="0.8"/></g>`,
+  Cache: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#3B48CC" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#3B48CC" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="6" fill="none" stroke="#3B48CC" stroke-width="1.3"/><path d="M${s/2-3} ${s/2}l3-3 3 3-3 3-3-3" fill="none" stroke="#3B48CC" stroke-width="1.1"/></g>`,
+  S3: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#3F8624" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#3F8624" stroke-width="1.2"/><path d="M${s/2-7} ${s/2-2}c0-2.5 3.2-4 7-4s7 1.5 7 4v5c0 2.5-3.2 4-7 4s-7-1.5-7-4z" fill="none" stroke="#3F8624" stroke-width="1.3"/><ellipse cx="${s/2}" cy="${s/2-2}" rx="7" ry="2.5" fill="none" stroke="#3F8624" stroke-width="0.8"/></g>`,
+  ALB: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#8C4FFF" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#8C4FFF" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="7" fill="none" stroke="#8C4FFF" stroke-width="1.3"/><circle cx="${s/2-3}" cy="${s/2}" r="1.3" fill="#8C4FFF"/><circle cx="${s/2+3}" cy="${s/2-3}" r="1.3" fill="#8C4FFF"/><circle cx="${s/2+3}" cy="${s/2+3}" r="1.3" fill="#8C4FFF"/><line x1="${s/2-1.7}" y1="${s/2}" x2="${s/2+1.7}" y2="${s/2-3}" stroke="#8C4FFF" stroke-width="0.8"/><line x1="${s/2-1.7}" y1="${s/2}" x2="${s/2+1.7}" y2="${s/2+3}" stroke="#8C4FFF" stroke-width="0.8"/></g>`,
+  NLB: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#8C4FFF" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#8C4FFF" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="7" fill="none" stroke="#8C4FFF" stroke-width="1.3"/><path d="M${s/2-3} ${s/2-3}h6M${s/2-3} ${s/2}h6M${s/2-3} ${s/2+3}h6" stroke="#8C4FFF" stroke-width="1.1"/></g>`,
+  TG: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#8C4FFF" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#8C4FFF" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="5.5" fill="none" stroke="#8C4FFF" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="2.5" fill="none" stroke="#8C4FFF" stroke-width="0.9"/><circle cx="${s/2}" cy="${s/2}" r="0.8" fill="#8C4FFF"/></g>`,
+  SG: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#DD344C" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#DD344C" stroke-width="1.2"/><path d="M${s/2} ${s/2-7}l7 3.5v5c0 2.5-3 4.5-7 6-4-1.5-7-3.5-7-6v-5z" fill="none" stroke="#DD344C" stroke-width="1.3"/></g>`,
+  IAM: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#DD344C" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#DD344C" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2-3}" r="3" fill="none" stroke="#DD344C" stroke-width="1.3"/><path d="M${s/2-5} ${s/2+5}c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5" fill="none" stroke="#DD344C" stroke-width="1.3"/></g>`,
+  KMS: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#DD344C" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#DD344C" stroke-width="1.2"/><circle cx="${s/2-2}" cy="${s/2}" r="3.5" fill="none" stroke="#DD344C" stroke-width="1.2"/><path d="M${s/2+1.5} ${s/2}h5.5M${s/2+4} ${s/2}v2.5M${s/2+7} ${s/2}v2.5" stroke="#DD344C" stroke-width="1.1"/></g>`,
+  WAF: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#DD344C" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#DD344C" stroke-width="1.2"/><text x="${s/2}" y="${s/2+4}" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" font-weight="600" fill="#DD344C">WAF</text></g>`,
+  CF: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#8C4FFF" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#8C4FFF" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="6" fill="none" stroke="#8C4FFF" stroke-width="1"/><ellipse cx="${s/2}" cy="${s/2}" rx="6" ry="3" fill="none" stroke="#8C4FFF" stroke-width="1"/><line x1="${s/2}" y1="${s/2-6}" x2="${s/2}" y2="${s/2+6}" stroke="#8C4FFF" stroke-width="0.7"/></g>`,
+  R53: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#8C4FFF" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#8C4FFF" stroke-width="1.2"/><text x="${s/2}" y="${s/2+4}" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" font-weight="600" fill="#8C4FFF">R53</text></g>`,
+  SQS: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#E7157B" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#E7157B" stroke-width="1.2"/><rect x="${s/2-7}" y="${s/2-4}" width="14" height="9" rx="2" fill="none" stroke="#E7157B" stroke-width="1.3"/><path d="M${s/2-4} ${s/2-1}h8M${s/2-4} ${s/2+2}h6" stroke="#E7157B" stroke-width="0.8"/></g>`,
+  SNS: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#E7157B" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#E7157B" stroke-width="1.2"/><path d="M${s/2-5} ${s/2+4}l5-8 5 8z" fill="none" stroke="#E7157B" stroke-width="1.3"/><circle cx="${s/2}" cy="${s/2-6}" r="1.3" fill="#E7157B"/><line x1="${s/2}" y1="${s/2-4}" x2="${s/2}" y2="${s/2-7}" stroke="#E7157B" stroke-width="1.1"/></g>`,
+  CW: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#E7157B" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#E7157B" stroke-width="1.2"/><circle cx="${s/2}" cy="${s/2}" r="6" fill="none" stroke="#E7157B" stroke-width="1.3"/><path d="M${s/2} ${s/2-3.5}v3.5h2.5" fill="none" stroke="#E7157B" stroke-width="1.4" stroke-linecap="round"/></g>`,
+  Docker: (s=36) => `<g><rect width="${s}" height="${s}" rx="6" fill="#2496ED" opacity="0.12"/><rect x="2" y="2" width="${s-4}" height="${s-4}" rx="5" fill="none" stroke="#2496ED" stroke-width="1.2"/><rect x="${s/2-6}" y="${s/2-1}" width="12" height="7" rx="1.5" fill="none" stroke="#2496ED" stroke-width="1.2"/><rect x="${s/2-4}" y="${s/2+1}" width="2.5" height="2.5" fill="#2496ED" opacity="0.5"/><rect x="${s/2-1}" y="${s/2+1}" width="2.5" height="2.5" fill="#2496ED" opacity="0.5"/><rect x="${s/2+2}" y="${s/2+1}" width="2.5" height="2.5" fill="#2496ED" opacity="0.5"/><rect x="${s/2-1}" y="${s/2-3}" width="2.5" height="2.5" fill="#2496ED" opacity="0.3"/></g>`,
+};
+
 // ── TERRAFORM PARSER ──
 const RESOURCE_CATEGORIES = {
     vpc: { match: ['aws_vpc', 'aws_default_vpc'], color: '#118ab2', label: 'VPC', icon: 'VPC' },
@@ -673,7 +705,7 @@ function parseDockerCompose(code) {
             category: 'instance',
             label: 'Container',
             color: '#ff6b35',
-            icon: '🐳',
+            icon: 'Docker',
         });
     }
 
@@ -706,7 +738,7 @@ function renderDiagram(parsed) {
 
     // Layout constants
     const nodeW = 140;
-    const nodeH = 72;
+    const nodeH = 80;
     const padX = 32;
     const padY = 28;
 
@@ -823,19 +855,27 @@ function renderDiagram(parsed) {
         }
     }
 
-    // Draw resource nodes
+    // Draw resource nodes with icons
+    const iconSize = 36;
     for (const res of resources) {
         const pos = positions[res.name];
         if (!pos) continue;
 
+        const iconFn = typeof AWS_ICONS !== 'undefined' && AWS_ICONS[res.icon];
+        const iconSvg = iconFn ? iconFn(iconSize) : '';
+        const iconX = pos.x + (pos.w - iconSize) / 2;
+        const iconY = pos.y + 4;
+
         svgContent += `
             <g class="resource-node" filter="url(#shadow)">
                 <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" rx="10" fill="white" stroke="${res.color}" stroke-width="1.5"/>
-                <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="24" rx="10" fill="${res.color}" opacity="0.12"/>
-                <rect x="${pos.x}" y="${pos.y + 14}" width="${pos.w}" height="10" fill="${res.color}" opacity="0.12"/>
-                <text x="${pos.x + pos.w/2}" y="${pos.y + 16}" text-anchor="middle" font-family="DM Mono, monospace" font-size="10" font-weight="500" fill="${res.color}">${res.icon}</text>
-                <text x="${pos.x + pos.w/2}" y="${pos.y + 38}" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="600" fill="#1a1a2e">${res.label}</text>
-                <text x="${pos.x + pos.w/2}" y="${pos.y + 54}" text-anchor="middle" font-family="DM Mono, monospace" font-size="9" fill="#7a7f99">${res.name.length > 18 ? res.name.slice(0, 16) + '..' : res.name}</text>
+                ${iconFn ? `<g transform="translate(${iconX}, ${iconY})">${iconSvg}</g>` : `
+                    <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="24" rx="10" fill="${res.color}" opacity="0.12"/>
+                    <rect x="${pos.x}" y="${pos.y + 14}" width="${pos.w}" height="10" fill="${res.color}" opacity="0.12"/>
+                    <text x="${pos.x + pos.w/2}" y="${pos.y + 16}" text-anchor="middle" font-family="DM Mono, monospace" font-size="10" font-weight="500" fill="${res.color}">${res.icon}</text>
+                `}
+                <text x="${pos.x + pos.w/2}" y="${pos.y + 50}" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#1a1a2e">${res.label}</text>
+                <text x="${pos.x + pos.w/2}" y="${pos.y + 64}" text-anchor="middle" font-family="DM Mono, monospace" font-size="9" fill="#7a7f99">${res.name.length > 18 ? res.name.slice(0, 16) + '..' : res.name}</text>
             </g>
         `;
     }
