@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfraSketch — Terraform to Architecture Diagram | Free Online Tool</title>
+    <meta name="description" content="Paste your Terraform code and instantly generate beautiful AWS architecture diagrams. Free, no signup, no cloud credentials needed. Export as PNG or SVG.">
+    <meta name="keywords" content="terraform diagram, terraform visualizer, aws architecture diagram generator, terraform to diagram, infrastructure diagram, cloudformation diagram, IaC visualizer">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0f1a;
+            --bg-surface: #141829;
+            --bg-editor: #0d1017;
+            --bg-canvas: #f8f9fb;
+            --text: #e4e6ef;
+            --text-muted: #7a7f99;
+            --accent: #06d6a0;
+            --accent-dim: rgba(6, 214, 160, 0.1);
+            --accent-glow: rgba(6, 214, 160, 0.3);
+            --orange: #ff6b35;
+            --blue: #118ab2;
+            --red: #ef476f;
+            --yellow: #ffd166;
+            --border: #1e2240;
+            --sans: 'DM Sans', system-ui, sans-serif;
+            --mono: 'DM Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Grid bg */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(rgba(6, 214, 160, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 214, 160, 0.02) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+        /* NAV */
+        nav {
+            padding: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--bg);
+            font-weight: 700;
+        }
+
+        .logo span { color: var(--accent); }
+
+        .nav-links { display: flex; gap: 24px; list-style: none; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--accent); }
+
+        /* HERO */
+        .hero {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(6, 214, 160, 0.2);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            font-family: var(--mono);
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            line-height: 1.15;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 .hl { color: var(--accent); }
+
+        .hero p {
+            font-size: 17px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* MAIN WORKSPACE */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            margin: 32px 0;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            min-height: 560px;
+            background: var(--bg-surface);
+        }
+
+        /* Editor panel */
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title .dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .input-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .input-tab {
+            padding: 4px 12px;
+            font-size: 11px;
+            font-family: var(--mono);
+            font-weight: 500;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .input-tab.active {
+            background: var(--accent-dim);
+            border-color: rgba(6, 214, 160, 0.3);
+            color: var(--accent);
+        }
+
+        .input-tab:hover:not(.active) { border-color: var(--text-muted); }
+
+        .code-editor {
+            flex: 1;
+            padding: 16px;
+            background: var(--bg-editor);
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.7;
+            color: #b0b8d1;
+            border: none;
+            outline: none;
+            resize: none;
+            width: 100%;
+            tab-size: 2;
+        }
+
+        .code-editor::placeholder { color: #3a3f5c; }
+
+        .editor-actions {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .btn-generate {
+            padding: 10px 28px;
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-generate:hover {
+            box-shadow: 0 0 24px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-sample {
+            padding: 8px 16px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-sample:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Diagram panel */
+        .diagram-panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-surface);
+        }
+
+        .diagram-canvas {
+            flex: 1;
+            overflow: auto;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .diagram-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .diagram-placeholder .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .diagram-placeholder p {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-export {
+            padding: 6px 14px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Diagram SVG area */
+        #diagram-svg {
+            width: 100%;
+            height: 100%;
+            min-height: 460px;
+        }
+
+        /* Resource nodes in diagram */
+        .resource-node {
+            cursor: pointer;
+        }
+
+        .resource-node:hover rect {
+            filter: brightness(1.1);
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            padding: 8px 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .stat-item { display: flex; align-items: center; gap: 6px; }
+        .stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .stat-dot.vpc { background: var(--blue); }
+        .stat-dot.compute { background: var(--orange); }
+        .stat-dot.db { background: var(--red); }
+        .stat-dot.storage { background: var(--yellow); }
+        .stat-dot.lb { background: var(--accent); }
+
+        /* Features section */
+        .features {
+            padding: 60px 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            padding: 28px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(6, 214, 160, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .feature-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        footer p {
+            font-size: 12px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .workspace { grid-template-columns: 1fr; }
+            .editor-panel { border-right: none; border-bottom: 1px solid var(--border); }
+            .code-editor { min-height: 200px; }
+            .features { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+
+        /* Loading animation */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .loading-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .loading-indicator.active { display: flex; }
+
+        .loading-ring {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <nav>
+        <div class="logo">
+            <div class="logo-icon">IS</div>
+            Infra<span>Sketch</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#tool">Tool</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="badge">FREE &middot; NO SIGNUP &middot; NO CREDENTIALS</div>
+        <h1>Paste Terraform.<br><span class="hl">Get architecture diagrams.</span></h1>
+        <p>Instantly visualize your infrastructure. Paste your Terraform HCL, docker-compose, or CloudFormation — get a clean, exportable architecture diagram in seconds.</p>
+    </section>
+
+    <div class="workspace" id="tool">
+        <div class="editor-panel">
+            <div class="panel-header">
+                <div class="panel-title"><span class="dot"></span> Input</div>
+                <div class="input-tabs">
+                    <button class="input-tab active" data-type="terraform">Terraform</button>
+                    <button class="input-tab" data-type="docker">Docker Compose</button>
+                </div>
+            </div>
+            <textarea class="code-editor" id="code-input" placeholder="# Paste your Terraform code here...
+
+resource &quot;aws_vpc&quot; &quot;main&quot; {
+  cidr_block = &quot;10.0.0.0/16&quot;
+}
+
+resource &quot;aws_subnet&quot; &quot;public&quot; {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = &quot;10.0.1.0/24&quot;
+}
+
+resource &quot;aws_instance&quot; &quot;web&quot; {
+  ami           = &quot;ami-0c55b159cbfafe1f0&quot;
+  instance_type = &quot;t3.medium&quot;
+  subnet_id     = aws_subnet.public.id
+}"></textarea>
+            <div class="editor-actions">
+                <button class="btn-sample" id="btn-load-sample">Load sample</button>
+                <button class="btn-generate" id="btn-generate">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Generate Diagram
+                </button>
+            </div>
+        </div>
+
+        <div class="diagram-panel">
+            <div class="panel-header">
+                <div class="panel-title"><span class="dot"></span> Architecture Diagram</div>
+                <div class="export-actions">
+                    <button class="btn-export" id="btn-export-png">PNG</button>
+                    <button class="btn-export" id="btn-export-svg">SVG</button>
+                </div>
+            </div>
+            <div class="diagram-canvas" id="diagram-canvas">
+                <div class="diagram-placeholder" id="placeholder">
+                    <div class="icon">&#9649;</div>
+                    <p>Paste your Terraform code on the left<br>and click <strong>Generate Diagram</strong></p>
+                </div>
+                <div class="loading-indicator" id="loading">
+                    <div class="loading-ring"></div>
+                    <span style="font-size:13px;color:var(--text-muted)">Parsing infrastructure...</span>
+                </div>
+                <svg id="diagram-svg" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div class="stats-bar" id="stats-bar" style="display:none">
+                <div class="stat-item"><span class="stat-dot vpc"></span> <span id="stat-vpc">0</span> VPC/Network</div>
+                <div class="stat-item"><span class="stat-dot compute"></span> <span id="stat-compute">0</span> Compute</div>
+                <div class="stat-item"><span class="stat-dot db"></span> <span id="stat-db">0</span> Database</div>
+                <div class="stat-item"><span class="stat-dot storage"></span> <span id="stat-storage">0</span> Storage</div>
+                <div class="stat-item"><span class="stat-dot lb"></span> <span id="stat-lb">0</span> Load Balancer</div>
+            </div>
+        </div>
+    </div>
+
+    <section class="features" id="features">
+        <div class="feature-card">
+            <div class="feature-icon">&#9889;</div>
+            <h3>No credentials needed</h3>
+            <p>Unlike Cloudcraft or Hava, InfraSketch never touches your cloud account. Just paste code — everything runs in your browser.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#127912;</div>
+            <h3>Official AWS icons</h3>
+            <p>Generates diagrams using proper AWS architecture icons. Professional enough for documentation and presentations.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128230;</div>
+            <h3>Export anywhere</h3>
+            <p>Download as PNG or SVG. Use in your docs, README files, presentations, or Confluence pages.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128272;</div>
+            <h3>100% private</h3>
+            <p>Your code never leaves your browser. No server processing, no storage, no telemetry. Fully client-side.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#127760;</div>
+            <h3>Multi-format support</h3>
+            <p>Terraform HCL, docker-compose.yml, and CloudFormation templates. More formats coming soon.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128161;</div>
+            <h3>Smart layout</h3>
+            <p>Automatically detects VPCs, subnets, and resource relationships to create logically grouped diagrams.</p>
+        </div>
+    </section>
+
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra" style="color:var(--accent);text-decoration:none">Raghvendra Pandey</a></p>
+    </div>
+</footer>
+
+<script>
+// ── TERRAFORM PARSER ──
+const RESOURCE_CATEGORIES = {
+    vpc: { match: ['aws_vpc', 'aws_default_vpc'], color: '#118ab2', label: 'VPC', icon: 'VPC' },
+    subnet: { match: ['aws_subnet'], color: '#073b4c', label: 'Subnet', icon: 'Subnet' },
+    instance: { match: ['aws_instance', 'aws_launch_template'], color: '#ff6b35', label: 'EC2', icon: 'EC2' },
+    eks: { match: ['aws_eks_cluster', 'aws_eks_node_group'], color: '#ff6b35', label: 'EKS', icon: 'EKS' },
+    ecs: { match: ['aws_ecs_cluster', 'aws_ecs_service', 'aws_ecs_task_definition'], color: '#ff6b35', label: 'ECS', icon: 'ECS' },
+    lambda: { match: ['aws_lambda_function'], color: '#ff6b35', label: 'Lambda', icon: 'Lambda' },
+    rds: { match: ['aws_db_instance', 'aws_rds_cluster'], color: '#ef476f', label: 'RDS', icon: 'RDS' },
+    dynamodb: { match: ['aws_dynamodb_table'], color: '#ef476f', label: 'DynamoDB', icon: 'DDB' },
+    elasticache: { match: ['aws_elasticache_cluster', 'aws_elasticache_replication_group'], color: '#ef476f', label: 'ElastiCache', icon: 'Cache' },
+    s3: { match: ['aws_s3_bucket'], color: '#ffd166', label: 'S3', icon: 'S3' },
+    alb: { match: ['aws_lb', 'aws_alb'], color: '#06d6a0', label: 'ALB', icon: 'ALB' },
+    nlb: { match: ['aws_lb'], color: '#06d6a0', label: 'NLB', icon: 'NLB' },
+    tg: { match: ['aws_lb_target_group', 'aws_alb_target_group'], color: '#06d6a0', label: 'Target Group', icon: 'TG' },
+    sg: { match: ['aws_security_group'], color: '#8338ec', label: 'Security Group', icon: 'SG' },
+    iam_role: { match: ['aws_iam_role'], color: '#8338ec', label: 'IAM Role', icon: 'IAM' },
+    route53: { match: ['aws_route53_zone', 'aws_route53_record'], color: '#8338ec', label: 'Route 53', icon: 'R53' },
+    cloudfront: { match: ['aws_cloudfront_distribution'], color: '#8338ec', label: 'CloudFront', icon: 'CF' },
+    sqs: { match: ['aws_sqs_queue'], color: '#e07a5f', label: 'SQS', icon: 'SQS' },
+    sns: { match: ['aws_sns_topic'], color: '#e07a5f', label: 'SNS', icon: 'SNS' },
+    ecr: { match: ['aws_ecr_repository'], color: '#ff6b35', label: 'ECR', icon: 'ECR' },
+    nat: { match: ['aws_nat_gateway'], color: '#118ab2', label: 'NAT GW', icon: 'NAT' },
+    igw: { match: ['aws_internet_gateway'], color: '#118ab2', label: 'IGW', icon: 'IGW' },
+    eip: { match: ['aws_eip'], color: '#118ab2', label: 'Elastic IP', icon: 'EIP' },
+    kms: { match: ['aws_kms_key'], color: '#8338ec', label: 'KMS', icon: 'KMS' },
+    cloudwatch: { match: ['aws_cloudwatch_log_group', 'aws_cloudwatch_metric_alarm'], color: '#e07a5f', label: 'CloudWatch', icon: 'CW' },
+    autoscaling: { match: ['aws_autoscaling_group'], color: '#ff6b35', label: 'ASG', icon: 'ASG' },
+    waf: { match: ['aws_wafv2_web_acl'], color: '#8338ec', label: 'WAF', icon: 'WAF' },
+};
+
+const STAT_CATEGORY_MAP = {
+    vpc: ['vpc', 'subnet', 'nat', 'igw', 'eip'],
+    compute: ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling'],
+    db: ['rds', 'dynamodb', 'elasticache'],
+    storage: ['s3'],
+    lb: ['alb', 'nlb', 'tg'],
+};
+
+function parseTerraform(code) {
+    const resources = [];
+    const regex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{/g;
+    let match;
+
+    while ((match = regex.exec(code)) !== null) {
+        const type = match[1];
+        const name = match[2];
+
+        let category = null;
+        for (const [cat, cfg] of Object.entries(RESOURCE_CATEGORIES)) {
+            if (cfg.match.includes(type)) {
+                category = cat;
+                break;
+            }
+        }
+
+        if (category) {
+            resources.push({
+                type,
+                name,
+                category,
+                label: RESOURCE_CATEGORIES[category].label,
+                color: RESOURCE_CATEGORIES[category].color,
+                icon: RESOURCE_CATEGORIES[category].icon,
+            });
+        }
+    }
+
+    // Detect references (simple heuristic)
+    const connections = [];
+    const lines = code.split('\n');
+    for (const res of resources) {
+        for (const line of lines) {
+            for (const other of resources) {
+                if (res.name !== other.name && line.includes(`${other.type}.${other.name}`)) {
+                    connections.push({ from: other.name, to: res.name });
+                }
+            }
+        }
+    }
+
+    return { resources, connections };
+}
+
+function parseDockerCompose(code) {
+    const resources = [];
+    const connections = [];
+    const serviceRegex = /^\s{2}(\w[\w-]*):\s*$/gm;
+    let match;
+
+    while ((match = serviceRegex.exec(code)) !== null) {
+        const name = match[1];
+        resources.push({
+            type: 'docker_service',
+            name,
+            category: 'instance',
+            label: 'Container',
+            color: '#ff6b35',
+            icon: '🐳',
+        });
+    }
+
+    // detect depends_on
+    const dependsRegex = /depends_on:\s*\n((?:\s+-\s+\w[\w-]*\n?)*)/g;
+    let depMatch;
+    while ((depMatch = dependsRegex.exec(code)) !== null) {
+        const block = depMatch[1];
+        const deps = block.match(/- (\w[\w-]*)/g);
+        if (deps) {
+            deps.forEach(d => {
+                const depName = d.replace('- ', '');
+                connections.push({ from: depName, to: 'unknown' });
+            });
+        }
+    }
+
+    return { resources, connections };
+}
+
+// ── DIAGRAM RENDERER ──
+function renderDiagram(parsed) {
+    const svg = document.getElementById('diagram-svg');
+    const { resources, connections } = parsed;
+
+    if (resources.length === 0) {
+        alert('No supported resources found. Check your code and try again.');
+        return;
+    }
+
+    // Layout constants
+    const nodeW = 140;
+    const nodeH = 72;
+    const padX = 32;
+    const padY = 28;
+
+    // Group resources by visual category
+    const groups = {
+        networking: resources.filter(r => ['vpc', 'subnet', 'nat', 'igw', 'eip'].includes(r.category)),
+        loadbalancer: resources.filter(r => ['alb', 'nlb', 'tg'].includes(r.category)),
+        compute: resources.filter(r => ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling'].includes(r.category)),
+        database: resources.filter(r => ['rds', 'dynamodb', 'elasticache'].includes(r.category)),
+        storage: resources.filter(r => ['s3'].includes(r.category)),
+        messaging: resources.filter(r => ['sqs', 'sns'].includes(r.category)),
+        security: resources.filter(r => ['sg', 'iam_role', 'route53', 'cloudfront', 'kms', 'waf', 'cloudwatch'].includes(r.category)),
+    };
+
+    const activeGroups = Object.entries(groups).filter(([, items]) => items.length > 0);
+
+    // Calculate layout
+    const cols = Math.min(4, Math.max(2, Math.ceil(Math.sqrt(resources.length))));
+    const groupGap = 48;
+    let currentY = 40;
+
+    const positions = {};
+    const groupRects = [];
+
+    const groupLabels = {
+        networking: 'Networking',
+        loadbalancer: 'Load Balancing',
+        compute: 'Compute',
+        database: 'Database',
+        storage: 'Storage',
+        messaging: 'Messaging',
+        security: 'Security & Identity',
+    };
+
+    const groupColors = {
+        networking: '#118ab2',
+        loadbalancer: '#06d6a0',
+        compute: '#ff6b35',
+        database: '#ef476f',
+        storage: '#ffd166',
+        messaging: '#e07a5f',
+        security: '#8338ec',
+    };
+
+    for (const [groupName, items] of activeGroups) {
+        const groupCols = Math.min(4, items.length);
+        const groupRows = Math.ceil(items.length / groupCols);
+        const groupW = groupCols * (nodeW + padX) + padX;
+        const groupH = groupRows * (nodeH + padY) + padY + 28;
+
+        groupRects.push({
+            x: 40,
+            y: currentY,
+            w: groupW,
+            h: groupH,
+            label: groupLabels[groupName] || groupName,
+            color: groupColors[groupName] || '#666',
+        });
+
+        items.forEach((res, i) => {
+            const col = i % groupCols;
+            const row = Math.floor(i / groupCols);
+            positions[res.name] = {
+                x: 40 + padX + col * (nodeW + padX),
+                y: currentY + 32 + padY + row * (nodeH + padY),
+                w: nodeW,
+                h: nodeH,
+            };
+        });
+
+        currentY += groupH + groupGap;
+    }
+
+    // Determine SVG size
+    const maxW = Math.max(...groupRects.map(g => g.x + g.w)) + 60;
+    const maxH = currentY + 20;
+
+    svg.setAttribute('viewBox', `0 0 ${maxW} ${maxH}`);
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', maxH);
+    svg.style.display = 'block';
+
+    let svgContent = `
+        <defs>
+            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#3a3f5c"/>
+            </marker>
+            <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+            </filter>
+        </defs>
+        <rect width="${maxW}" height="${maxH}" fill="#f8f9fb" rx="8"/>
+    `;
+
+    // Draw group rects
+    for (const g of groupRects) {
+        svgContent += `
+            <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="12" fill="none" stroke="${g.color}" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+            <text x="${g.x + 12}" y="${g.y + 18}" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="${g.color}" opacity="0.8">${g.label}</text>
+        `;
+    }
+
+    // Draw connections
+    for (const conn of connections) {
+        const fromPos = positions[conn.from];
+        const toPos = positions[conn.to];
+        if (fromPos && toPos) {
+            const x1 = fromPos.x + fromPos.w / 2;
+            const y1 = fromPos.y + fromPos.h;
+            const x2 = toPos.x + toPos.w / 2;
+            const y2 = toPos.y;
+            const midY = (y1 + y2) / 2;
+            svgContent += `<path d="M${x1} ${y1} C${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}" fill="none" stroke="#3a3f5c" stroke-width="1.2" marker-end="url(#arrowhead)" opacity="0.5"/>`;
+        }
+    }
+
+    // Draw resource nodes
+    for (const res of resources) {
+        const pos = positions[res.name];
+        if (!pos) continue;
+
+        svgContent += `
+            <g class="resource-node" filter="url(#shadow)">
+                <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" rx="10" fill="white" stroke="${res.color}" stroke-width="1.5"/>
+                <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="24" rx="10" fill="${res.color}" opacity="0.12"/>
+                <rect x="${pos.x}" y="${pos.y + 14}" width="${pos.w}" height="10" fill="${res.color}" opacity="0.12"/>
+                <text x="${pos.x + pos.w/2}" y="${pos.y + 16}" text-anchor="middle" font-family="DM Mono, monospace" font-size="10" font-weight="500" fill="${res.color}">${res.icon}</text>
+                <text x="${pos.x + pos.w/2}" y="${pos.y + 38}" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="600" fill="#1a1a2e">${res.label}</text>
+                <text x="${pos.x + pos.w/2}" y="${pos.y + 54}" text-anchor="middle" font-family="DM Mono, monospace" font-size="9" fill="#7a7f99">${res.name.length > 18 ? res.name.slice(0, 16) + '..' : res.name}</text>
+            </g>
+        `;
+    }
+
+    svg.innerHTML = svgContent;
+
+    // Update stats
+    const stats = { vpc: 0, compute: 0, db: 0, storage: 0, lb: 0 };
+    for (const res of resources) {
+        for (const [stat, cats] of Object.entries(STAT_CATEGORY_MAP)) {
+            if (cats.includes(res.category)) stats[stat]++;
+        }
+    }
+
+    document.getElementById('stat-vpc').textContent = stats.vpc;
+    document.getElementById('stat-compute').textContent = stats.compute;
+    document.getElementById('stat-db').textContent = stats.db;
+    document.getElementById('stat-storage').textContent = stats.storage;
+    document.getElementById('stat-lb').textContent = stats.lb;
+    document.getElementById('stats-bar').style.display = 'flex';
+}
+
+// ── SAMPLE TERRAFORM ──
+const SAMPLE_TERRAFORM = `# Production AWS Infrastructure
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  tags = { Name = "production-vpc" }
+}
+
+resource "aws_subnet" "public_1" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "us-east-1a"
+}
+
+resource "aws_subnet" "private_1" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.10.0/24"
+  availability_zone = "us-east-1a"
+}
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public_1.id
+}
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+}
+
+resource "aws_security_group" "web" {
+  name   = "web-sg"
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_security_group" "db" {
+  name   = "db-sg"
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_lb" "main" {
+  name               = "prod-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.web.id]
+  subnets            = [aws_subnet.public_1.id]
+}
+
+resource "aws_lb_target_group" "app" {
+  name     = "app-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+}
+
+resource "aws_eks_cluster" "main" {
+  name     = "prod-cluster"
+  role_arn = aws_iam_role.eks.arn
+
+  vpc_config {
+    subnet_ids = [aws_subnet.private_1.id]
+  }
+}
+
+resource "aws_eks_node_group" "workers" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "workers"
+  node_role_arn   = aws_iam_role.node.arn
+  subnet_ids      = [aws_subnet.private_1.id]
+}
+
+resource "aws_iam_role" "eks" {
+  name = "eks-cluster-role"
+  assume_role_policy = jsonencode({})
+}
+
+resource "aws_iam_role" "node" {
+  name = "eks-node-role"
+  assume_role_policy = jsonencode({})
+}
+
+resource "aws_db_instance" "main" {
+  identifier     = "prod-db"
+  engine         = "postgres"
+  instance_class = "db.t3.medium"
+  vpc_security_group_ids = [aws_security_group.db.id]
+  db_subnet_group_name   = "main"
+}
+
+resource "aws_elasticache_cluster" "redis" {
+  cluster_id           = "prod-redis"
+  engine               = "redis"
+  node_type            = "cache.t3.micro"
+  num_cache_nodes      = 1
+}
+
+resource "aws_s3_bucket" "assets" {
+  bucket = "prod-static-assets"
+}
+
+resource "aws_s3_bucket" "logs" {
+  bucket = "prod-logs"
+}
+
+resource "aws_cloudfront_distribution" "cdn" {
+  enabled = true
+  origin {
+    domain_name = aws_s3_bucket.assets.bucket_regional_domain_name
+    origin_id   = "s3-assets"
+  }
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "s3-assets"
+    viewer_protocol_policy = "redirect-to-https"
+  }
+  restrictions { geo_restriction { restriction_type = "none" } }
+  viewer_certificate { cloudfront_default_certificate = true }
+}
+
+resource "aws_route53_zone" "main" {
+  name = "example.com"
+}
+
+resource "aws_sqs_queue" "events" {
+  name = "event-queue"
+}
+
+resource "aws_sns_topic" "alerts" {
+  name = "infra-alerts"
+}
+
+resource "aws_cloudwatch_log_group" "app" {
+  name              = "/ecs/app"
+  retention_in_days = 30
+}`;
+
+// ── EVENT HANDLERS ──
+document.getElementById('btn-load-sample').addEventListener('click', () => {
+    document.getElementById('code-input').value = SAMPLE_TERRAFORM;
+});
+
+document.getElementById('btn-generate').addEventListener('click', () => {
+    const code = document.getElementById('code-input').value.trim();
+    if (!code) {
+        alert('Please paste some Terraform or docker-compose code first.');
+        return;
+    }
+
+    const placeholder = document.getElementById('placeholder');
+    const loading = document.getElementById('loading');
+    const svg = document.getElementById('diagram-svg');
+
+    placeholder.style.display = 'none';
+    svg.style.display = 'none';
+    loading.classList.add('active');
+
+    setTimeout(() => {
+        const activeTab = document.querySelector('.input-tab.active').dataset.type;
+        let parsed;
+
+        if (activeTab === 'docker') {
+            parsed = parseDockerCompose(code);
+        } else {
+            parsed = parseTerraform(code);
+        }
+
+        loading.classList.remove('active');
+        renderDiagram(parsed);
+    }, 800);
+});
+
+// Tab switching
+document.querySelectorAll('.input-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+    });
+});
+
+// Export PNG
+document.getElementById('btn-export-png').addEventListener('click', () => {
+    const svg = document.getElementById('diagram-svg');
+    if (svg.style.display === 'none') return;
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+        canvas.width = img.width * 2;
+        canvas.height = img.height * 2;
+        ctx.scale(2, 2);
+        ctx.drawImage(img, 0, 0);
+        const link = document.createElement('a');
+        link.download = 'infrasketch-diagram.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    };
+
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+});
+
+// Export SVG
+document.getElementById('btn-export-svg').addEventListener('click', () => {
+    const svg = document.getElementById('diagram-svg');
+    if (svg.style.display === 'none') return;
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const link = document.createElement('a');
+    link.download = 'infrasketch-diagram.svg';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+});
+</script>
+
+</body>
+</html>
