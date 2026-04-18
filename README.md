@@ -52,13 +52,14 @@ CloudFormation, Kubernetes manifests, Azure, and GCP are roadmap items rather th
 4. The layout engine places resources into a generated SVG diagram.
 5. Export buttons serialize the current diagram to PNG, SVG, or draw.io XML.
 
-All of the app logic lives in `index.html` today. The icon assets live in `icons/`.
+The HTML shell lives in `index.html`. The parser, layout, renderer, export logic, and app bootstrap live in `js/`. The icon assets live in `icons/`.
 
 ## Project Structure
 
 ```text
 .
 |-- index.html          # Main InfraSketch app
+|-- js/                 # Parser, layout, renderer, and export modules
 |-- icons/              # Architecture icon SVG assets
 |-- blog/               # Static blog pages
 |-- about.html          # About page
@@ -72,9 +73,7 @@ All of the app logic lives in `index.html` today. The icon assets live in `icons
 
 ## Run Locally
 
-Because InfraSketch is a static site, there is no build step.
-
-Open `index.html` directly in a browser, or serve the folder locally:
+Because InfraSketch is a static site, there is no build step. The app uses JavaScript modules, so serve the folder locally instead of opening `index.html` from the filesystem:
 
 ```bash
 python3 -m http.server 8000
@@ -99,19 +98,15 @@ InfraSketch is intentionally lightweight, but that also means the parser is not 
 - Terraform parsing is regex-based and does not evaluate modules, variables, `count`, `for_each`, locals, or dynamic blocks.
 - Relationships are inferred from simple resource references and may miss complex expressions.
 - Docker Compose support is basic and should be upgraded to a real YAML parser for production-grade accuracy.
-- The main app is currently a single HTML file, which is convenient for static hosting but harder to test as the codebase grows.
-- Exported SVG files reference icon assets by path, so fully standalone SVG export should inline or embed icons in a future improvement.
+- Local development should use a small static server because browser module loading and icon inlining are more reliable over HTTP than `file://`.
 
 ## Suggested Next Improvements
 
-- Split parser, layout, renderer, and export code into separate JavaScript modules.
 - Add unit tests for Terraform parsing, Docker Compose parsing, and draw.io XML generation.
-- Use stable resource IDs based on Terraform addresses such as `aws_instance.web` instead of local names alone.
-- Replace the Docker Compose regex parser with a YAML parser.
-- Escape all user-controlled labels before inserting generated SVG markup.
+- Upgrade the Docker Compose parser to a real YAML parser.
 - Add a small visual regression suite for sample diagrams.
 - Add a real mobile navigation menu instead of hiding navigation links.
-- Make privacy and analytics messaging consistent across the app and policy pages.
+- Add examples that show complex Terraform module and multi-file workflows.
 
 ## Contributing
 
