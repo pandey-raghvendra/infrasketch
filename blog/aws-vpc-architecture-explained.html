@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS VPC Architecture Explained with Diagrams — From Simple to Production — InfraSketch</title>
+    <meta name="description" content="Visual guide to AWS VPC architecture patterns. From a single public subnet to production-grade multi-AZ setups with private subnets, NAT gateways, and load balancers. Includes Terraform code.">
+    <meta name="keywords" content="AWS VPC architecture, VPC diagram, VPC terraform, AWS networking, public private subnet, NAT gateway, AWS architecture pattern">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/aws-vpc-architecture-explained.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>:root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}.logo span{color:var(--accent)}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.tip-box{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.tip-box p{margin:0;font-size:14px}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}</style>
+</head>
+<body>
+<nav><a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a><ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul></nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">AWS</span>
+        <h1>AWS VPC Architecture Explained with Diagrams — From Simple to Production</h1>
+        <div class="meta">By Raghvendra Pandey &middot; April 2026 &middot; 9 min read</div>
+    </div>
+    <article>
+        <p>Every AWS architecture starts with a VPC. Whether you're deploying a single EC2 instance or a fleet of microservices on EKS, the network foundation determines your security posture, availability, and cost. Yet VPC networking is one of the most commonly misunderstood parts of AWS.</p>
+
+        <p>This guide walks through four VPC architecture patterns, from simplest to production-grade, with Terraform code for each. You can paste any of these into <a href="/">InfraSketch</a> to see the architecture diagram.</p>
+
+        <h2>Pattern 1: Single public subnet (development only)</h2>
+
+        <p>The simplest possible setup — one VPC, one public subnet, one internet gateway. Every resource gets a public IP and is directly accessible from the internet.</p>
+
+<pre>resource "aws_vpc" "dev" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  tags = { Name = "dev-vpc" }
+}
+
+resource "aws_internet_gateway" "dev" {
+  vpc_id = aws_vpc.dev.id
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.dev.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "ap-south-1a"
+  map_public_ip_on_launch = true
+  tags = { Name = "public-subnet" }
+}
+
+resource "aws_instance" "app" {
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public.id
+  tags = { Name = "app-server" }
+}</pre>
+
+        <p>This pattern works for development environments, quick prototypes, and personal projects where you need something running fast without worrying about network security. Everything is on a public subnet, which means every resource is exposed to the internet.</p>
+
+        <div class="tip-box"><p>Never use this pattern in production. Databases, application servers, and internal services should never be on public subnets. It's like putting your house keys under the doormat — technically works, but invites trouble.</p></div>
+
+        <h2>Pattern 2: Public + private subnets with NAT</h2>
+
+        <p>The standard two-tier architecture. Public subnets host load balancers and bastion hosts. Private subnets host application servers and databases. A NAT Gateway allows private resources to access the internet (for updates, API calls) without being directly accessible.</p>
+
+<pre>resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  tags = { Name = "main-vpc" }
+}
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "ap-south-1a"
+  map_public_ip_on_launch = true
+  tags = { Name = "public-subnet" }
+}
+
+resource "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.10.0/24"
+  availability_zone = "ap-south-1a"
+  tags = { Name = "private-subnet" }
+}
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public.id
+  tags = { Name = "main-nat" }
+}
+
+resource "aws_lb" "app" {
+  name               = "app-alb"
+  internal           = false
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public.id]
+}
+
+resource "aws_instance" "app" {
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t3.medium"
+  subnet_id     = aws_subnet.private.id
+  tags = { Name = "app-server" }
+}
+
+resource "aws_db_instance" "main" {
+  identifier     = "app-db"
+  engine         = "postgres"
+  instance_class = "db.t3.medium"
+  tags = { Name = "app-database" }
+}</pre>
+
+        <p>This is the most common VPC pattern and works well for small to medium applications. The ALB in the public subnet handles incoming traffic and forwards it to application servers in the private subnet. The database sits in the private subnet with no public access.</p>
+
+        <p>The NAT Gateway costs around $32/month (in ap-south-1) plus data transfer charges. For development environments where you want to save money, you can use a NAT Instance (a small EC2 instance configured as a NAT) instead, though it's less reliable.</p>
+
+        <h2>Pattern 3: Multi-AZ for high availability</h2>
+
+        <p>Pattern 2 has a single point of failure — everything is in one Availability Zone. If that AZ goes down (and they do, occasionally), your entire application is offline. Production workloads need multi-AZ redundancy.</p>
+
+<pre>resource "aws_vpc" "prod" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  tags = { Name = "prod-vpc" }
+}
+
+resource "aws_internet_gateway" "prod" {
+  vpc_id = aws_vpc.prod.id
+}
+
+# Public subnets in two AZs
+resource "aws_subnet" "public_1" {
+  vpc_id            = aws_vpc.prod.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "ap-south-1a"
+  map_public_ip_on_launch = true
+  tags = { Name = "public-1a" }
+}
+
+resource "aws_subnet" "public_2" {
+  vpc_id            = aws_vpc.prod.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "ap-south-1b"
+  map_public_ip_on_launch = true
+  tags = { Name = "public-1b" }
+}
+
+# Private subnets in two AZs
+resource "aws_subnet" "private_1" {
+  vpc_id            = aws_vpc.prod.id
+  cidr_block        = "10.0.10.0/24"
+  availability_zone = "ap-south-1a"
+  tags = { Name = "private-1a" }
+}
+
+resource "aws_subnet" "private_2" {
+  vpc_id            = aws_vpc.prod.id
+  cidr_block        = "10.0.11.0/24"
+  availability_zone = "ap-south-1b"
+  tags = { Name = "private-1b" }
+}
+
+# NAT Gateways - one per AZ for redundancy
+resource "aws_eip" "nat_1" { domain = "vpc" }
+resource "aws_eip" "nat_2" { domain = "vpc" }
+
+resource "aws_nat_gateway" "az1" {
+  allocation_id = aws_eip.nat_1.id
+  subnet_id     = aws_subnet.public_1.id
+}
+
+resource "aws_nat_gateway" "az2" {
+  allocation_id = aws_eip.nat_2.id
+  subnet_id     = aws_subnet.public_2.id
+}
+
+# ALB spans both public subnets
+resource "aws_lb" "prod" {
+  name               = "prod-alb"
+  internal           = false
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+}
+
+# EKS cluster spans both private subnets
+resource "aws_eks_cluster" "prod" {
+  name     = "prod-cluster"
+  role_arn = aws_iam_role.eks.arn
+  vpc_config {
+    subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]
+  }
+}
+
+resource "aws_iam_role" "eks" {
+  name = "eks-cluster-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "eks.amazonaws.com" }
+    }]
+  })
+}
+
+# RDS with Multi-AZ enabled
+resource "aws_db_instance" "prod" {
+  identifier     = "prod-db"
+  engine         = "postgres"
+  instance_class = "db.r5.large"
+  multi_az       = true
+}</pre>
+
+        <p>This pattern duplicates subnets and NAT Gateways across two Availability Zones. The ALB automatically distributes traffic across both AZs. EKS schedules pods across both private subnets. RDS Multi-AZ maintains a standby replica in the second AZ.</p>
+
+        <p>The cost increase from Pattern 2 is primarily the second NAT Gateway (~$32/month) and the additional EKS/RDS capacity in the second AZ. For production workloads, this cost is negligible compared to the downtime risk of a single-AZ deployment.</p>
+
+        <div class="tip-box"><p>Paste any of these Terraform snippets into <a href="/">InfraSketch</a> to see the architecture diagram generated automatically. You can visually verify your VPC layout matches your intent.</p></div>
+
+        <h2>Pattern 4: Production-grade with security layers</h2>
+
+        <p>The complete production pattern adds security groups, VPC endpoints, CloudFront CDN, and a WAF layer. This is what a well-architected AWS deployment actually looks like.</p>
+
+        <p>The full Terraform for this pattern is extensive — typically 500+ lines. The key additions beyond Pattern 3 are security groups with least-privilege rules for each service tier, VPC endpoints for S3 and ECR to keep traffic within the AWS network and reduce NAT costs, a CloudFront distribution in front of the ALB for caching and DDoS protection, a WAF (Web Application Firewall) attached to CloudFront or the ALB for Layer 7 filtering, and VPC Flow Logs sent to CloudWatch for network monitoring and incident investigation.</p>
+
+        <p>Each of these additions addresses a specific security or operational concern. Security groups control which services can communicate with each other — the database should only accept connections from the application tier, not from the entire VPC. VPC endpoints eliminate the need for traffic to S3 and ECR to traverse the public internet through the NAT Gateway, which both improves security and reduces NAT data transfer costs.</p>
+
+        <h2>Common VPC mistakes to avoid</h2>
+
+        <p>After managing VPCs for dozens of production workloads, these are the mistakes I see most often.</p>
+
+        <p>The first is using too-small CIDR blocks. A /24 VPC gives you 256 IPs, which sounds like plenty until you realize subnets, load balancers, and EKS each consume IPs. Start with a /16 (65,536 IPs) for production VPCs. You can always use smaller subnets within it.</p>
+
+        <p>The second is putting databases on public subnets. It happens more often than you'd think, usually because someone copied a tutorial that took shortcuts. Databases should always be on private subnets with security groups that only allow connections from the application tier.</p>
+
+        <p>The third is using a single NAT Gateway for production. NAT Gateways are zonal — if the AZ goes down, all private subnet internet access in that AZ is lost. Always use one NAT Gateway per AZ in production.</p>
+
+        <p>The fourth is overlapping CIDR blocks with other VPCs or on-premises networks. If you ever need VPC peering or a VPN connection, overlapping CIDRs will prevent it. Plan your IP addressing scheme across all environments before you deploy anything.</p>
+
+        <h2>Visualize your VPC</h2>
+
+        <p>Understanding your VPC architecture is much easier with a diagram. Take any of the Terraform snippets above, paste them into <a href="/">InfraSketch</a>, and you'll see the resources grouped by category — networking resources (VPC, subnets, IGW, NAT) in one group, compute (EKS, EC2) in another, databases (RDS) in a third.</p>
+
+        <p>This visual grouping makes it immediately obvious whether your architecture follows the patterns described here — are databases in private subnets? Is there a NAT Gateway in each AZ? Is the ALB spanning multiple public subnets? A quick diagram answers these questions faster than reading through Terraform files.</p>
+
+        <div class="cta-box">
+            <h3>See your VPC architecture</h3>
+            <p>Paste your VPC Terraform code and visualize the network architecture instantly.</p>
+            <a href="/" class="btn">Generate VPC Diagram</a>
+        </div>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

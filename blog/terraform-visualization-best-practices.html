@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform Visualization: 5 Ways to See What Your Code Actually Builds — InfraSketch</title>
+    <meta name="description" content="5 practical methods to visualize Terraform infrastructure — from terraform graph to automated diagram generators. Includes examples and tool comparisons.">
+    <meta name="keywords" content="terraform visualization, terraform diagram, visualize terraform, terraform graph, terraform architecture diagram, infrastructure visualization">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/terraform-visualization-best-practices.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}.logo span{color:var(--accent)}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Terraform</span>
+        <h1>Terraform Visualization: 5 Ways to See What Your Code Actually Builds</h1>
+        <div class="meta">By Raghvendra Pandey &middot; April 2026 &middot; 7 min read</div>
+    </div>
+    <article>
+        <p>You've got 3,000 lines of Terraform spread across 40 files, organized into modules, with variables referencing other variables referencing data sources. It works. It deploys. But can you actually see what it builds?</p>
+
+        <p>This is one of the most common challenges in infrastructure-as-code. The code is the source of truth, but it's not visual. You can't glance at a <code>.tf</code> file and immediately understand the architecture the way you can with a diagram.</p>
+
+        <p>Here are five practical approaches to visualize your Terraform infrastructure, ranked from simplest to most sophisticated.</p>
+
+        <h2>1. terraform graph + Graphviz</h2>
+
+        <p>Terraform has a built-in <code>graph</code> command that outputs a dependency graph in DOT format. You can pipe it through Graphviz to generate a visual diagram.</p>
+
+<pre>terraform graph | dot -Tpng > graph.png</pre>
+
+        <p>This is the quickest approach — one command, no external tools needed (besides Graphviz). It shows every resource and its dependencies, which is useful for understanding execution order.</p>
+
+        <p>The problem is readability. For any real-world infrastructure, the output is a massive, tangled web of nodes and arrows. A typical production setup with 50+ resources generates a graph that's essentially unreadable. It includes internal Terraform resources (providers, data sources, variables) that add noise without adding understanding.</p>
+
+        <p>Terraform graph is useful for debugging dependency issues — "why is this resource waiting for that one?" — but it's not suitable for architecture documentation.</p>
+
+        <h2>2. Terraform Visual (VS Code extension)</h2>
+
+        <p>If you use VS Code, the Terraform Visual extension renders a visual graph of your Terraform resources directly in your editor. It reads your <code>.tf</code> files and generates an interactive diagram that you can zoom, pan, and click on.</p>
+
+        <p>The advantage over <code>terraform graph</code> is that it filters out noise and only shows the resources you care about. It also updates in real-time as you edit your code, which is useful during development.</p>
+
+        <p>The limitation is that it's tied to VS Code. You can't easily share the output with someone who uses a different editor, and the diagrams aren't suitable for documentation or presentations.</p>
+
+        <h2>3. Python Diagrams library</h2>
+
+        <p>The <code>diagrams</code> library for Python lets you define architecture diagrams programmatically. While it doesn't read Terraform files directly, you can write a Python script that mirrors your Terraform architecture.</p>
+
+<pre>from diagrams import Diagram, Cluster
+from diagrams.aws.compute import EKS
+from diagrams.aws.database import RDS, ElastiCache
+from diagrams.aws.network import ELB, Route53
+
+with Diagram("Production Architecture", show=False):
+    dns = Route53("Route 53")
+    lb = ELB("ALB")
+
+    with Cluster("EKS Cluster"):
+        services = [EKS("api"),
+                    EKS("worker"),
+                    EKS("scheduler")]
+
+    db = RDS("PostgreSQL")
+    cache = ElastiCache("Redis")
+
+    dns >> lb >> services
+    services >> db
+    services >> cache</pre>
+
+        <p>This produces clean, professional diagrams with official AWS icons. The Python code can be committed alongside your Terraform code and updated in the same PR. It's a good approach for teams that want version-controlled diagrams.</p>
+
+        <p>The downside is duplication — you're maintaining two representations of the same infrastructure (Terraform and Python). When someone adds a new resource in Terraform but forgets to update the diagram code, they drift apart.</p>
+
+        <h2>4. Paste your code into InfraSketch</h2>
+
+        <p>This is the approach I built <a href="/">InfraSketch</a> for. Instead of writing separate diagram code, you paste your existing Terraform HCL and the tool generates the architecture diagram automatically.</p>
+
+<pre># Just paste this into InfraSketch:
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_eks_cluster" "app" {
+  name = "production"
+  vpc_config {
+    subnet_ids = [aws_subnet.private.id]
+  }
+}
+
+resource "aws_rds_cluster" "db" {
+  cluster_identifier = "app-db"
+  engine = "aurora-postgresql"
+}
+
+# InfraSketch parses this and generates a
+# grouped diagram with AWS icons automatically</pre>
+
+        <p>The tool parses resource types, detects references between resources, groups them by category (networking, compute, database, etc.), and renders a diagram with official AWS architecture icons. Everything runs in the browser — your code never leaves your machine.</p>
+
+        <p>This works well for quick visualization — "let me see what this Terraform actually creates" — and for generating diagrams to include in documentation or README files. The limitation is that it does static analysis only (it doesn't run <code>terraform plan</code>), so it may miss resources created by complex expressions or external modules.</p>
+
+        <h2>5. Rover (Terraform Visualizer)</h2>
+
+        <p>Rover is an open-source tool that reads Terraform state files or plan output and generates interactive diagrams. Unlike InfraSketch which does static analysis of HCL code, Rover works with the actual state — meaning it shows exactly what's deployed, including resources created by modules and count/for_each expressions.</p>
+
+<pre># Generate a plan
+terraform plan -out=plan.out
+
+# Visualize it
+rover -planPath plan.out</pre>
+
+        <p>Rover produces an interactive web-based diagram that you can zoom, filter, and search. It's more accurate than static analysis because it uses the resolved state, but it requires you to have Terraform initialized and access to the state file.</p>
+
+        <h2>Which approach should you use?</h2>
+
+        <p>It depends on what you're trying to accomplish.</p>
+
+        <p>If you need a quick visualization while developing, use InfraSketch or the VS Code extension. Paste your code, see the diagram, iterate.</p>
+
+        <p>If you need accurate diagrams of what's actually deployed, use Rover with your state file. It's the most accurate because it works with resolved state rather than source code.</p>
+
+        <p>If you need presentation-ready diagrams that are version-controlled, use the Python Diagrams library. It takes more effort but produces the most polished output.</p>
+
+        <p>If you need to debug dependency chains, <code>terraform graph</code> is still the right tool despite its messy output.</p>
+
+        <p>The best approach for most teams is to combine methods: use InfraSketch or Rover for day-to-day visualization, and the Python Diagrams library for documentation that needs to look polished.</p>
+
+        <div class="cta-box">
+            <h3>Visualize your Terraform instantly</h3>
+            <p>Paste your Terraform HCL and see the architecture diagram in seconds.</p>
+            <a href="/" class="btn">Open InfraSketch</a>
+        </div>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

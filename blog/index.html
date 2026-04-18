@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — InfraSketch | DevOps, Terraform & Cloud Architecture</title>
+    <meta name="description" content="Articles on Terraform best practices, AWS architecture diagrams, infrastructure visualization, DevOps workflows, and cloud infrastructure patterns.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}
+        body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+        .container{max-width:800px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+        nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}
+        .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}
+        .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}
+        .logo span{color:var(--accent)}
+        .nav-links{display:flex;gap:24px;list-style:none}
+        .nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}
+        .nav-links a:hover{color:var(--accent)}
+        .page-header{padding:60px 0 40px;border-bottom:1px solid var(--border);margin-bottom:40px}
+        .page-header h1{font-size:36px;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
+        .page-header p{color:var(--text-muted);font-size:16px}
+        .blog-list{display:flex;flex-direction:column;gap:24px;margin-bottom:60px}
+        .blog-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:28px;text-decoration:none;color:var(--text);transition:all 0.3s;display:block}
+        .blog-card:hover{border-color:rgba(6,214,160,0.3);transform:translateY(-2px)}
+        .blog-meta{display:flex;gap:12px;align-items:center;margin-bottom:12px;font-size:12px;font-family:var(--mono);color:var(--text-muted)}
+        .blog-tag{padding:3px 10px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600}
+        .blog-card h2{font-size:20px;font-weight:600;margin-bottom:8px;letter-spacing:-0.3px}
+        .blog-card p{color:var(--text-muted);font-size:14px;line-height:1.7}
+        .read-more{color:var(--accent);font-size:13px;font-weight:600;margin-top:12px;display:inline-block}
+        footer{padding:24px 0;border-top:1px solid var(--border);text-align:center;margin-top:60px}
+        footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}
+        footer a{color:var(--accent);text-decoration:none}
+        @media(max-width:640px){.nav-links{display:none}.page-header h1{font-size:28px}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a>
+    <ul class="nav-links">
+        <li><a href="/">Tool</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+    </ul>
+</nav>
+<div class="container">
+    <div class="page-header">
+        <h1>Blog</h1>
+        <p>Practical articles on Terraform, AWS architecture, infrastructure visualization, and DevOps workflows.</p>
+    </div>
+    <div class="blog-list">
+
+        <a href="/blog/how-to-create-aws-architecture-diagrams.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">AWS</span> April 2026 &middot; 8 min read</div>
+            <h2>How to Create AWS Architecture Diagrams in 2026: A Complete Guide</h2>
+            <p>A practical comparison of every method for creating AWS architecture diagrams — from manual drawing tools to automated generators. Includes tool comparison, best practices, and when to use each approach.</p>
+            <span class="read-more">Read article &rarr;</span>
+        </a>
+
+        <a href="/blog/terraform-visualization-best-practices.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">Terraform</span> April 2026 &middot; 7 min read</div>
+            <h2>Terraform Visualization: 5 Ways to See What Your Code Actually Builds</h2>
+            <p>Your Terraform codebase has grown to thousands of lines across dozens of files. But can you actually see what it builds? Here are five practical approaches to visualize Terraform infrastructure.</p>
+            <span class="read-more">Read article &rarr;</span>
+        </a>
+
+        <a href="/blog/free-vs-paid-diagram-tools.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">Tools</span> April 2026 &middot; 6 min read</div>
+            <h2>Free vs Paid Cloud Architecture Diagram Tools — Honest Comparison 2026</h2>
+            <p>Cloudcraft costs $49/month. Draw.io is free. InfraSketch generates diagrams from code. Which one should you actually use? An honest comparison based on real-world usage.</p>
+            <span class="read-more">Read article &rarr;</span>
+        </a>
+
+        <a href="/blog/docker-compose-diagram-tutorial.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">Docker</span> April 2026 &middot; 6 min read</div>
+            <h2>How to Visualize Your Docker Compose Setup (With Examples)</h2>
+            <p>Docker Compose files grow complex fast. Learn how to generate architecture diagrams from your docker-compose.yml to understand and document your container architecture.</p>
+            <span class="read-more">Read article &rarr;</span>
+        </a>
+
+        <a href="/blog/aws-vpc-architecture-explained.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">AWS</span> April 2026 &middot; 9 min read</div>
+            <h2>AWS VPC Architecture Explained with Diagrams — From Simple to Production</h2>
+            <p>A visual guide to AWS VPC architecture, from a single public subnet to a production-grade multi-AZ setup with private subnets, NAT gateways, and load balancers. Every pattern shown with Terraform code and diagrams.</p>
+            <span class="read-more">Read article &rarr;</span>
+        </a>
+
+    </div>
+</div>
+<footer>
+    <div class="container">
+        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra">Raghvendra Pandey</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p>
+    </div>
+</footer>
+</body>
+</html>

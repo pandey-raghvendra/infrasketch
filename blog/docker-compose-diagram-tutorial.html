@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Visualize Your Docker Compose Setup (With Examples) — InfraSketch</title>
+    <meta name="description" content="Learn how to generate architecture diagrams from your docker-compose.yml file. Visualize container relationships, networks, and dependencies with practical examples.">
+    <meta name="keywords" content="docker compose diagram, docker compose visualizer, visualize docker compose, docker architecture diagram, container diagram">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/docker-compose-diagram-tutorial.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>:root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}.logo span{color:var(--accent)}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}</style>
+</head>
+<body>
+<nav><a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a><ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul></nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Docker</span>
+        <h1>How to Visualize Your Docker Compose Setup (With Examples)</h1>
+        <div class="meta">By Raghvendra Pandey &middot; April 2026 &middot; 6 min read</div>
+    </div>
+    <article>
+        <p>Docker Compose files start simple — a web server, a database, maybe a cache. Then requirements grow. You add a message queue, a worker service, a monitoring stack, a reverse proxy. Before you know it, your <code>docker-compose.yml</code> is 200 lines long and nobody on the team can explain how all the services connect.</p>
+
+        <p>This article covers practical ways to visualize your Docker Compose setup so you can understand, document, and communicate your container architecture.</p>
+
+        <h2>Why visualize Docker Compose?</h2>
+
+        <p>A <code>docker-compose.yml</code> file defines services, networks, volumes, and dependencies — but it does so in a flat YAML structure that doesn't visually convey how things connect. When someone new joins the team and asks "how do these containers talk to each other?", reading 200 lines of YAML isn't the answer.</p>
+
+        <p>Diagrams help in three specific situations. During onboarding, a new developer can look at a diagram and understand the service topology in 30 seconds. During debugging, when a service can't connect to another, a diagram shows you which network they're on and what sits between them. During architecture reviews, when you're discussing whether to split a monolith service or add a new dependency, a visual representation makes the conversation concrete.</p>
+
+        <h2>Example: a typical web application</h2>
+
+        <p>Let's start with a real-world example — a web application with a React frontend, a Python API, PostgreSQL, Redis, and Nginx as a reverse proxy.</p>
+
+<pre>version: "3.8"
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - api
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - api
+
+  api:
+    build: ./api
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://app:secret@postgres/appdb
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+
+  worker:
+    build: ./worker
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  pgdata:</pre>
+
+        <p>Reading this YAML, you can piece together the architecture — Nginx sits in front of everything, the frontend talks to the API, the API uses PostgreSQL and Redis, and a worker also connects to both data stores. But it takes a few minutes of careful reading to build that mental model.</p>
+
+        <h2>Method 1: Use InfraSketch</h2>
+
+        <p>The quickest approach is to paste your Docker Compose YAML directly into <a href="/">InfraSketch</a>. Select the "Docker Compose" tab, paste your YAML, and click "Generate Diagram." The tool parses service definitions and generates a visual diagram showing each container and its connections.</p>
+
+        <p>This takes about 5 seconds and gives you a diagram you can export as PNG or SVG for your project README or documentation. The current version detects services from the YAML structure and shows them as container nodes.</p>
+
+        <h2>Method 2: docker-compose-viz</h2>
+
+        <p>The <code>docker-compose-viz</code> tool is a CLI that reads your compose file and generates a graph using Graphviz. It's available as a Docker container itself, which is convenient.</p>
+
+<pre>docker run --rm -it \
+  --name dcv \
+  -v $(pwd):/input:ro \
+  pmsipilot/docker-compose-viz \
+  render -m image docker-compose.yml</pre>
+
+        <p>This produces a dependency graph showing which services depend on which. It's more detailed than a simple service list because it visualizes the <code>depends_on</code> relationships, <code>links</code>, and shared networks.</p>
+
+        <p>The output is functional but not pretty — it uses default Graphviz styling, which means tiny text and cramped layouts for complex setups. For a quick check of your dependency chain, it works. For documentation, you'll want something more polished.</p>
+
+        <h2>Method 3: Mermaid.js in your README</h2>
+
+        <p>If you want a diagram that lives in your README and renders automatically on GitHub, Mermaid is a great option. You define the diagram using a simple text syntax that GitHub renders as an image.</p>
+
+<pre>```mermaid
+graph TB
+    Client[Browser] --> Nginx
+    Nginx --> Frontend[React App]
+    Nginx --> API[Python API]
+    API --> Postgres[(PostgreSQL)]
+    API --> Redis[(Redis)]
+    Worker --> Postgres
+    Worker --> Redis
+```</pre>
+
+        <p>This renders as a clean flowchart directly in your GitHub README. The advantage is that the diagram is version-controlled alongside your code. When you add a new service, you update the Mermaid block in the same PR.</p>
+
+        <p>The limitation is manual maintenance — you need to keep the Mermaid diagram in sync with your actual <code>docker-compose.yml</code>. It's also limited to simple box-and-arrow diagrams without service-specific icons.</p>
+
+        <h2>Method 4: Draw it manually (when you need polish)</h2>
+
+        <p>For presentations, documentation sites, or client deliverables, sometimes you need a hand-crafted diagram. Tools like Draw.io, Excalidraw, or Figma give you full control over layout, styling, and annotations.</p>
+
+        <p>The key to making manual Docker diagrams useful is to include the right details: service names, exposed ports, volume mounts, and network boundaries. A diagram that just shows boxes with service names isn't much more useful than reading the YAML. A diagram that shows "Nginx (port 80) routes /api/* to API service (port 8000) on backend network" tells a real story.</p>
+
+        <h2>Best practices for container architecture diagrams</h2>
+
+        <p>Regardless of which tool you use, effective Docker Compose diagrams share a few characteristics.</p>
+
+        <p>First, show network boundaries. If your compose file defines multiple networks (frontend, backend, monitoring), group services by network. This immediately clarifies which services can communicate with each other.</p>
+
+        <p>Second, indicate data persistence. Services with volumes are stateful — they hold data that matters. Highlight databases and any service with persistent volumes differently from stateless application containers.</p>
+
+        <p>Third, show external access points. Which ports are exposed to the host? Which services are accessible from outside? This is critical for security reviews and debugging network issues.</p>
+
+        <p>Fourth, label the connections. Don't just draw arrows — label them with protocol and port. "HTTP :8000" is more useful than a plain line between two boxes.</p>
+
+        <h2>Keep it simple</h2>
+
+        <p>The best Docker Compose diagram is one that actually gets created and maintained. A rough auto-generated diagram that you update by re-running a tool is infinitely more valuable than a beautiful hand-drawn diagram from three months ago that no longer reflects reality.</p>
+
+        <p>Start with InfraSketch or Mermaid for a quick visualization. If you need more polish, refine it manually. The goal is understanding, not art.</p>
+
+        <div class="cta-box">
+            <h3>Visualize your Docker Compose</h3>
+            <p>Paste your docker-compose.yml and see your container architecture instantly.</p>
+            <a href="/" class="btn">Open InfraSketch</a>
+        </div>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

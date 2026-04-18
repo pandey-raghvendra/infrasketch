@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Create AWS Architecture Diagrams in 2026: A Complete Guide — InfraSketch</title>
+    <meta name="description" content="Learn every method for creating AWS architecture diagrams in 2026. Compare manual tools, automated generators, and code-based approaches with practical examples.">
+    <meta name="keywords" content="AWS architecture diagram, create AWS diagram, terraform diagram, cloud architecture, infrastructure diagram tool">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/how-to-create-aws-architecture-diagrams.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}
+        body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+        .container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+        nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}
+        .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}
+        .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}
+        .logo span{color:var(--accent)}
+        .nav-links{display:flex;gap:24px;list-style:none}
+        .nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}
+        .nav-links a:hover{color:var(--accent)}
+        .article-header{padding:60px 0 32px}
+        .article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}
+        .article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}
+        .article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}
+        article{padding:32px 0 60px}
+        article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}
+        article h3{font-size:17px;font-weight:600;margin:28px 0 12px}
+        article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}
+        article a{color:var(--accent);text-decoration:none}
+        article a:hover{text-decoration:underline}
+        article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}
+        article li{margin-bottom:8px}
+        article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}
+        article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}
+        .comparison-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+        .comparison-table th{background:var(--bg-surface);text-align:left;padding:12px 16px;border:1px solid var(--border);color:var(--accent);font-weight:600}
+        .comparison-table td{padding:12px 16px;border:1px solid var(--border);color:var(--text-muted)}
+        .cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}
+        .cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}
+        .cta-box p{margin-bottom:16px;color:var(--text-muted)}
+        .btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}
+        .btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}
+        footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}
+        footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}
+        footer a{color:var(--accent);text-decoration:none}
+        @media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a>
+    <ul class="nav-links">
+        <li><a href="/">Tool</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+    </ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">AWS</span>
+        <h1>How to Create AWS Architecture Diagrams in 2026: A Complete Guide</h1>
+        <div class="meta">By Raghvendra Pandey &middot; April 2026 &middot; 8 min read</div>
+    </div>
+
+    <article>
+        <p>Architecture diagrams are one of those things every team needs but nobody wants to maintain. You spend an hour in draw.io moving boxes around, and by the time you share it, someone has already changed the infrastructure.</p>
+
+        <p>After 9 years of building cloud infrastructure, I've tried every method — from whiteboards to $500/month enterprise tools. Here's a practical breakdown of every approach available in 2026, with honest pros and cons for each.</p>
+
+        <h2>Why architecture diagrams matter</h2>
+
+        <p>Before diving into tools, it's worth understanding why diagrams are worth the effort. They serve three critical purposes in any engineering team.</p>
+
+        <p>First, they accelerate onboarding. A new team member looking at 50 Terraform files has no idea how things connect. A diagram gives them the mental model in 30 seconds that would otherwise take days of reading code.</p>
+
+        <p>Second, they improve incident response. When something breaks at 3 AM, you need to quickly understand which services are affected. A clear architecture diagram shows blast radius instantly — which services talk to the broken database, which load balancer routes to the failing service.</p>
+
+        <p>Third, they enable architecture reviews. Whether you're pitching a migration to your CTO or doing a well-architected review, diagrams make the conversation concrete rather than abstract.</p>
+
+        <h2>Method 1: Manual drawing tools</h2>
+
+        <p>The traditional approach. Open a tool, drag boxes, draw arrows, label everything by hand.</p>
+
+        <h3>Draw.io (diagrams.net) — Free</h3>
+        <p>Draw.io is the most popular free option and for good reason. It has built-in AWS icon libraries, works in the browser, exports to PNG/SVG/PDF, and integrates with Confluence and Google Drive. For one-off diagrams that don't need frequent updates, it's hard to beat.</p>
+        <p>The downside is entirely about maintenance. The moment your infrastructure changes — a new subnet, a renamed service, an additional database — your diagram is out of date. Someone has to manually update it, and that someone is usually nobody.</p>
+
+        <h3>Lucidchart — $7.95+/month</h3>
+        <p>Lucidchart adds real-time collaboration on top of Draw.io's feature set. Multiple people can edit the same diagram simultaneously, which is useful for architecture review sessions. It also has better auto-layout and alignment tools.</p>
+        <p>The problem is the same as Draw.io — it's still manual. You're paying $8-15/month per user for a tool that produces diagrams that go stale immediately.</p>
+
+        <h3>When to use manual tools</h3>
+        <p>Manual tools work well for conceptual or aspirational diagrams — showing what you plan to build, not what currently exists. They're also good for presentations where you need a specific visual style or narrative flow that automated tools can't produce.</p>
+
+        <h2>Method 2: Live cloud scanners</h2>
+
+        <p>These tools connect to your actual AWS/Azure/GCP account and generate diagrams from live infrastructure.</p>
+
+        <h3>Cloudcraft — $49+/month</h3>
+        <p>Cloudcraft (now owned by Datadog) scans your AWS account and generates both 2D and 3D architecture diagrams. The 3D isometric view looks impressive in presentations. It also includes cost estimation — hover over any resource to see its monthly cost.</p>
+        <p>The catch: you need to give it read access to your cloud account. For many organizations, this is a non-starter — security teams don't want a third-party service scanning production infrastructure. It's also expensive at $49/month for individual use and more for teams.</p>
+
+        <h3>Hava.io — $49+/month</h3>
+        <p>Hava takes a similar approach but adds change tracking — it records every infrastructure change and lets you view historical diagrams. This is genuinely useful for debugging "what changed?" during an incident. It supports AWS, Azure, and GCP.</p>
+
+        <h3>AWS Workload Discovery — Free (self-hosted)</h3>
+        <p>Amazon's own solution, deployed as a CloudFormation stack in your account. It scans your resources and generates interactive diagrams. Being first-party, it avoids the credential-sharing concern. However, it only works for AWS (no multi-cloud), requires significant setup, and the diagrams aren't as polished as commercial tools.</p>
+
+        <h3>When to use cloud scanners</h3>
+        <p>Cloud scanners are ideal for large organizations with complex, frequently changing infrastructure where manual diagramming is impossible. They're also useful for cloud cost audits and compliance documentation. But they're overkill for small teams or individual developers.</p>
+
+        <h2>Method 3: Diagram-as-code</h2>
+
+        <p>Write code that generates diagrams. The diagram lives alongside your infrastructure code and can be version-controlled.</p>
+
+        <h3>Python Diagrams library</h3>
+        <p>The <code>diagrams</code> Python library lets you define architecture diagrams in Python code. It uses the official AWS/GCP/Azure icons and generates clean PNG output.</p>
+
+<pre>from diagrams import Diagram, Cluster
+from diagrams.aws.compute import EKS
+from diagrams.aws.database import RDS
+from diagrams.aws.network import ELB
+
+with Diagram("Production", show=False):
+    lb = ELB("ALB")
+    with Cluster("EKS Cluster"):
+        svc = EKS("app")
+    db = RDS("postgres")
+    lb >> svc >> db</pre>
+
+        <p>This approach is popular because diagrams can be committed to Git, reviewed in PRs, and updated alongside infrastructure changes. The downside is that you're still manually defining the diagram — it doesn't read your Terraform code automatically.</p>
+
+        <h3>Mermaid.js</h3>
+        <p>Mermaid uses a markdown-like syntax to define diagrams. It's built into GitHub (renders in README files), Notion, and many documentation tools. It's great for simple flowcharts and sequence diagrams, but it doesn't support AWS icons natively and the layout engine can produce awkward results for complex architectures.</p>
+
+        <h3>When to use diagram-as-code</h3>
+        <p>Diagram-as-code works well for teams that want version-controlled diagrams that evolve with the codebase. It's a good middle ground between manual tools and automated scanners. The trade-off is that someone still needs to write and maintain the diagram code.</p>
+
+        <h2>Method 4: Generate from IaC (Infrastructure as Code)</h2>
+
+        <p>This is the newest approach — tools that read your existing Terraform, CloudFormation, or Docker Compose files and automatically generate architecture diagrams. No manual drawing, no cloud credentials, no separate diagram code to maintain.</p>
+
+        <h3>InfraSketch — Free, open source</h3>
+        <p>Full disclosure: I built <a href="/">InfraSketch</a>. It takes a different approach from all the tools above — you paste your Terraform HCL or Docker Compose YAML, and it generates an architecture diagram instantly in your browser. No signup, no cloud credentials, no server-side processing.</p>
+
+        <p>It parses 25+ AWS resource types, detects relationships between them, groups resources by category (networking, compute, database, storage, load balancing), and renders diagrams with official AWS architecture icons. You can export as PNG or SVG.</p>
+
+        <p>The advantage is simplicity and privacy. Your code never leaves your browser. The limitation is that it currently only supports AWS resources and the parser may not catch every edge case in complex Terraform configurations.</p>
+
+        <h3>terraform graph</h3>
+        <p>Terraform has a built-in <code>terraform graph</code> command that outputs a dependency graph in DOT format. You can pipe it through Graphviz to generate a visual diagram. It's technically accurate but produces overwhelming, unreadable graphs for any real-world infrastructure. It shows every single resource and dependency, including internal Terraform resources that aren't meaningful to humans.</p>
+
+        <h2>Comparison summary</h2>
+
+        <table class="comparison-table">
+            <tr>
+                <th>Method</th>
+                <th>Cost</th>
+                <th>Auto-updates</th>
+                <th>Credentials needed</th>
+                <th>Best for</th>
+            </tr>
+            <tr>
+                <td>Draw.io</td>
+                <td>Free</td>
+                <td>No</td>
+                <td>No</td>
+                <td>One-off diagrams</td>
+            </tr>
+            <tr>
+                <td>Lucidchart</td>
+                <td>$8+/mo</td>
+                <td>No</td>
+                <td>No</td>
+                <td>Team collaboration</td>
+            </tr>
+            <tr>
+                <td>Cloudcraft</td>
+                <td>$49+/mo</td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td>Enterprise documentation</td>
+            </tr>
+            <tr>
+                <td>Hava.io</td>
+                <td>$49+/mo</td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td>Change tracking</td>
+            </tr>
+            <tr>
+                <td>Python Diagrams</td>
+                <td>Free</td>
+                <td>Semi</td>
+                <td>No</td>
+                <td>Version-controlled docs</td>
+            </tr>
+            <tr>
+                <td>InfraSketch</td>
+                <td>Free</td>
+                <td>From code</td>
+                <td>No</td>
+                <td>Quick diagrams from IaC</td>
+            </tr>
+        </table>
+
+        <h2>My recommendation</h2>
+
+        <p>There's no single best tool — it depends on your situation. If you're a solo developer or small team, start with InfraSketch for quick diagrams from your existing Terraform code, and use Draw.io when you need a custom presentation-ready diagram. If you're at a large organization with complex multi-account infrastructure, a cloud scanner like Cloudcraft or Hava pays for itself in time saved.</p>
+
+        <p>The key insight is this: the best diagram is one that actually exists. A rough, auto-generated diagram that's always up-to-date is infinitely more valuable than a beautiful hand-drawn diagram from six months ago that no longer matches reality.</p>
+
+        <div class="cta-box">
+            <h3>Try InfraSketch</h3>
+            <p>Paste your Terraform code and get an architecture diagram in seconds. Free, no signup required.</p>
+            <a href="/" class="btn">Generate a Diagram</a>
+        </div>
+    </article>
+</div>
+<footer>
+    <div class="container">
+        <p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p>
+    </div>
+</footer>
+</body>
+</html>
