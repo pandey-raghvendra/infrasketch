@@ -176,9 +176,336 @@ const SAMPLE_DOCKER_COMPOSE = `services:
     image: redis:7-alpine
 `;
 
-const SAMPLES = {
-    terraform: SAMPLE_TERRAFORM,
-    docker: SAMPLE_DOCKER_COMPOSE,
+// ── Complex example: Terraform modules (flattened for the parser) ─────────────
+const SAMPLE_TERRAFORM_MODULES = `# Multi-module Terraform: VPC module + EKS module + RDS module
+# (Resources shown as they would appear after module expansion)
+
+# ── networking/main.tf ──────────────────────────────────────────────────────
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+}
+
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_subnet" "public_a" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "us-east-1a"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "public_b" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "private_a" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.10.0/24"
+  availability_zone = "us-east-1a"
+}
+
+resource "aws_subnet" "private_b" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.11.0/24"
+  availability_zone = "us-east-1b"
+}
+
+resource "aws_subnet" "data_a" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.20.0/24"
+  availability_zone = "us-east-1a"
+}
+
+resource "aws_eip" "nat_a" { domain = "vpc" }
+resource "aws_eip" "nat_b" { domain = "vpc" }
+
+resource "aws_nat_gateway" "nat_a" {
+  allocation_id = aws_eip.nat_a.id
+  subnet_id     = aws_subnet.public_a.id
+}
+
+resource "aws_nat_gateway" "nat_b" {
+  allocation_id = aws_eip.nat_b.id
+  subnet_id     = aws_subnet.public_b.id
+}
+
+resource "aws_wafv2_web_acl" "main" {
+  name  = "prod-waf"
+  scope = "REGIONAL"
+}
+
+# ── compute/main.tf ─────────────────────────────────────────────────────────
+resource "aws_lb" "frontend" {
+  name               = "prod-alb"
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+}
+
+resource "aws_lb_target_group" "app" {
+  name   = "app-tg"
+  port   = 8080
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_security_group" "alb" {
+  name   = "alb-sg"
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_security_group" "app" {
+  name   = "app-sg"
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_security_group" "db" {
+  name   = "db-sg"
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_eks_cluster" "main" {
+  name     = "prod-cluster"
+  role_arn = aws_iam_role.eks_cluster.arn
+  vpc_config {
+    subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+    security_group_ids = [aws_security_group.app.id]
+  }
+}
+
+resource "aws_eks_node_group" "system" {
+  cluster_name   = aws_eks_cluster.main.name
+  node_role_arn  = aws_iam_role.eks_nodes.arn
+  subnet_ids     = [aws_subnet.private_a.id]
+}
+
+resource "aws_iam_role" "eks_cluster" { name = "eks-cluster-role" }
+resource "aws_iam_role" "eks_nodes"   { name = "eks-nodes-role" }
+
+resource "aws_ecr_repository" "app" { name = "prod/app" }
+
+# ── data/main.tf ─────────────────────────────────────────────────────────────
+resource "aws_db_instance" "postgres" {
+  identifier     = "prod-db"
+  engine         = "postgres"
+  instance_class = "db.t3.medium"
+  subnet_id      = aws_subnet.data_a.id
+}
+
+resource "aws_elasticache_replication_group" "redis" {
+  replication_group_id = "prod-redis"
+  node_type            = "cache.t3.micro"
+  subnet_id            = aws_subnet.data_a.id
+}
+
+resource "aws_s3_bucket" "assets"  { bucket = "prod-static-assets" }
+resource "aws_s3_bucket" "backups" { bucket = "prod-db-backups" }
+
+# ── messaging/main.tf ────────────────────────────────────────────────────────
+resource "aws_sqs_queue" "jobs"        { name = "job-queue" }
+resource "aws_sqs_queue" "jobs_dlq"    { name = "job-queue-dlq" }
+resource "aws_sns_topic" "alerts"      { name = "infra-alerts" }
+resource "aws_sns_topic" "deployments" { name = "deploy-events" }
+
+resource "aws_lambda_function" "worker" {
+  function_name = "job-worker"
+  runtime       = "nodejs20.x"
+  subnet_id     = aws_subnet.private_a.id
+}
+
+resource "aws_kms_key" "secrets" { description = "Secrets Manager encryption" }
+
+# ── observability/main.tf ────────────────────────────────────────────────────
+resource "aws_cloudfront_distribution" "cdn" {
+  enabled     = true
+  origin { domain_name = aws_lb.frontend.dns_name }
+}
+
+resource "aws_route53_zone" "main" { name = "example.com" }
+
+resource "aws_cloudwatch_log_group" "eks"    { name = "/aws/eks/prod-cluster/cluster" }
+resource "aws_cloudwatch_log_group" "lambda" { name = "/aws/lambda/job-worker" }
+resource "aws_cloudwatch_metric_alarm" "db_cpu" {
+  alarm_name = "rds-cpu-high"
+}
+`;
+
+// ── Complex example: multi-file serverless workflow ───────────────────────────
+const SAMPLE_TERRAFORM_SERVERLESS = `# Serverless event-driven pipeline
+# Combines: api.tf + processing.tf + storage.tf + iam.tf
+
+# ── api.tf ───────────────────────────────────────────────────────────────────
+resource "aws_cloudfront_distribution" "api_cdn" {
+  enabled = true
+  origin { domain_name = aws_lb.api.dns_name }
+}
+
+resource "aws_wafv2_web_acl" "api" {
+  name  = "api-waf"
+  scope = "REGIONAL"
+}
+
+resource "aws_route53_zone" "api" { name = "api.example.com" }
+
+resource "aws_lb" "api" {
+  name               = "api-alb"
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public.id]
+}
+
+resource "aws_lb_target_group" "api" {
+  name   = "api-tg"
+  port   = 443
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_vpc" "main"    { cidr_block = "10.0.0.0/16" }
+resource "aws_subnet" "public"  { vpc_id = aws_vpc.main.id  cidr_block = "10.0.1.0/24" }
+resource "aws_subnet" "private" { vpc_id = aws_vpc.main.id  cidr_block = "10.0.2.0/24" }
+resource "aws_internet_gateway" "gw" { vpc_id = aws_vpc.main.id }
+
+# ── processing.tf ────────────────────────────────────────────────────────────
+resource "aws_sqs_queue" "ingest"   { name = "ingest-queue" }
+resource "aws_sqs_queue" "enrich"   { name = "enrich-queue" }
+resource "aws_sqs_queue" "failed"   { name = "dead-letter-queue" }
+resource "aws_sns_topic" "results"  { name = "result-events" }
+resource "aws_sns_topic" "alerts"   { name = "pipeline-alerts" }
+
+resource "aws_lambda_function" "ingest" {
+  function_name = "ingest-handler"
+  runtime       = "python3.11"
+  subnet_id     = aws_subnet.private.id
+  role          = aws_iam_role.lambda_exec.arn
+}
+
+resource "aws_lambda_function" "enrich" {
+  function_name = "enrich-handler"
+  runtime       = "python3.11"
+  subnet_id     = aws_subnet.private.id
+  role          = aws_iam_role.lambda_exec.arn
+}
+
+resource "aws_lambda_function" "notify" {
+  function_name = "notify-handler"
+  runtime       = "python3.11"
+  subnet_id     = aws_subnet.private.id
+  role          = aws_iam_role.lambda_exec.arn
+}
+
+# ── storage.tf ───────────────────────────────────────────────────────────────
+resource "aws_dynamodb_table" "events" {
+  name     = "pipeline-events"
+  hash_key = "event_id"
+}
+
+resource "aws_s3_bucket" "raw"       { bucket = "pipeline-raw-data" }
+resource "aws_s3_bucket" "processed" { bucket = "pipeline-processed" }
+resource "aws_elasticache_cluster" "session" { cluster_id = "session-cache" }
+
+# ── iam.tf ───────────────────────────────────────────────────────────────────
+resource "aws_iam_role" "lambda_exec" { name = "lambda-exec-role" }
+resource "aws_kms_key" "pipeline"     { description = "Pipeline data encryption" }
+resource "aws_security_group" "lambda" { vpc_id = aws_vpc.main.id }
+resource "aws_cloudwatch_log_group" "pipeline" { name = "/aws/lambda/pipeline" }
+`;
+
+// ── Complex Docker example: microservices platform ─────────────────────────
+const SAMPLE_DOCKER_MICROSERVICES = `services:
+  # API Gateway / Reverse Proxy
+  gateway:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - auth
+      - api
+
+  # Auth service
+  auth:
+    image: node:20-alpine
+    command: npm start
+    environment:
+      DB_URL: postgres://auth:secret@auth-db:5432/auth
+      REDIS_URL: redis://session-cache:6379
+      JWT_SECRET: changeme
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      session-cache:
+        condition: service_started
+
+  # Core API
+  api:
+    image: node:20-alpine
+    command: npm start
+    environment:
+      DB_URL: postgres://app:secret@app-db:5432/app
+      QUEUE_URL: amqp://mq:5672
+    depends_on:
+      app-db:
+        condition: service_healthy
+      mq:
+        condition: service_started
+      auth:
+        condition: service_started
+
+  # Background worker
+  worker:
+    image: node:20-alpine
+    command: npm run worker
+    depends_on:
+      - mq
+      - app-db
+
+  # Auth database
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: secret
+
+  # Application database
+  app-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+
+  # Session cache
+  session-cache:
+    image: redis:7-alpine
+
+  # Message broker
+  mq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "15672:15672"
+
+  # Search engine
+  search:
+    image: elasticsearch:8.11.0
+    depends_on:
+      - app-db
+`;
+
+const EXTRA_SAMPLES = {
+    terraform: {
+        basic: { label: 'Production AWS stack', code: SAMPLE_TERRAFORM },
+        modules: { label: 'Multi-module (VPC + EKS + RDS + serverless)', code: SAMPLE_TERRAFORM_MODULES },
+        serverless: { label: 'Serverless pipeline (multi-file)', code: SAMPLE_TERRAFORM_SERVERLESS },
+    },
+    docker: {
+        basic: { label: 'Web app (nginx + API + DB + cache)', code: SAMPLE_DOCKER_COMPOSE },
+        microservices: { label: 'Microservices platform (9 services)', code: SAMPLE_DOCKER_MICROSERVICES },
+    },
 };
 
 const PLACEHOLDERS = {
@@ -217,20 +544,14 @@ services:
     image: postgres:16-alpine`,
 };
 
-const SAMPLE_BUTTON_LABELS = {
-    terraform: 'Load Terraform sample',
-    docker: 'Load Docker sample',
-};
-
 const codeInput = document.getElementById('code-input');
 const generateButton = document.getElementById('btn-generate');
-const loadSampleButton = document.getElementById('btn-load-sample');
+const exampleSelect = document.getElementById('example-select');
 const placeholder = document.getElementById('placeholder');
 const loading = document.getElementById('loading');
 const diagramSvg = document.getElementById('diagram-svg');
 const statsBar = document.getElementById('stats-bar');
 let lastParsed = null;
-let lastLoadedSampleType = null;
 
 function activeInputType() {
     return document.querySelector('.input-tab.active').dataset.type;
@@ -257,27 +578,37 @@ function parseCode(code) {
         : parseTerraform(code);
 }
 
-function updateEditorForType(type, previousType = null) {
-    const currentText = codeInput.value.trim();
-    const previousSample = previousType ? SAMPLES[previousType].trim() : null;
-    const lastSample = lastLoadedSampleType ? SAMPLES[lastLoadedSampleType].trim() : null;
-    const shouldSwapSample = currentText && (currentText === previousSample || currentText === lastSample);
-
-    codeInput.placeholder = PLACEHOLDERS[type];
-    loadSampleButton.textContent = SAMPLE_BUTTON_LABELS[type];
-
-    if (shouldSwapSample) {
-        codeInput.value = SAMPLES[type];
-        lastLoadedSampleType = type;
-    } else if (!currentText) {
-        lastLoadedSampleType = null;
+function populateExampleSelect(type) {
+    const extras = EXTRA_SAMPLES[type] || {};
+    exampleSelect.innerHTML = '<option value="">Load an example...</option>';
+    for (const [key, { label }] of Object.entries(extras)) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = label;
+        exampleSelect.appendChild(opt);
     }
 }
 
-loadSampleButton.addEventListener('click', () => {
+function updateEditorForType(type, previousType = null) {
+    const currentText = codeInput.value.trim();
+    const previousSamples = previousType ? Object.values(EXTRA_SAMPLES[previousType] || {}).map((s) => s.code.trim()) : [];
+    const isShowingSample = previousSamples.some((s) => s === currentText);
+
+    codeInput.placeholder = PLACEHOLDERS[type];
+    populateExampleSelect(type);
+
+    if (isShowingSample || !currentText) {
+        codeInput.value = '';
+    }
+}
+
+exampleSelect.addEventListener('change', () => {
     const type = activeInputType();
-    codeInput.value = SAMPLES[type];
-    lastLoadedSampleType = type;
+    const key = exampleSelect.value;
+    if (!key) return;
+    const sample = EXTRA_SAMPLES[type]?.[key];
+    if (sample) codeInput.value = sample.code;
+    exampleSelect.value = '';
 });
 
 generateButton.addEventListener('click', () => {

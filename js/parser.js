@@ -159,101 +159,25 @@ export function parseTerraform(code) {
     return { resources, connections, vpcOf, subnetOf };
 }
 
-function indentOf(line) {
-    const match = line.match(/^ */);
-    return match ? match[0].length : 0;
-}
-
-function stripComment(line) {
-    const hashIndex = line.indexOf('#');
-    return hashIndex === -1 ? line : line.slice(0, hashIndex);
-}
-
-function parseInlineDependencyList(value) {
-    const trimmed = value.trim();
-    if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return [];
-
-    return trimmed
-        .slice(1, -1)
-        .split(',')
-        .map((item) => item.trim().replace(/^['"]|['"]$/g, ''))
-        .filter(Boolean);
-}
-
-function parseDependsOn(service) {
-    const dependencies = new Set();
-
-    for (let i = 0; i < service.lines.length; i += 1) {
-        const rawLine = stripComment(service.lines[i]);
-        const match = rawLine.match(/^(\s*)depends_on\s*:\s*(.*)$/);
-        if (!match) continue;
-
-        const propertyIndent = match[1].length;
-        parseInlineDependencyList(match[2]).forEach((dep) => dependencies.add(dep));
-
-        for (let j = i + 1; j < service.lines.length; j += 1) {
-            const childLine = stripComment(service.lines[j]);
-            if (!childLine.trim()) continue;
-
-            const childIndent = indentOf(childLine);
-            if (childIndent <= propertyIndent) break;
-
-            const listItem = childLine.match(/^\s*-\s*([\w.-]+)/);
-            if (listItem) {
-                dependencies.add(listItem[1]);
-                continue;
-            }
-
-            const mapItem = childLine.match(/^\s*([\w.-]+)\s*:/);
-            if (mapItem) dependencies.add(mapItem[1]);
-        }
-    }
-
-    return [...dependencies];
-}
-
-function extractComposeServices(code) {
-    const lines = code.replace(/\r\n/g, '\n').split('\n');
-    const servicesLineIndex = lines.findIndex((line) => /^\s*services\s*:\s*(?:#.*)?$/.test(stripComment(line)));
-    if (servicesLineIndex === -1) return [];
-
-    const baseIndent = indentOf(lines[servicesLineIndex]);
-    const services = [];
-    let current = null;
-    let serviceIndent = null;
-
-    for (let i = servicesLineIndex + 1; i < lines.length; i += 1) {
-        const line = lines[i];
-        const cleanLine = stripComment(line);
-        if (!cleanLine.trim()) {
-            if (current) current.lines.push(line);
-            continue;
-        }
-
-        const indent = indentOf(cleanLine);
-        if (indent <= baseIndent) break;
-
-        const serviceMatch = cleanLine.match(/^(\s*)([\w.-]+)\s*:\s*$/);
-        if (serviceMatch && (serviceIndent === null || indent === serviceIndent)) {
-            serviceIndent = indent;
-            current = { name: serviceMatch[2], lines: [] };
-            services.push(current);
-            continue;
-        }
-
-        if (current) current.lines.push(line);
-    }
-
-    return services;
+function normalizeDependsOn(dependsOn) {
+    if (Array.isArray(dependsOn)) return dependsOn;
+    if (dependsOn && typeof dependsOn === 'object') return Object.keys(dependsOn);
+    return [];
 }
 
 export function parseDockerCompose(code) {
-    const services = extractComposeServices(code);
-    const serviceNames = new Set(services.map((service) => service.name));
-    const resources = services.map((service) => ({
-        id: `docker.${service.name}`,
+    const yamlParser = globalThis.jsyaml;
+    if (!yamlParser) throw new Error('YAML parser (js-yaml) not loaded.');
+
+    const doc = yamlParser.load(code) || {};
+    const servicesMap = (doc && typeof doc === 'object') ? (doc.services || {}) : {};
+    const serviceNames = Object.keys(servicesMap);
+    const serviceSet = new Set(serviceNames);
+
+    const resources = serviceNames.map((name) => ({
+        id: `docker.${name}`,
         type: 'docker_service',
-        name: service.name,
+        name,
         category: 'instance',
         label: 'Container',
         color: DOCKER_COLOR,
@@ -263,12 +187,12 @@ export function parseDockerCompose(code) {
     const connections = [];
     const seen = new Set();
 
-    for (const service of services) {
-        for (const dependency of parseDependsOn(service)) {
-            if (!serviceNames.has(dependency)) continue;
-
-            const from = `docker.${dependency}`;
-            const to = `docker.${service.name}`;
+    for (const [name, service] of Object.entries(servicesMap)) {
+        const deps = normalizeDependsOn(service?.depends_on);
+        for (const dep of deps) {
+            if (!serviceSet.has(dep)) continue;
+            const from = `docker.${dep}`;
+            const to = `docker.${name}`;
             const key = `${from}->${to}`;
             if (!seen.has(key)) {
                 seen.add(key);
