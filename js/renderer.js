@@ -1,4 +1,4 @@
-import { AWS_ICON_PATHS, SVG_LAYOUT, SVG_NS, XLINK_NS } from './constants.js';
+import { ICON_PATHS, SVG_LAYOUT, SVG_NS, XLINK_NS } from './constants.js';
 import { buildDiagramLayout } from './layout.js';
 
 function setAttributes(element, attrs) {
@@ -145,7 +145,7 @@ function appendResourceNode(svg, resource, position, config) {
         'stroke-width': 1.5,
     }));
 
-    const iconPath = AWS_ICON_PATHS[resource.icon];
+    const iconPath = ICON_PATHS[resource.icon];
     if (iconPath) {
         const icon = append(group, svgElement('image', {
             href: iconPath,
@@ -219,6 +219,12 @@ export function renderDiagram(parsed, svg) {
 
     if (metrics.hasVpc) {
         const vpc = groups.vpcRes[0];
+        const isAzure = vpc.type === 'azurerm_virtual_network';
+        const borderColor = isAzure ? '#0078D4' : '#f59e0b';
+        const headerFill = isAzure ? '#e8f4ff' : '#fffbeb';
+        const labelColor = isAzure ? '#005A9E' : '#b45309';
+        const containerLabel = isAzure ? `VNet — ${vpc.name}` : `VPC — ${vpc.name}`;
+
         append(svg, svgElement('rect', {
             x: metrics.vpcX,
             y: metrics.vpcY,
@@ -226,7 +232,7 @@ export function renderDiagram(parsed, svg) {
             height: metrics.vpcBoxH,
             rx: 12,
             fill: 'white',
-            stroke: '#f59e0b',
+            stroke: borderColor,
             'stroke-width': 2,
         }));
         append(svg, svgElement('rect', {
@@ -235,8 +241,8 @@ export function renderDiagram(parsed, svg) {
             width: metrics.vpcBoxW,
             height: config.VPC_LBL,
             rx: 12,
-            fill: '#fffbeb',
-            stroke: '#f59e0b',
+            fill: headerFill,
+            stroke: borderColor,
             'stroke-width': 2,
         }));
         append(svg, svgElement('rect', {
@@ -244,7 +250,7 @@ export function renderDiagram(parsed, svg) {
             y: metrics.vpcY + config.VPC_LBL - 4,
             width: metrics.vpcBoxW,
             height: 4,
-            fill: '#fffbeb',
+            fill: headerFill,
         }));
         append(svg, svgElement('text', {
             x: metrics.vpcX + 14,
@@ -252,8 +258,8 @@ export function renderDiagram(parsed, svg) {
             'font-family': 'DM Sans,sans-serif',
             'font-size': 11,
             'font-weight': 700,
-            fill: '#b45309',
-        }, `VPC - ${vpc.name}`));
+            fill: labelColor,
+        }, containerLabel));
     }
 
     for (const subnet of groups.subnetRes) {

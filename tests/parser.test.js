@@ -270,3 +270,140 @@ services:
         expect(result.subnetOf).toEqual({});
     });
 });
+
+// ─── parseTerraform — Azure ───────────────────────────────────────────────────
+
+describe('parseTerraform — Azure', () => {
+    it('recognises azurerm_virtual_network as vpc category', () => {
+        const code = `
+resource "azurerm_virtual_network" "main" {
+  name          = "prod-vnet"
+  address_space = ["10.0.0.0/16"]
+}`;
+        const { resources } = parseTerraform(code);
+        expect(resources).toHaveLength(1);
+        expect(resources[0]).toMatchObject({ category: 'vpc', type: 'azurerm_virtual_network', name: 'main' });
+    });
+
+    it('recognises azurerm_subnet as subnet category', () => {
+        const code = `
+resource "azurerm_subnet" "private" {
+  name                 = "private"
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+resource "azurerm_virtual_network" "main" {
+  name          = "prod-vnet"
+  address_space = ["10.0.0.0/16"]
+}`;
+        const { resources } = parseTerraform(code);
+        const categories = resources.map((r) => r.category);
+        expect(categories).toContain('subnet');
+        expect(categories).toContain('vpc');
+    });
+
+    it('maps azurerm_subnet to its VNet via virtual_network_name', () => {
+        const code = `
+resource "azurerm_virtual_network" "main" {
+  name          = "prod-vnet"
+  address_space = ["10.0.0.0/16"]
+}
+resource "azurerm_subnet" "private" {
+  name                 = "private"
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.2.0/24"]
+}`;
+        const { vpcOf } = parseTerraform(code);
+        expect(vpcOf['azurerm_subnet.private']).toBe('azurerm_virtual_network.main');
+    });
+
+    it('maps a resource to azurerm_subnet via subnet_id', () => {
+        const code = `
+resource "azurerm_virtual_network" "main" { name = "vnet" address_space = ["10.0.0.0/16"] }
+resource "azurerm_subnet" "priv" {
+  name                 = "priv"
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+resource "azurerm_linux_web_app" "api" {
+  name      = "api"
+  subnet_id = azurerm_subnet.priv.id
+}`;
+        const { subnetOf } = parseTerraform(code);
+        expect(subnetOf['azurerm_linux_web_app.api']).toBe('azurerm_subnet.priv');
+    });
+
+    it('maps AKS default_node_pool vnet_subnet_id to azurerm_subnet', () => {
+        const code = `
+resource "azurerm_virtual_network" "main" { name = "vnet" address_space = ["10.0.0.0/16"] }
+resource "azurerm_subnet" "priv" {
+  name                 = "priv"
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.2.0/24"]
+}
+resource "azurerm_kubernetes_cluster" "main" {
+  name = "prod-aks"
+  default_node_pool {
+    name           = "default"
+    vnet_subnet_id = azurerm_subnet.priv.id
+  }
+}`;
+        const { subnetOf } = parseTerraform(code);
+        expect(subnetOf['azurerm_kubernetes_cluster.main']).toBe('azurerm_subnet.priv');
+    });
+
+    it('recognises Azure compute resource categories', () => {
+        const code = `
+resource "azurerm_kubernetes_cluster" "aks" { name = "aks" }
+resource "azurerm_linux_function_app" "fn" { name = "fn" }
+resource "azurerm_linux_web_app" "app" { name = "app" }
+resource "azurerm_virtual_machine" "vm" { name = "vm" }`;
+        const { resources } = parseTerraform(code);
+        const cats = Object.fromEntries(resources.map((r) => [r.name, r.category]));
+        expect(cats.aks).toBe('az_aks');
+        expect(cats.fn).toBe('az_function');
+        expect(cats.app).toBe('az_appservice');
+        expect(cats.vm).toBe('az_vm');
+    });
+
+    it('recognises Azure data/storage resource categories', () => {
+        const code = `
+resource "azurerm_mssql_server" "sql" { name = "sql" }
+resource "azurerm_cosmosdb_account" "cosmos" { name = "cosmos" }
+resource "azurerm_postgresql_flexible_server" "pg" { name = "pg" }
+resource "azurerm_redis_cache" "redis" { name = "redis" }
+resource "azurerm_storage_account" "storage" { name = "storage" }`;
+        const { resources } = parseTerraform(code);
+        const cats = Object.fromEntries(resources.map((r) => [r.name, r.category]));
+        expect(cats.sql).toBe('az_sql');
+        expect(cats.cosmos).toBe('az_cosmos');
+        expect(cats.pg).toBe('az_postgres');
+        expect(cats.redis).toBe('az_redis');
+        expect(cats.storage).toBe('az_storage');
+    });
+
+    it('recognises Azure messaging and security categories', () => {
+        const code = `
+resource "azurerm_servicebus_namespace" "sb" { name = "sb" }
+resource "azurerm_eventhub_namespace" "eh" { name = "eh" }
+resource "azurerm_key_vault" "kv" { name = "kv" }
+resource "azurerm_network_security_group" "nsg" { name = "nsg" }`;
+        const { resources } = parseTerraform(code);
+        const cats = Object.fromEntries(resources.map((r) => [r.name, r.category]));
+        expect(cats.sb).toBe('az_servicebus');
+        expect(cats.eh).toBe('az_eventhub');
+        expect(cats.kv).toBe('az_keyvault');
+        expect(cats.nsg).toBe('az_nsg');
+    });
+
+    it('does not create connections for resource_group_name references', () => {
+        const code = `
+resource "azurerm_virtual_network" "main" { name = "vnet" address_space = ["10.0.0.0/16"] }
+resource "azurerm_kubernetes_cluster" "aks" {
+  name                = "aks"
+  resource_group_name = azurerm_resource_group.main.name
+}`;
+        const { connections } = parseTerraform(code);
+        expect(connections).toEqual([]);
+    });
+});
