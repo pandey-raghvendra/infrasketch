@@ -756,141 +756,215 @@ function renderDiagram(parsed) {
         return;
     }
 
+    // Node dimensions
+    const nodeW = 120;
+    const nodeH = 76;
+    const nodeGapX = 20;
+    const nodeGapY = 16;
+    const maxNodesPerRow = 6;
+
+    // Architectural tiers ordered by request flow (top → bottom)
+    // Security is a separate side column that spans all tiers
+    const TIER_DEFS = [
+        { id: 'edge',      label: 'Internet Edge',  cats: ['cloudfront', 'waf', 'route53'],                    bg: '#eef3ff', border: '#4361ee' },
+        { id: 'ingress',   label: 'Load Balancer',  cats: ['alb', 'nlb', 'tg'],                               bg: '#eafaf5', border: '#06d6a0' },
+        { id: 'network',   label: 'Network',        cats: ['vpc', 'igw', 'nat', 'eip', 'subnet'],             bg: '#fffbee', border: '#f4a261' },
+        { id: 'compute',   label: 'Compute',        cats: ['instance', 'eks', 'ecs', 'lambda', 'autoscaling', 'ecr'], bg: '#fff3ee', border: '#ff6b35' },
+        { id: 'data',      label: 'Data',           cats: ['rds', 'dynamodb', 'elasticache', 's3'],           bg: '#fff0f4', border: '#ef476f' },
+        { id: 'messaging', label: 'Messaging',      cats: ['sqs', 'sns'],                                     bg: '#fff8f5', border: '#e07a5f' },
+    ];
+    const SECURITY_CATS = ['sg', 'iam_role', 'kms', 'cloudwatch'];
+
+    // Separate security resources from flow resources
+    const securityResources = resources.filter(r => SECURITY_CATS.includes(r.category));
+    const flowResources = resources.filter(r => !SECURITY_CATS.includes(r.category));
+
+    // Assign flow resources to tiers
+    const tierResources = {};
+    TIER_DEFS.forEach(t => { tierResources[t.id] = []; });
+    for (const res of flowResources) {
+        for (const tier of TIER_DEFS) {
+            if (tier.cats.includes(res.category)) {
+                tierResources[tier.id].push(res);
+                break;
+            }
+        }
+    }
+    const activeTiers = TIER_DEFS.filter(t => tierResources[t.id].length > 0);
+
     // Layout constants
-    const nodeW = 140;
-    const nodeH = 80;
-    const padX = 32;
-    const padY = 28;
+    const canvasPad = 32;
+    const tierPadX = 20;
+    const tierLabelH = 26;
+    const tierPadBottom = 16;
+    const tierGap = 16;
+    const secColW = securityResources.length > 0 ? nodeW + tierPadX * 2 + 16 : 0;
+    const secColGap = securityResources.length > 0 ? 20 : 0;
 
-    // Group resources by visual category
-    const groups = {
-        networking: resources.filter(r => ['vpc', 'subnet', 'nat', 'igw', 'eip'].includes(r.category)),
-        loadbalancer: resources.filter(r => ['alb', 'nlb', 'tg'].includes(r.category)),
-        compute: resources.filter(r => ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling'].includes(r.category)),
-        database: resources.filter(r => ['rds', 'dynamodb', 'elasticache'].includes(r.category)),
-        storage: resources.filter(r => ['s3'].includes(r.category)),
-        messaging: resources.filter(r => ['sqs', 'sns'].includes(r.category)),
-        security: resources.filter(r => ['sg', 'iam_role', 'route53', 'cloudfront', 'kms', 'waf', 'cloudwatch'].includes(r.category)),
-    };
+    // Find widest tier to set uniform width
+    let maxContentW = 0;
+    for (const tier of activeTiers) {
+        const items = tierResources[tier.id];
+        const cols = Math.min(maxNodesPerRow, items.length);
+        maxContentW = Math.max(maxContentW, cols * nodeW + (cols - 1) * nodeGapX);
+    }
+    const tierW = maxContentW + tierPadX * 2;
 
-    const activeGroups = Object.entries(groups).filter(([, items]) => items.length > 0);
-
-    // Calculate layout
-    const cols = Math.min(4, Math.max(2, Math.ceil(Math.sqrt(resources.length))));
-    const groupGap = 48;
-    let currentY = 40;
-
+    // Calculate positions
     const positions = {};
-    const groupRects = [];
+    const tierRects = [];
+    let currentY = canvasPad;
 
-    const groupLabels = {
-        networking: 'Networking',
-        loadbalancer: 'Load Balancing',
-        compute: 'Compute',
-        database: 'Database',
-        storage: 'Storage',
-        messaging: 'Messaging',
-        security: 'Security & Identity',
-    };
+    for (const tier of activeTiers) {
+        const items = tierResources[tier.id];
+        const rows = Math.ceil(items.length / maxNodesPerRow);
+        const tierH = rows * nodeH + (rows - 1) * nodeGapY + tierLabelH + tierPadBottom;
 
-    const groupColors = {
-        networking: '#118ab2',
-        loadbalancer: '#06d6a0',
-        compute: '#ff6b35',
-        database: '#ef476f',
-        storage: '#ffd166',
-        messaging: '#e07a5f',
-        security: '#8338ec',
-    };
-
-    for (const [groupName, items] of activeGroups) {
-        const groupCols = Math.min(4, items.length);
-        const groupRows = Math.ceil(items.length / groupCols);
-        const groupW = groupCols * (nodeW + padX) + padX;
-        const groupH = groupRows * (nodeH + padY) + padY + 28;
-
-        groupRects.push({
-            x: 40,
-            y: currentY,
-            w: groupW,
-            h: groupH,
-            label: groupLabels[groupName] || groupName,
-            color: groupColors[groupName] || '#666',
-        });
+        tierRects.push({ x: canvasPad, y: currentY, w: tierW, h: tierH, label: tier.label, bg: tier.bg, border: tier.border });
 
         items.forEach((res, i) => {
-            const col = i % groupCols;
-            const row = Math.floor(i / groupCols);
+            const col = i % maxNodesPerRow;
+            const row = Math.floor(i / maxNodesPerRow);
+            // Center each row of nodes within the tier
+            const rowCount = Math.min(items.length - row * maxNodesPerRow, maxNodesPerRow);
+            const rowW = rowCount * nodeW + (rowCount - 1) * nodeGapX;
+            const rowStartX = canvasPad + tierPadX + (maxContentW - rowW) / 2;
             positions[res.name] = {
-                x: 40 + padX + col * (nodeW + padX),
-                y: currentY + 32 + padY + row * (nodeH + padY),
+                x: rowStartX + col * (nodeW + nodeGapX),
+                y: currentY + tierLabelH + row * (nodeH + nodeGapY),
                 w: nodeW,
                 h: nodeH,
             };
         });
 
-        currentY += groupH + groupGap;
+        currentY += tierH + tierGap;
     }
 
-    // Determine SVG size
-    const maxW = Math.max(...groupRects.map(g => g.x + g.w)) + 60;
-    const maxH = currentY + 20;
+    // Security column — right side, vertically centered
+    const secColX = canvasPad + tierW + secColGap;
+    const totalFlowH = currentY - tierGap - canvasPad;
+    let secStartY = canvasPad;
+    if (securityResources.length > 0) {
+        const secRows = Math.ceil(securityResources.length / 1);
+        const totalSecH = secRows * nodeH + (secRows - 1) * nodeGapY;
+        secStartY = canvasPad + Math.max(0, (totalFlowH - totalSecH) / 2);
+    }
+    securityResources.forEach((res, i) => {
+        positions[res.name] = {
+            x: secColX + tierPadX,
+            y: secStartY + i * (nodeH + nodeGapY),
+            w: nodeW,
+            h: nodeH,
+        };
+    });
 
-    svg.setAttribute('viewBox', `0 0 ${maxW} ${maxH}`);
+    const svgW = canvasPad + tierW + secColGap + secColW + canvasPad;
+    const svgH = currentY - tierGap + canvasPad;
+
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
     svg.setAttribute('width', '100%');
-    svg.setAttribute('height', maxH);
+    svg.setAttribute('height', svgH);
     svg.style.display = 'block';
 
     let svgContent = `
         <defs>
             <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                <polygon points="0 0, 8 3, 0 6" fill="#3a3f5c"/>
+                <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
             </marker>
-            <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+            <marker id="arrowhead-dashed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#6366f1" opacity="0.7"/>
+            </marker>
+            <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.09"/>
             </filter>
         </defs>
-        <rect width="${maxW}" height="${maxH}" fill="#f8f9fb" rx="8"/>
+        <rect width="${svgW}" height="${svgH}" fill="#f7f8fc" rx="8"/>
     `;
 
-    // Draw group rects
-    for (const g of groupRects) {
+    // Draw tier bands (filled swimlanes)
+    for (const g of tierRects) {
         svgContent += `
-            <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="12" fill="none" stroke="${g.color}" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
-            <text x="${g.x + 12}" y="${g.y + 18}" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="${g.color}" opacity="0.8">${g.label}</text>
+            <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="10" fill="${g.bg}" stroke="${g.border}" stroke-width="1.5"/>
+            <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${tierLabelH}" rx="10" fill="${g.border}" opacity="0.15"/>
+            <rect x="${g.x}" y="${g.y + tierLabelH - 4}" width="${g.w}" height="4" fill="${g.border}" opacity="0.12"/>
+            <text x="${g.x + 14}" y="${g.y + 18}" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="${g.border}" letter-spacing="0.8">${g.label.toUpperCase()}</text>
         `;
     }
 
-    // Draw connections
-    for (const conn of connections) {
-        const fromPos = positions[conn.from];
-        const toPos = positions[conn.to];
-        if (fromPos && toPos) {
-            const x1 = fromPos.x + fromPos.w / 2;
-            const y1 = fromPos.y + fromPos.h;
-            const x2 = toPos.x + toPos.w / 2;
-            const y2 = toPos.y;
-            const midY = (y1 + y2) / 2;
-            svgContent += `<path d="M${x1} ${y1} C${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}" fill="none" stroke="#3a3f5c" stroke-width="1.2" marker-end="url(#arrowhead)" opacity="0.5"/>`;
-        }
+    // Security column box
+    if (securityResources.length > 0) {
+        const secH = securityResources.length * nodeH + (securityResources.length - 1) * nodeGapY + tierLabelH + tierPadBottom;
+        svgContent += `
+            <rect x="${secColX}" y="${canvasPad}" width="${secColW}" height="${Math.max(totalFlowH, secH)}" rx="10" fill="#f5f0ff" stroke="#8338ec" stroke-width="1.5"/>
+            <rect x="${secColX}" y="${canvasPad}" width="${secColW}" height="${tierLabelH}" rx="10" fill="#8338ec" opacity="0.15"/>
+            <rect x="${secColX}" y="${canvasPad + tierLabelH - 4}" width="${secColW}" height="4" fill="#8338ec" opacity="0.12"/>
+            <text x="${secColX + 14}" y="${canvasPad + 18}" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#8338ec" letter-spacing="0.8">SECURITY &amp; OPS</text>
+        `;
     }
 
-    // Draw resource nodes with icons
-    const iconSize = 36;
+    // Draw connections with orthogonal (elbow) routing
+    const dedupedConns = [];
+    const seenConns = new Set();
+    for (const conn of connections) {
+        const key = `${conn.from}→${conn.to}`;
+        if (!seenConns.has(key)) { seenConns.add(key); dedupedConns.push(conn); }
+    }
+
+    for (const conn of dedupedConns) {
+        const fromPos = positions[conn.from];
+        const toPos = positions[conn.to];
+        if (!fromPos || !toPos) continue;
+
+        const fromCx = fromPos.x + fromPos.w / 2;
+        const fromCy = fromPos.y + fromPos.h / 2;
+        const toCx = toPos.x + toPos.w / 2;
+        const toCy = toPos.y + toPos.h / 2;
+
+        const isCrossCol = Math.abs(fromPos.x - toPos.x) > tierW / 2;
+        const dy = toCy - fromCy;
+
+        let path, stroke, dash, opacity;
+        if (isCrossCol) {
+            // Security ↔ flow resource: dashed side connection
+            const x1 = fromPos.x > toPos.x ? fromPos.x : fromPos.x + fromPos.w;
+            const x2 = toPos.x > fromPos.x ? toPos.x : toPos.x + toPos.w;
+            path = `M${x1} ${fromCy} L${x2} ${toCy}`;
+            stroke = '#6366f1'; dash = '5 3'; opacity = '0.5';
+        } else if (Math.abs(dy) < nodeH) {
+            // Same tier: horizontal connection between node edges
+            const x1 = fromPos.x + fromPos.w;
+            const x2 = toPos.x;
+            path = `M${x1} ${fromCy} L${x2} ${toCy}`;
+            stroke = '#374151'; dash = '4 2'; opacity = '0.55';
+        } else {
+            // Different tiers: elbow routing down from bottom of source to top of target
+            const y1 = fromPos.y + fromPos.h;
+            const y2 = toPos.y;
+            const midY = y1 + (y2 - y1) / 2;
+            path = `M${fromCx} ${y1} L${fromCx} ${midY} L${toCx} ${midY} L${toCx} ${y2}`;
+            stroke = '#374151'; dash = 'none'; opacity = '0.6';
+        }
+
+        const markerEnd = isCrossCol ? 'url(#arrowhead-dashed)' : 'url(#arrowhead)';
+        svgContent += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="${dash}" marker-end="${markerEnd}" opacity="${opacity}"/>`;
+    }
+
+    // Draw resource nodes
+    const iconSize = 34;
     for (const res of resources) {
         const pos = positions[res.name];
         if (!pos) continue;
 
         const iconX = pos.x + (pos.w - iconSize) / 2;
-        const iconY = pos.y + 6;
+        const iconY = pos.y + 5;
         const iconImg = getIconSvg(res.icon, iconX, iconY, iconSize);
 
         svgContent += `
             <g class="resource-node" filter="url(#shadow)">
-                <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" rx="10" fill="white" stroke="${res.color}" stroke-width="1.5"/>
+                <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" rx="8" fill="white" stroke="${res.color}" stroke-width="1.5"/>
                 ${iconImg}
-                <text x="${pos.x + pos.w/2}" y="${pos.y + 52}" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#1a1a2e">${res.label}</text>
-                <text x="${pos.x + pos.w/2}" y="${pos.y + 66}" text-anchor="middle" font-family="DM Mono, monospace" font-size="9" fill="#7a7f99">${res.name.length > 18 ? res.name.slice(0, 16) + '..' : res.name}</text>
+                <text x="${pos.x + pos.w/2}" y="${pos.y + 50}" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#111827">${res.label}</text>
+                <text x="${pos.x + pos.w/2}" y="${pos.y + 63}" text-anchor="middle" font-family="DM Mono, monospace" font-size="8" fill="#6b7280">${res.name.length > 16 ? res.name.slice(0, 14) + '..' : res.name}</text>
             </g>
         `;
     }
