@@ -668,47 +668,72 @@ const STAT_CATEGORY_MAP = {
 
 function parseTerraform(code) {
     const resources = [];
-    const regex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{/g;
-    let match;
 
-    while ((match = regex.exec(code)) !== null) {
-        const type = match[1];
-        const name = match[2];
+    // Extract resource block header positions
+    const headerRe = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{/g;
+    const blockPositions = [];
+    let m;
+    while ((m = headerRe.exec(code)) !== null) {
+        blockPositions.push({ type: m[1], name: m[2], matchStart: m.index, bodyStart: m.index + m[0].length });
+    }
 
+    for (const bp of blockPositions) {
         let category = null;
         for (const [cat, cfg] of Object.entries(RESOURCE_CATEGORIES)) {
-            if (cfg.match.includes(type)) {
-                category = cat;
-                break;
-            }
+            if (cfg.match.includes(bp.type)) { category = cat; break; }
         }
-
         if (category) {
-            resources.push({
-                type,
-                name,
-                category,
+            resources.push({ type: bp.type, name: bp.name, category,
                 label: RESOURCE_CATEGORIES[category].label,
                 color: RESOURCE_CATEGORIES[category].color,
-                icon: RESOURCE_CATEGORIES[category].icon,
-            });
+                icon: RESOURCE_CATEGORIES[category].icon });
         }
     }
 
-    // Detect references (simple heuristic)
+    if (!resources.length) return { resources, connections: [], vpcOf: {}, subnetOf: {} };
+
+    // Extract each block's body text (from header end to next block start)
+    const blocks = blockPositions.map((bp, i) => ({
+        type: bp.type, name: bp.name,
+        body: code.slice(bp.bodyStart, i + 1 < blockPositions.length ? blockPositions[i + 1].matchStart : code.length),
+    }));
+
+    const resourceNames = new Set(resources.map(r => r.name));
+
+    // Parse containment: which resource belongs to which VPC / subnet
+    const vpcOf = {};    // resName → vpcResourceName
+    const subnetOf = {}; // resName → subnetResourceName
+    for (const block of blocks) {
+        if (!resourceNames.has(block.name)) continue;
+        const vm = block.body.match(/\bvpc_id\s*=\s*aws_vpc\.(\w+)/);
+        if (vm && resourceNames.has(vm[1])) vpcOf[block.name] = vm[1];
+        // Match subnet_id, subnet_ids = [...], or subnets = [...] — pick first subnet found
+        const sm = block.body.match(/\bsubnet_ids?\s*=\s*\[?[^\]]*aws_subnet\.(\w+)/)
+                || block.body.match(/\bsubnets\s*=\s*\[?[^\]]*aws_subnet\.(\w+)/);
+        if (sm && resourceNames.has(sm[1])) subnetOf[block.name] = sm[1];
+    }
+
+    // Connection detection — skip lines that express containment/wiring, not data flow
+    const SKIP_LINE = /^\s*(?:vpc_id|subnet_id|subnet_ids|security_group_ids?|security_groups|allocation_id|cluster_name|db_subnet_group(?:_name)?|target_group_arns|vpc_zone_identifier|availability_zones?|cidr_block|enable_|tags\s*\{?|ingress|egress|from_port|to_port|protocol|master_|password|username|engine|instance_class|node_type|runtime|handler|role\s*=|assume_role|source_arn|bucket\s*=|domain\s*=)\s*[=\[{]/;
+
     const connections = [];
-    const lines = code.split('\n');
-    for (const res of resources) {
-        for (const line of lines) {
-            for (const other of resources) {
-                if (res.name !== other.name && line.includes(`${other.type}.${other.name}`)) {
-                    connections.push({ from: other.name, to: res.name });
+    const seen = new Set();
+
+    for (const block of blocks) {
+        if (!resourceNames.has(block.name)) continue;
+        for (const line of block.body.split('\n')) {
+            if (SKIP_LINE.test(line)) continue;
+            for (const res of resources) {
+                if (res.name === block.name) continue;
+                if (line.includes(`${res.type}.${res.name}`)) {
+                    const key = `${res.name}→${block.name}`;
+                    if (!seen.has(key)) { seen.add(key); connections.push({ from: res.name, to: block.name }); }
                 }
             }
         }
     }
 
-    return { resources, connections };
+    return { resources, connections, vpcOf, subnetOf };
 }
 
 function parseDockerCompose(code) {
@@ -749,236 +774,347 @@ function parseDockerCompose(code) {
 // ── DIAGRAM RENDERER ──
 function renderDiagram(parsed) {
     const svg = document.getElementById('diagram-svg');
-    const { resources, connections } = parsed;
+    const { resources, connections, vpcOf = {}, subnetOf = {} } = parsed;
 
-    if (resources.length === 0) {
+    if (!resources.length) {
         alert('No supported resources found. Check your code and try again.');
         return;
     }
 
-    // Node dimensions
-    const nodeW = 120;
-    const nodeH = 76;
-    const nodeGapX = 20;
-    const nodeGapY = 16;
-    const maxNodesPerRow = 6;
+    // ── constants ───────────────────────────────────────────────────────────
+    const NW = 120, NH = 76, NGX = 20, NGY = 16, ICON_S = 34;
+    const CP = 40;           // canvas padding
+    const VPC_LBL = 34;      // VPC label bar height
+    const VPC_PAD = 22;      // VPC inner padding
+    const SUB_LBL = 26;      // subnet label height
+    const SUB_PAD = 14;      // subnet inner padding
+    const SUB_GAP = 12;      // gap between subnet boxes
+    const ZONE_GAP = 20;     // gap between layout zones
+    const SEC_GAP = 20;      // gap before security column
 
-    // Architectural tiers ordered by request flow (top → bottom)
-    // Security is a separate side column that spans all tiers
-    const TIER_DEFS = [
-        { id: 'edge',      label: 'Internet Edge',  cats: ['cloudfront', 'waf', 'route53'],                    bg: '#eef3ff', border: '#4361ee' },
-        { id: 'ingress',   label: 'Load Balancer',  cats: ['alb', 'nlb', 'tg'],                               bg: '#eafaf5', border: '#06d6a0' },
-        { id: 'network',   label: 'Network',        cats: ['vpc', 'igw', 'nat', 'eip', 'subnet'],             bg: '#fffbee', border: '#f4a261' },
-        { id: 'compute',   label: 'Compute',        cats: ['instance', 'eks', 'ecs', 'lambda', 'autoscaling', 'ecr'], bg: '#fff3ee', border: '#ff6b35' },
-        { id: 'data',      label: 'Data',           cats: ['rds', 'dynamodb', 'elasticache', 's3'],           bg: '#fff0f4', border: '#ef476f' },
-        { id: 'messaging', label: 'Messaging',      cats: ['sqs', 'sns'],                                     bg: '#fff8f5', border: '#e07a5f' },
-    ];
-    const SECURITY_CATS = ['sg', 'iam_role', 'kms', 'cloudwatch'];
+    // ── classify every resource ─────────────────────────────────────────────
+    const C_INTERNET  = new Set(['igw', 'cloudfront', 'route53', 'waf']);
+    const C_INGRESS   = new Set(['alb', 'nlb', 'tg']);
+    const C_DATA      = new Set(['rds', 'dynamodb', 'elasticache', 's3']);
+    const C_MESSAGING = new Set(['sqs', 'sns']);
+    const C_SECURITY  = new Set(['sg', 'iam_role', 'kms', 'cloudwatch']);
+    const C_VPC       = new Set(['vpc']);
+    const C_SUBNET    = new Set(['subnet']);
 
-    // Separate security resources from flow resources
-    const securityResources = resources.filter(r => SECURITY_CATS.includes(r.category));
-    const flowResources = resources.filter(r => !SECURITY_CATS.includes(r.category));
+    const vpcRes    = resources.filter(r => C_VPC.has(r.category));
+    const subnetRes = resources.filter(r => C_SUBNET.has(r.category));
+    const secRes    = resources.filter(r => C_SECURITY.has(r.category));
+    const msgRes    = resources.filter(r => C_MESSAGING.has(r.category));
+    const intRes    = resources.filter(r => C_INTERNET.has(r.category));
+    const hasVpc    = vpcRes.length > 0;
 
-    // Assign flow resources to tiers
-    const tierResources = {};
-    TIER_DEFS.forEach(t => { tierResources[t.id] = []; });
-    for (const res of flowResources) {
-        for (const tier of TIER_DEFS) {
-            if (tier.cats.includes(res.category)) {
-                tierResources[tier.id].push(res);
-                break;
-            }
+    // Build subnet content buckets
+    const subnetContents = {}; // subnetName → [res, ...]
+    subnetRes.forEach(s => { subnetContents[s.name] = []; });
+
+    const vpcIngressRes = [], vpcDataRes = [], vpcOtherRes = [];
+
+    for (const res of resources) {
+        const c = res.category;
+        if (C_VPC.has(c) || C_SUBNET.has(c) || C_SECURITY.has(c) || C_MESSAGING.has(c) || C_INTERNET.has(c)) continue;
+        if (subnetOf[res.name] && subnetContents[subnetOf[res.name]] !== undefined) {
+            subnetContents[subnetOf[res.name]].push(res);
+        } else if (C_INGRESS.has(c)) {
+            vpcIngressRes.push(res);
+        } else if (C_DATA.has(c)) {
+            vpcDataRes.push(res);
+        } else {
+            vpcOtherRes.push(res);
         }
     }
-    const activeTiers = TIER_DEFS.filter(t => tierResources[t.id].length > 0);
 
-    // Layout constants
-    const canvasPad = 32;
-    const tierPadX = 20;
-    const tierLabelH = 26;
-    const tierPadBottom = 16;
-    const tierGap = 16;
-    const secColW = securityResources.length > 0 ? nodeW + tierPadX * 2 + 16 : 0;
-    const secColGap = securityResources.length > 0 ? 20 : 0;
-
-    // Find widest tier to set uniform width
-    let maxContentW = 0;
-    for (const tier of activeTiers) {
-        const items = tierResources[tier.id];
-        const cols = Math.min(maxNodesPerRow, items.length);
-        maxContentW = Math.max(maxContentW, cols * nodeW + (cols - 1) * nodeGapX);
-    }
-    const tierW = maxContentW + tierPadX * 2;
-
-    // Calculate positions
-    const positions = {};
-    const tierRects = [];
-    let currentY = canvasPad;
-
-    for (const tier of activeTiers) {
-        const items = tierResources[tier.id];
-        const rows = Math.ceil(items.length / maxNodesPerRow);
-        const tierH = rows * nodeH + (rows - 1) * nodeGapY + tierLabelH + tierPadBottom;
-
-        tierRects.push({ x: canvasPad, y: currentY, w: tierW, h: tierH, label: tier.label, bg: tier.bg, border: tier.border });
-
-        items.forEach((res, i) => {
-            const col = i % maxNodesPerRow;
-            const row = Math.floor(i / maxNodesPerRow);
-            // Center each row of nodes within the tier
-            const rowCount = Math.min(items.length - row * maxNodesPerRow, maxNodesPerRow);
-            const rowW = rowCount * nodeW + (rowCount - 1) * nodeGapX;
-            const rowStartX = canvasPad + tierPadX + (maxContentW - rowW) / 2;
-            positions[res.name] = {
-                x: rowStartX + col * (nodeW + nodeGapX),
-                y: currentY + tierLabelH + row * (nodeH + nodeGapY),
-                w: nodeW,
-                h: nodeH,
-            };
+    // ── layout helper: place nodes in a centered grid, return relative coords ─
+    function layoutGrid(nodes, maxCols) {
+        if (!nodes.length) return { pos: {}, W: 0, H: 0 };
+        const cols = Math.min(maxCols, nodes.length);
+        const rows = Math.ceil(nodes.length / cols);
+        const pos = {};
+        nodes.forEach((n, i) => {
+            const r = Math.floor(i / cols);
+            const c = i % cols;
+            const rowItems = Math.min(nodes.length - r * cols, cols);
+            const rowW = rowItems * NW + (rowItems - 1) * NGX;
+            const totalW = cols * NW + (cols - 1) * NGX;
+            pos[n.name] = { lx: (totalW - rowW) / 2 + c * (NW + NGX), ly: r * (NH + NGY) };
         });
-
-        currentY += tierH + tierGap;
+        return { pos, W: cols * NW + (cols - 1) * NGX, H: rows * NH + (rows - 1) * NGY };
     }
 
-    // Security column — right side, vertically centered
-    const secColX = canvasPad + tierW + secColGap;
-    const totalFlowH = currentY - tierGap - canvasPad;
-    let secStartY = canvasPad;
-    if (securityResources.length > 0) {
-        const secRows = Math.ceil(securityResources.length / 1);
-        const totalSecH = secRows * nodeH + (secRows - 1) * nodeGapY;
-        secStartY = canvasPad + Math.max(0, (totalFlowH - totalSecH) / 2);
+    // Layout each subnet's contents
+    const subLayouts = {};
+    subnetRes.forEach(s => { subLayouts[s.name] = layoutGrid(subnetContents[s.name] || [], 3); });
+
+    // Subnet box dimensions (box that wraps its contents)
+    function subBoxDim(sName) {
+        const { W, H } = subLayouts[sName] || { W: 0, H: 0 };
+        return { bw: Math.max(W, NW) + SUB_PAD * 2, bh: (H > 0 ? H : NH) + SUB_LBL + SUB_PAD };
     }
-    securityResources.forEach((res, i) => {
-        positions[res.name] = {
-            x: secColX + tierPadX,
-            y: secStartY + i * (nodeH + nodeGapY),
-            w: nodeW,
-            h: nodeH,
-        };
-    });
 
-    const svgW = canvasPad + tierW + secColGap + secColW + canvasPad;
-    const svgH = currentY - tierGap + canvasPad;
+    const ingressGrid = layoutGrid(vpcIngressRes, 6);
+    const dataGrid    = layoutGrid(vpcDataRes, 6);
+    const otherGrid   = layoutGrid(vpcOtherRes, 4);
+    const intGrid     = layoutGrid(intRes, 6);
+    const msgGrid     = layoutGrid(msgRes, 6);
+    const secGrid     = layoutGrid(secRes, 1);
 
+    // Subnet row metrics
+    const subnetRowW = subnetRes.reduce((acc, s, i) => acc + subBoxDim(s.name).bw + (i > 0 ? SUB_GAP : 0), 0);
+    const subnetRowH = subnetRes.reduce((acc, s) => Math.max(acc, subBoxDim(s.name).bh), 0);
+
+    // VPC interior content width (max of all interior rows)
+    const vpcContentW = Math.max(ingressGrid.W, subnetRowW, dataGrid.W, otherGrid.W, NW * 2);
+
+    // VPC interior content height (stacked rows with gaps)
+    const vpcRows = [
+        [vpcIngressRes.length, ingressGrid.H],
+        [subnetRes.length,     subnetRowH],
+        [vpcDataRes.length,    dataGrid.H],
+        [vpcOtherRes.length,   otherGrid.H],
+    ].filter(([n]) => n > 0);
+    const vpcContentH = vpcRows.reduce((acc, [, h], i) => acc + h + (i > 0 ? ZONE_GAP : 0), 0) || NH;
+
+    const vpcBoxW = hasVpc ? vpcContentW + VPC_PAD * 2 : vpcContentW;
+    const vpcBoxH = hasVpc ? vpcContentH + VPC_LBL + VPC_PAD : vpcContentH;
+
+    // Internet and messaging zones
+    const intZoneH = intRes.length  ? intGrid.H  + 32 : 0;
+    const msgZoneH = msgRes.length  ? msgGrid.H  + 32 : 0;
+
+    // Main column width and total content height
+    const mainW = Math.max(vpcBoxW, intGrid.W, msgGrid.W);
+    const mainH = (intZoneH ? intZoneH + ZONE_GAP : 0) + vpcBoxH + (msgZoneH ? ZONE_GAP + msgZoneH : 0);
+
+    // Security column
+    const secColW = secRes.length ? NW + SEC_GAP : 0;
+
+    // SVG dimensions
+    const svgW = CP + mainW + secColW + CP;
+    const svgH = CP + mainH + CP;
+
+    // ── compute absolute positions ──────────────────────────────────────────
+    const positions = {}; // resName → {x, y, w, h, [isSubnet]}
+    let absY = CP;
+    const absX = CP;
+
+    // Internet zone (above VPC)
+    if (intRes.length) {
+        const zX = absX + (mainW - intGrid.W) / 2;
+        intRes.forEach(n => {
+            const { lx, ly } = intGrid.pos[n.name];
+            positions[n.name] = { x: zX + lx, y: absY + 16 + ly, w: NW, h: NH };
+        });
+        absY += intZoneH + ZONE_GAP;
+    }
+
+    // VPC box start
+    const vpcY = absY, vpcX = absX;
+    const innerX = hasVpc ? vpcX + VPC_PAD : vpcX;
+    let innerY = hasVpc ? vpcY + VPC_LBL : vpcY;
+
+    // Ingress row (inside VPC / top)
+    if (vpcIngressRes.length) {
+        const rX = innerX + (vpcContentW - ingressGrid.W) / 2;
+        vpcIngressRes.forEach(n => {
+            const { lx, ly } = ingressGrid.pos[n.name];
+            positions[n.name] = { x: rX + lx, y: innerY + ly, w: NW, h: NH };
+        });
+        innerY += ingressGrid.H + ZONE_GAP;
+    }
+
+    // Subnet row (inside VPC)
+    if (subnetRes.length) {
+        let subX = innerX + (vpcContentW - subnetRowW) / 2;
+        for (const sub of subnetRes) {
+            const { bw, bh } = subBoxDim(sub.name);
+            const layout = subLayouts[sub.name];
+            // Subnet box position (treated as a container, not a node)
+            positions[sub.name] = { x: subX, y: innerY, w: bw, h: bh, isSubnet: true };
+            // Resources inside the subnet
+            const cOffX = subX + SUB_PAD + (bw - SUB_PAD * 2 - layout.W) / 2;
+            const cOffY = innerY + SUB_LBL;
+            (subnetContents[sub.name] || []).forEach(n => {
+                const { lx, ly } = layout.pos[n.name] || {};
+                if (lx !== undefined) positions[n.name] = { x: cOffX + lx, y: cOffY + ly, w: NW, h: NH };
+            });
+            subX += bw + SUB_GAP;
+        }
+        innerY += subnetRowH + ZONE_GAP;
+    }
+
+    // Data row (inside VPC / bottom)
+    if (vpcDataRes.length) {
+        const rX = innerX + (vpcContentW - dataGrid.W) / 2;
+        vpcDataRes.forEach(n => {
+            const { lx, ly } = dataGrid.pos[n.name];
+            positions[n.name] = { x: rX + lx, y: innerY + ly, w: NW, h: NH };
+        });
+        innerY += dataGrid.H + ZONE_GAP;
+    }
+
+    // Other VPC nodes
+    if (vpcOtherRes.length) {
+        const rX = innerX + (vpcContentW - otherGrid.W) / 2;
+        vpcOtherRes.forEach(n => {
+            const { lx, ly } = otherGrid.pos[n.name];
+            positions[n.name] = { x: rX + lx, y: innerY + ly, w: NW, h: NH };
+        });
+    }
+
+    absY += vpcBoxH;
+
+    // Messaging zone (below VPC)
+    if (msgRes.length) {
+        absY += ZONE_GAP;
+        const rX = absX + (mainW - msgGrid.W) / 2;
+        msgRes.forEach(n => {
+            const { lx, ly } = msgGrid.pos[n.name];
+            positions[n.name] = { x: rX + lx, y: absY + 16 + ly, w: NW, h: NH };
+        });
+        absY += msgZoneH;
+    }
+
+    // Security column (right side, vertically centered)
+    if (secRes.length) {
+        const secX = CP + mainW + SEC_GAP;
+        const secStartY = CP + (mainH - secGrid.H) / 2;
+        secRes.forEach(n => {
+            const { lx, ly } = secGrid.pos[n.name];
+            positions[n.name] = { x: secX + lx, y: secStartY + ly, w: NW, h: NH };
+        });
+    }
+
+    // ── SVG generation ──────────────────────────────────────────────────────
     svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', svgH);
     svg.style.display = 'block';
 
-    let svgContent = `
+    let html = `
         <defs>
-            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
                 <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
             </marker>
-            <marker id="arrowhead-dashed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                <polygon points="0 0, 8 3, 0 6" fill="#6366f1" opacity="0.7"/>
+            <marker id="arr-sec" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#8338ec" opacity="0.8"/>
             </marker>
             <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.09"/>
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
             </filter>
         </defs>
-        <rect width="${svgW}" height="${svgH}" fill="#f7f8fc" rx="8"/>
+        <rect width="${svgW}" height="${svgH}" fill="#f0f2f7" rx="8"/>
     `;
 
-    // Draw tier bands (filled swimlanes)
-    for (const g of tierRects) {
-        svgContent += `
-            <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="10" fill="${g.bg}" stroke="${g.border}" stroke-width="1.5"/>
-            <rect x="${g.x}" y="${g.y}" width="${g.w}" height="${tierLabelH}" rx="10" fill="${g.border}" opacity="0.15"/>
-            <rect x="${g.x}" y="${g.y + tierLabelH - 4}" width="${g.w}" height="4" fill="${g.border}" opacity="0.12"/>
-            <text x="${g.x + 14}" y="${g.y + 18}" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="${g.border}" letter-spacing="0.8">${g.label.toUpperCase()}</text>
+    // Internet zone band
+    if (intRes.length) {
+        const izY = CP - 8, izH = intZoneH + 4;
+        html += `<rect x="${absX - 12}" y="${izY}" width="${mainW + 24}" height="${izH}" rx="8" fill="#e8edf5" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5 3" opacity="0.85"/>
+        <text x="${absX + 6}" y="${izY + 15}" font-family="DM Sans,sans-serif" font-size="9" font-weight="700" fill="#64748b" letter-spacing="0.8">INTERNET</text>`;
+    }
+
+    // VPC container box
+    if (hasVpc) {
+        const vpc = vpcRes[0];
+        html += `
+            <rect x="${vpcX}" y="${vpcY}" width="${vpcBoxW}" height="${vpcBoxH}" rx="12" fill="white" stroke="#f59e0b" stroke-width="2"/>
+            <rect x="${vpcX}" y="${vpcY}" width="${vpcBoxW}" height="${VPC_LBL}" rx="12" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
+            <rect x="${vpcX}" y="${vpcY + VPC_LBL - 4}" width="${vpcBoxW}" height="4" fill="#fffbeb"/>
+            <text x="${vpcX + 14}" y="${vpcY + 22}" font-family="DM Sans,sans-serif" font-size="11" font-weight="700" fill="#b45309">VPC · ${vpc.name}</text>
         `;
+    }
+
+    // Subnet boxes (drawn as dashed containers)
+    for (const sub of subnetRes) {
+        const pos = positions[sub.name];
+        if (!pos) continue;
+        html += `
+            <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" rx="8" fill="#f0f7ff" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="5 3"/>
+            <text x="${pos.x + 8}" y="${pos.y + 17}" font-family="DM Sans,sans-serif" font-size="9" font-weight="600" fill="#2563eb">subnet · ${sub.name}</text>
+        `;
+    }
+
+    // Messaging zone band
+    if (msgRes.length) {
+        const mY = CP + mainH - msgZoneH;
+        html += `<rect x="${absX - 12}" y="${mY - 4}" width="${mainW + 24}" height="${msgZoneH + 12}" rx="8" fill="#fff5f0" stroke="#e07a5f" stroke-width="1" stroke-dasharray="5 3" opacity="0.85"/>
+        <text x="${absX + 6}" y="${mY + 12}" font-family="DM Sans,sans-serif" font-size="9" font-weight="700" fill="#e07a5f" letter-spacing="0.8">MESSAGING</text>`;
     }
 
     // Security column box
-    if (securityResources.length > 0) {
-        const secH = securityResources.length * nodeH + (securityResources.length - 1) * nodeGapY + tierLabelH + tierPadBottom;
-        svgContent += `
-            <rect x="${secColX}" y="${canvasPad}" width="${secColW}" height="${Math.max(totalFlowH, secH)}" rx="10" fill="#f5f0ff" stroke="#8338ec" stroke-width="1.5"/>
-            <rect x="${secColX}" y="${canvasPad}" width="${secColW}" height="${tierLabelH}" rx="10" fill="#8338ec" opacity="0.15"/>
-            <rect x="${secColX}" y="${canvasPad + tierLabelH - 4}" width="${secColW}" height="4" fill="#8338ec" opacity="0.12"/>
-            <text x="${secColX + 14}" y="${canvasPad + 18}" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#8338ec" letter-spacing="0.8">SECURITY &amp; OPS</text>
+    if (secRes.length) {
+        const secX = CP + mainW + SEC_GAP;
+        const secStartY = CP + (mainH - secGrid.H) / 2;
+        html += `
+            <rect x="${secX - 12}" y="${secStartY - 28}" width="${NW + 24}" height="${secGrid.H + 52}" rx="8" fill="#f5f0ff" stroke="#8338ec" stroke-width="1.5" stroke-dasharray="5 3"/>
+            <text x="${secX}" y="${secStartY - 12}" font-family="DM Sans,sans-serif" font-size="9" font-weight="700" fill="#8338ec" letter-spacing="0.5">SECURITY</text>
         `;
     }
 
-    // Draw connections with orthogonal (elbow) routing
-    const dedupedConns = [];
-    const seenConns = new Set();
+    // Connections — orthogonal elbow routing
     for (const conn of connections) {
-        const key = `${conn.from}→${conn.to}`;
-        if (!seenConns.has(key)) { seenConns.add(key); dedupedConns.push(conn); }
-    }
+        const from = positions[conn.from];
+        const to   = positions[conn.to];
+        if (!from || !to || from.isSubnet || to.isSubnet) continue;
 
-    for (const conn of dedupedConns) {
-        const fromPos = positions[conn.from];
-        const toPos = positions[conn.to];
-        if (!fromPos || !toPos) continue;
+        const fx = from.x + NW / 2, fy = from.y + NH / 2;
+        const tx = to.x   + NW / 2, ty = to.y   + NH / 2;
 
-        const fromCx = fromPos.x + fromPos.w / 2;
-        const fromCy = fromPos.y + fromPos.h / 2;
-        const toCx = toPos.x + toPos.w / 2;
-        const toCy = toPos.y + toPos.h / 2;
+        // Determine if this is a cross-column (security) connection
+        const secX = CP + mainW + SEC_GAP;
+        const isSec = from.x >= secX || to.x >= secX;
 
-        const isCrossCol = Math.abs(fromPos.x - toPos.x) > tierW / 2;
-        const dy = toCy - fromCy;
-
-        let path, stroke, dash, opacity;
-        if (isCrossCol) {
-            // Security ↔ flow resource: dashed side connection
-            const x1 = fromPos.x > toPos.x ? fromPos.x : fromPos.x + fromPos.w;
-            const x2 = toPos.x > fromPos.x ? toPos.x : toPos.x + toPos.w;
-            path = `M${x1} ${fromCy} L${x2} ${toCy}`;
-            stroke = '#6366f1'; dash = '5 3'; opacity = '0.5';
-        } else if (Math.abs(dy) < nodeH) {
-            // Same tier: horizontal connection between node edges
-            const x1 = fromPos.x + fromPos.w;
-            const x2 = toPos.x;
-            path = `M${x1} ${fromCy} L${x2} ${toCy}`;
-            stroke = '#374151'; dash = '4 2'; opacity = '0.55';
+        let path;
+        const vertDiff = ty - fy;
+        if (Math.abs(vertDiff) < NH * 0.6) {
+            // Same-level: direct horizontal line between node edges
+            const ex1 = fx < tx ? from.x + NW : from.x;
+            const ex2 = tx > fx ? to.x : to.x + NW;
+            path = `M${ex1},${fy} L${ex2},${ty}`;
+        } else if (vertDiff > 0) {
+            // Flowing downward: elbow (bottom → mid → top)
+            const y1 = from.y + NH, y2 = to.y, midY = (y1 + y2) / 2;
+            path = `M${fx},${y1} L${fx},${midY} L${tx},${midY} L${tx},${y2}`;
         } else {
-            // Different tiers: elbow routing down from bottom of source to top of target
-            const y1 = fromPos.y + fromPos.h;
-            const y2 = toPos.y;
-            const midY = y1 + (y2 - y1) / 2;
-            path = `M${fromCx} ${y1} L${fromCx} ${midY} L${toCx} ${midY} L${toCx} ${y2}`;
-            stroke = '#374151'; dash = 'none'; opacity = '0.6';
+            // Flowing upward: elbow (top → mid → bottom)
+            const y1 = from.y, y2 = to.y + NH, midY = (y1 + y2) / 2;
+            path = `M${fx},${y1} L${fx},${midY} L${tx},${midY} L${tx},${y2}`;
         }
 
-        const markerEnd = isCrossCol ? 'url(#arrowhead-dashed)' : 'url(#arrowhead)';
-        svgContent += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="${dash}" marker-end="${markerEnd}" opacity="${opacity}"/>`;
+        const stroke = isSec ? '#8338ec' : '#374151';
+        const dash   = isSec ? '5 3' : (Math.abs(vertDiff) < NH * 0.6 ? '4 2' : 'none');
+        const marker = isSec ? 'url(#arr-sec)' : 'url(#arr)';
+        html += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="${dash}" marker-end="${marker}" opacity="0.65"/>`;
     }
 
-    // Draw resource nodes
-    const iconSize = 34;
+    // Resource nodes
     for (const res of resources) {
         const pos = positions[res.name];
-        if (!pos) continue;
-
-        const iconX = pos.x + (pos.w - iconSize) / 2;
-        const iconY = pos.y + 5;
-        const iconImg = getIconSvg(res.icon, iconX, iconY, iconSize);
-
-        svgContent += `
+        if (!pos || pos.isSubnet) continue;
+        const { x, y } = pos;
+        const iconImg = getIconSvg(res.icon, x + (NW - ICON_S) / 2, y + 5, ICON_S);
+        html += `
             <g class="resource-node" filter="url(#shadow)">
-                <rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" rx="8" fill="white" stroke="${res.color}" stroke-width="1.5"/>
+                <rect x="${x}" y="${y}" width="${NW}" height="${NH}" rx="8" fill="white" stroke="${res.color}" stroke-width="1.5"/>
                 ${iconImg}
-                <text x="${pos.x + pos.w/2}" y="${pos.y + 50}" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#111827">${res.label}</text>
-                <text x="${pos.x + pos.w/2}" y="${pos.y + 63}" text-anchor="middle" font-family="DM Mono, monospace" font-size="8" fill="#6b7280">${res.name.length > 16 ? res.name.slice(0, 14) + '..' : res.name}</text>
+                <text x="${x + NW/2}" y="${y + 50}" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" font-weight="700" fill="#111827">${res.label}</text>
+                <text x="${x + NW/2}" y="${y + 63}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#6b7280">${res.name.length > 16 ? res.name.slice(0, 14) + '..' : res.name}</text>
             </g>
         `;
     }
 
-    svg.innerHTML = svgContent;
+    svg.innerHTML = html;
 
-    // Update stats
+    // Stats
     const stats = { vpc: 0, compute: 0, db: 0, storage: 0, lb: 0 };
     for (const res of resources) {
         for (const [stat, cats] of Object.entries(STAT_CATEGORY_MAP)) {
             if (cats.includes(res.category)) stats[stat]++;
         }
     }
-
     document.getElementById('stat-vpc').textContent = stats.vpc;
     document.getElementById('stat-compute').textContent = stats.compute;
     document.getElementById('stat-db').textContent = stats.db;
@@ -992,32 +1128,59 @@ const SAMPLE_TERRAFORM = `# Production AWS Infrastructure
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-  tags = { Name = "production-vpc" }
 }
 
-resource "aws_subnet" "public_1" {
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_cloudfront_distribution" "cdn" {
+  enabled = true
+  origin { domain_name = aws_lb.frontend.dns_name }
+}
+
+resource "aws_route53_zone" "main" {
+  name = "example.com"
+}
+
+resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.1.0/24"
   availability_zone = "us-east-1a"
+  map_public_ip_on_launch = true
 }
 
-resource "aws_subnet" "private_1" {
+resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.10.0/24"
   availability_zone = "us-east-1a"
 }
 
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
+resource "aws_subnet" "data" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.20.0/24"
+  availability_zone = "us-east-1a"
 }
 
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public_1.id
+  subnet_id     = aws_subnet.public.id
 }
 
 resource "aws_eip" "nat" {
   domain = "vpc"
+}
+
+resource "aws_lb" "frontend" {
+  name               = "prod-alb"
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public.id]
+}
+
+resource "aws_lb_target_group" "app" {
+  name     = "app-tg"
+  port     = 80
+  vpc_id   = aws_vpc.main.id
 }
 
 resource "aws_security_group" "web" {
@@ -1030,88 +1193,39 @@ resource "aws_security_group" "db" {
   vpc_id = aws_vpc.main.id
 }
 
-resource "aws_lb" "main" {
-  name               = "prod-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.web.id]
-  subnets            = [aws_subnet.public_1.id]
-}
-
-resource "aws_lb_target_group" "app" {
-  name     = "app-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id
-}
-
 resource "aws_eks_cluster" "main" {
   name     = "prod-cluster"
   role_arn = aws_iam_role.eks.arn
-
   vpc_config {
-    subnet_ids = [aws_subnet.private_1.id]
+    subnet_ids = [aws_subnet.private.id]
   }
 }
 
 resource "aws_eks_node_group" "workers" {
-  cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "workers"
-  node_role_arn   = aws_iam_role.node.arn
-  subnet_ids      = [aws_subnet.private_1.id]
+  cluster_name = aws_eks_cluster.main.name
+  node_role_arn = aws_iam_role.node.arn
+  subnet_ids   = [aws_subnet.private.id]
 }
 
-resource "aws_iam_role" "eks" {
-  name = "eks-cluster-role"
-  assume_role_policy = jsonencode({})
+resource "aws_lambda_function" "processor" {
+  function_name = "order-processor"
+  runtime       = "nodejs18.x"
+  subnet_id     = aws_subnet.private.id
 }
 
-resource "aws_iam_role" "node" {
-  name = "eks-node-role"
-  assume_role_policy = jsonencode({})
-}
-
-resource "aws_db_instance" "main" {
+resource "aws_db_instance" "postgres" {
   identifier     = "prod-db"
   engine         = "postgres"
-  instance_class = "db.t3.medium"
-  vpc_security_group_ids = [aws_security_group.db.id]
-  db_subnet_group_name   = "main"
+  subnet_id      = aws_subnet.data.id
 }
 
 resource "aws_elasticache_cluster" "redis" {
-  cluster_id           = "prod-redis"
-  engine               = "redis"
-  node_type            = "cache.t3.micro"
-  num_cache_nodes      = 1
+  cluster_id = "prod-redis"
+  subnet_id  = aws_subnet.data.id
 }
 
 resource "aws_s3_bucket" "assets" {
   bucket = "prod-static-assets"
-}
-
-resource "aws_s3_bucket" "logs" {
-  bucket = "prod-logs"
-}
-
-resource "aws_cloudfront_distribution" "cdn" {
-  enabled = true
-  origin {
-    domain_name = aws_s3_bucket.assets.bucket_regional_domain_name
-    origin_id   = "s3-assets"
-  }
-  default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "s3-assets"
-    viewer_protocol_policy = "redirect-to-https"
-  }
-  restrictions { geo_restriction { restriction_type = "none" } }
-  viewer_certificate { cloudfront_default_certificate = true }
-}
-
-resource "aws_route53_zone" "main" {
-  name = "example.com"
 }
 
 resource "aws_sqs_queue" "events" {
@@ -1122,10 +1236,23 @@ resource "aws_sns_topic" "alerts" {
   name = "infra-alerts"
 }
 
+resource "aws_iam_role" "eks" {
+  name = "eks-cluster-role"
+}
+
+resource "aws_iam_role" "node" {
+  name = "eks-node-role"
+}
+
 resource "aws_cloudwatch_log_group" "app" {
-  name              = "/ecs/app"
-  retention_in_days = 30
-}`;
+  name = "/eks/app"
+}
+
+resource "aws_kms_key" "secrets" {
+  description = "Secrets encryption"
+}
+
+`;
 
 // ── EVENT HANDLERS ──
 document.getElementById('btn-load-sample').addEventListener('click', () => {
