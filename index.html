@@ -93,6 +93,18 @@
         }
         .nav-links a:hover { color: var(--accent); }
 
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            color: var(--text);
+            line-height: 0;
+        }
+        .nav-toggle svg { display: block; }
+
         /* HERO */
         .hero {
             text-align: center;
@@ -268,6 +280,25 @@
         }
 
         .btn-sample:hover { border-color: var(--accent); color: var(--accent); }
+
+        .example-select {
+            padding: 8px 12px;
+            background: var(--bg-editor);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f99'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+            transition: border-color 0.2s, color 0.2s;
+            max-width: 240px;
+        }
+        .example-select:hover, .example-select:focus { border-color: var(--accent); color: var(--accent); outline: none; }
 
         /* Diagram panel */
         .diagram-panel {
@@ -595,8 +626,31 @@
             .step:last-child { border-bottom: none; }
             .step-arrow { display: none !important; }
             .resources-grid { grid-template-columns: 1fr; }
-            .nav-links { display: none; }
             .footer-inner { flex-direction: column; text-align: center; }
+
+            .nav-toggle { display: flex; }
+            nav { position: relative; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: calc(100% + 1px);
+                left: -20px;
+                right: -20px;
+                background: var(--bg-surface);
+                border-bottom: 1px solid var(--border);
+                padding: 12px 20px 16px;
+                flex-direction: column;
+                gap: 0;
+                z-index: 100;
+            }
+            .nav-links.open { display: flex; }
+            .nav-links li { border-bottom: 1px solid var(--border); }
+            .nav-links li:last-child { border-bottom: none; }
+            .nav-links a {
+                display: block;
+                padding: 12px 0;
+                font-size: 15px;
+            }
         }
 
         /* Loading animation */
@@ -634,7 +688,7 @@
         <a href="/" class="logo" aria-label="InfraSketch home">
             <img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud">
         </a>
-        <ul class="nav-links">
+        <ul class="nav-links" id="nav-links">
             <li><a href="#tool">Tool</a></li>
             <li><a href="#how-it-works">How it works</a></li>
             <li><a href="#features">Features</a></li>
@@ -642,6 +696,13 @@
             <li><a href="about.html">About</a></li>
             <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
         </ul>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="2" y1="5" x2="18" y2="5"/>
+                <line x1="2" y1="10" x2="18" y2="10"/>
+                <line x1="2" y1="15" x2="18" y2="15"/>
+            </svg>
+        </button>
     </nav>
 
     <section class="hero">
@@ -676,7 +737,9 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
   subnet_id     = aws_subnet.public.id
 }"></textarea>
             <div class="editor-actions">
-                <button class="btn-sample" id="btn-load-sample">Load Terraform sample</button>
+                <select class="example-select" id="example-select" aria-label="Load an example">
+                    <option value="">Load an example...</option>
+                </select>
                 <button class="btn-generate" id="btn-generate">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                     Generate Diagram
@@ -830,6 +893,23 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
     </div>
 </footer>
 
+<script src="lib/js-yaml.min.js"></script>
 <script type="module" src="js/main.js"></script>
+<script>
+    (function () {
+        var toggle = document.getElementById('nav-toggle');
+        var links = document.getElementById('nav-links');
+        toggle.addEventListener('click', function () {
+            var open = links.classList.toggle('open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        links.querySelectorAll('a').forEach(function (a) {
+            a.addEventListener('click', function () {
+                links.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            });
+        });
+    })();
+</script>
 </body>
 </html>

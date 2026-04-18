@@ -1,0 +1,157 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`draw.io XML visual regression > Docker Compose sample produces consistent XML 1`] = `
+"<mxfile host="InfraSketch" version="1.0">
+  <diagram id="arch" name="Architecture">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c10" value="Container&#xa;web" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4ff;strokeColor=#1d63ed;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c11" value="Container&#xa;api" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4ff;strokeColor=#1d63ed;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="160" y="50" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c12" value="Container&#xa;db" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4ff;strokeColor=#1d63ed;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="270" y="50" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c13" value="Container&#xa;cache" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4ff;strokeColor=#1d63ed;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="50" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="e900" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="c11" target="c10" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e901" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="c12" target="c11" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e902" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="c13" target="c11" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>"
+`;
+
+exports[`draw.io XML visual regression > Terraform with VPC + subnets + resources produces consistent layout 1`] = `
+"<mxfile host="InfraSketch" version="1.0">
+  <diagram id="arch" name="Architecture">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c10" value="VPC: main" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc_alt;grStroke=0;strokeColor=#147EBA;fillColor=#E6F3FB;fontStyle=1;fontSize=13;verticalLabelPosition=top;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="50" y="200" width="584" height="256" as="geometry"/>
+        </mxCell>
+        <mxCell id="c11" value="Subnet: pub" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_subnet;grStroke=0;strokeColor=#48C0B0;fillColor=#E6F9F7;fontStyle=1;fontSize=11;verticalLabelPosition=top;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="90" y="260" width="134" height="156" as="geometry"/>
+        </mxCell>
+        <mxCell id="c12" value="Subnet: priv" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_subnet;grStroke=0;strokeColor=#48C0B0;fillColor=#E6F9F7;fontStyle=1;fontSize=11;verticalLabelPosition=top;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="240" y="260" width="354" height="156" as="geometry"/>
+        </mxCell>
+        <mxCell id="c13" value="ALB&#xa;alb" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.application_load_balancer;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="118" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c14" value="NLB&#xa;nlb" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_load_balancer;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="268" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c15" value="RDS&#xa;db" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="378" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c16" value="ElastiCache&#xa;cache" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elasticache;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="488" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c17" value="CloudFront&#xa;cdn" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudfront;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="248" y="66" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c18" value="Route 53&#xa;dns" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.route_53;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="358" y="66" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c19" value="Security Group&#xa;web" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="674" y="159" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c20" value="KMS&#xa;secrets" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kms;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="674" y="269" width="78" height="78" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>"
+`;
+
+exports[`draw.io XML visual regression > full Terraform sample produces consistent XML 1`] = `
+"<mxfile host="InfraSketch" version="1.0">
+  <diagram id="arch" name="Architecture">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c10" value="VPC: main" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc_alt;grStroke=0;strokeColor=#147EBA;fillColor=#E6F3FB;fontStyle=1;fontSize=13;verticalLabelPosition=top;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="50" y="200" width="584" height="492" as="geometry"/>
+        </mxCell>
+        <mxCell id="c11" value="Subnet: public" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_subnet;grStroke=0;strokeColor=#48C0B0;fillColor=#E6F9F7;fontStyle=1;fontSize=11;verticalLabelPosition=top;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="90" y="260" width="244" height="156" as="geometry"/>
+        </mxCell>
+        <mxCell id="c12" value="Subnet: private" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_subnet;grStroke=0;strokeColor=#48C0B0;fillColor=#E6F9F7;fontStyle=1;fontSize=11;verticalLabelPosition=top;verticalAlign=bottom;" vertex="1" parent="1">
+          <mxGeometry x="350" y="260" width="244" height="156" as="geometry"/>
+        </mxCell>
+        <mxCell id="c13" value="IGW&#xa;gw" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.internet_gateway;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="303" y="66" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c14" value="NAT GW&#xa;main" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.nat_gateway;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="118" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c15" value="Elastic IP&#xa;nat" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_ip_address;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="303" y="574" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c16" value="ALB&#xa;frontend" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.application_load_balancer;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="228" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c17" value="EKS&#xa;main" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="378" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c18" value="IAM Role&#xa;eks" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.role;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="674" y="352" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c19" value="RDS&#xa;postgres" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="488" y="310" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c20" value="S3&#xa;assets" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="303" y="456" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c21" value="SQS&#xa;events" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="303" y="748" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c22" value="CloudWatch&#xa;app" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="674" y="462" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="e900" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="c18" target="c17" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>"
+`;
+
+exports[`draw.io XML visual regression > minimal two-resource Terraform produces consistent XML 1`] = `
+"<mxfile host="InfraSketch" version="1.0">
+  <diagram id="arch" name="Architecture">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c10" value="Lambda&#xa;fn" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="89" y="50" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="c11" value="SQS&#xa;q" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="89" y="184" width="78" height="78" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>"
+`;
+
+exports[`parsed resource count regression > full Terraform sample yields expected resource count 1`] = `13`;
