@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <title>InfraSketch — Terraform to Architecture Diagram | Free Online Tool</title>
     <meta name="description" content="Paste your Terraform code and instantly generate beautiful AWS architecture diagrams. Free, no signup, no cloud credentials needed. Export as PNG or SVG.">
     <meta name="keywords" content="terraform diagram, terraform visualizer, aws architecture diagram generator, terraform to diagram, docker compose diagram, infrastructure diagram, IaC visualizer">
@@ -69,22 +73,15 @@
             font-weight: 700;
             font-size: 20px;
             letter-spacing: -0.5px;
+            text-decoration: none;
         }
 
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--accent);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: var(--bg);
-            font-weight: 700;
+        .logo-img {
+            height: 38px;
+            width: auto;
+            display: block;
+            border-radius: 4px;
         }
-
-        .logo span { color: var(--accent); }
 
         .nav-links { display: flex; gap: 24px; list-style: none; }
         .nav-links a {
@@ -634,10 +631,9 @@
 <div class="container">
 
     <nav>
-        <div class="logo">
-            <div class="logo-icon">IS</div>
-            Infra<span>Sketch</span>
-        </div>
+        <a href="/" class="logo" aria-label="InfraSketch home">
+            <img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud">
+        </a>
         <ul class="nav-links">
             <li><a href="#tool">Tool</a></li>
             <li><a href="#how-it-works">How it works</a></li>

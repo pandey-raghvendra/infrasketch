@@ -52,7 +52,7 @@ CloudFormation, Kubernetes manifests, Azure, and GCP are roadmap items rather th
 4. The layout engine places resources into a generated SVG diagram.
 5. Export buttons serialize the current diagram to PNG, SVG, or draw.io XML.
 
-The HTML shell lives in `index.html`. The parser, layout, renderer, export logic, and app bootstrap live in `js/`. The icon assets live in `icons/`.
+The HTML shell lives in `index.html`. The parser, layout, renderer, export logic, and app bootstrap live in `js/`. Brand assets live in `assets/`, and architecture icon assets live in `icons/`.
 
 ## Project Structure
 
@@ -60,6 +60,7 @@ The HTML shell lives in `index.html`. The parser, layout, renderer, export logic
 .
 |-- index.html          # Main InfraSketch app
 |-- js/                 # Parser, layout, renderer, and export modules
+|-- assets/             # Brand logo assets
 |-- icons/              # Architecture icon SVG assets
 |-- blog/               # Static blog pages
 |-- about.html          # About page

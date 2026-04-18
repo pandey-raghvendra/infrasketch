@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <title>About — InfraSketch | Free Terraform Diagram Generator</title>
     <meta name="description" content="InfraSketch is a free, open-source tool that generates architecture diagrams from Terraform code. Built by a DevOps engineer with 9+ years of experience.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,8 +19,7 @@
         .container{max-width:800px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
         nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}
         .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}
-        .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}
-        .logo span{color:var(--accent)}
+        .logo-img{height:38px;width:auto;display:block;border-radius:4px}
         .nav-links{display:flex;gap:24px;list-style:none}
         .nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}
         .nav-links a:hover{color:var(--accent)}
@@ -45,7 +48,7 @@
 <body>
 
 <nav>
-    <a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
     <ul class="nav-links">
         <li><a href="/">Tool</a></li>
         <li><a href="/about.html">About</a></li>
