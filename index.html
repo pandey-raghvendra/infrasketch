@@ -369,12 +369,115 @@ gtag('config', 'G-XXXXXXXXXX');
         .stat-dot.storage { background: var(--yellow); }
         .stat-dot.lb { background: var(--accent); }
 
+        /* How it works */
+        .how-it-works {
+            padding: 56px 0 40px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .section-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+
+        .section-header h2 .hl { color: var(--accent); }
+
+        .section-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .step {
+            padding: 32px 28px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            position: relative;
+        }
+
+        .step:last-child { border-right: none; }
+
+        .step-number {
+            font-size: 11px;
+            font-family: var(--mono);
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        .step h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .step-arrow {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--accent);
+            z-index: 2;
+        }
+
+        .step:last-child .step-arrow { display: none; }
+
         /* Features section */
         .features {
-            padding: 60px 0;
+            padding: 40px 0 60px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
+        }
+
+        .features-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .features-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .features-header p {
+            font-size: 13px;
+            color: var(--text-muted);
         }
 
         .feature-card {
@@ -407,12 +510,68 @@ gtag('config', 'G-XXXXXXXXXX');
             margin-bottom: 12px;
         }
 
+        /* Resources / links section */
+        .resources {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 32px;
+        }
+
+        .resource-group h4 {
+            font-size: 11px;
+            font-family: var(--mono);
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .resource-group ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .resource-group a {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .resource-group a:hover { color: var(--accent); }
+
+        .resource-group a::before {
+            content: '→';
+            font-size: 11px;
+            color: var(--accent);
+            opacity: 0.6;
+        }
+
         /* Footer */
         footer {
             padding: 24px 0;
             border-top: 1px solid var(--border);
-            text-align: center;
-            margin-top: 40px;
+            margin-top: 20px;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         footer p {
@@ -421,13 +580,35 @@ gtag('config', 'G-XXXXXXXXXX');
             color: var(--text-muted);
         }
 
+        .footer-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 12px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--accent); }
+
         /* Responsive */
         @media (max-width: 768px) {
             .workspace { grid-template-columns: 1fr; }
             .editor-panel { border-right: none; border-bottom: 1px solid var(--border); }
             .code-editor { min-height: 200px; }
             .features { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .step { border-right: none; border-bottom: 1px solid var(--border); }
+            .step:last-child { border-bottom: none; }
+            .step-arrow { display: none !important; }
+            .resources-grid { grid-template-columns: 1fr; }
             .nav-links { display: none; }
+            .footer-inner { flex-direction: column; text-align: center; }
         }
 
         /* Loading animation */
@@ -468,7 +649,9 @@ gtag('config', 'G-XXXXXXXXXX');
         </div>
         <ul class="nav-links">
             <li><a href="#tool">Tool</a></li>
+            <li><a href="#how-it-works">How it works</a></li>
             <li><a href="#features">Features</a></li>
+            <li><a href="#resources">Resources</a></li>
             <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
         </ul>
     </nav>
@@ -519,6 +702,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="export-actions">
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
+                    <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>
                 </div>
             </div>
             <div class="diagram-canvas" id="diagram-canvas">
@@ -542,7 +726,37 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         </div>
     </div>
 
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-header">
+            <h2>How <span class="hl">it works</span></h2>
+            <p>Three steps from infrastructure code to a shareable architecture diagram.</p>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">STEP 01</div>
+                <h3>Paste your IaC code</h3>
+                <p>Copy your Terraform HCL or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and modules.</p>
+                <div class="step-arrow">&#8250;</div>
+            </div>
+            <div class="step">
+                <div class="step-number">STEP 02</div>
+                <h3>Auto-detect architecture</h3>
+                <p>The parser reads VPC boundaries, subnet membership (<code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code>, <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_ids</code>), and resource references to build a containment graph — separating structural wiring from actual traffic flow.</p>
+                <div class="step-arrow">&#8250;</div>
+            </div>
+            <div class="step">
+                <div class="step-number">STEP 03</div>
+                <h3>Export and share</h3>
+                <p>Download as <strong>PNG</strong> for presentations, <strong>SVG</strong> for docs and READMEs, or <strong>draw.io XML</strong> to keep editing in diagrams.net. All exports are client-side — nothing is uploaded.</p>
+            </div>
+        </div>
+    </section>
+
     <section class="features" id="features">
+        <div class="features-header">
+            <h2>Everything you need</h2>
+            <p>Built for engineers who want diagrams without the overhead of visual tools.</p>
+        </div>
         <div class="feature-card">
             <div class="feature-icon">&#9889;</div>
             <h3>No credentials needed</h3>
@@ -555,8 +769,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#128230;</div>
-            <h3>Export anywhere</h3>
-            <p>Download as PNG or SVG. Use in your docs, README files, presentations, or Confluence pages.</p>
+            <h3>Three export formats</h3>
+            <p>Download as PNG or SVG for docs and slides, or export draw.io XML to keep editing the diagram in diagrams.net.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#128272;</div>
@@ -564,14 +778,50 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <p>Your code never leaves your browser. No server processing, no storage, no telemetry. Fully client-side.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#127760;</div>
-            <h3>Multi-format support</h3>
-            <p>Terraform HCL, docker-compose.yml, and CloudFormation templates. More formats coming soon.</p>
+            <div class="feature-icon">&#128203;</div>
+            <h3>VPC containment layout</h3>
+            <p>Understands that <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">vpc_id</code> and <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code> are structural — renders subnets as nested boxes inside the VPC, not as arrows.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#128161;</div>
-            <h3>Smart layout</h3>
-            <p>Automatically detects VPCs, subnets, and resource relationships to create logically grouped diagrams.</p>
+            <h3>Clean connection routing</h3>
+            <p>Skips structural wiring references and only draws meaningful flow connections — no spaghetti arrows from every Terraform resource reference.</p>
+        </div>
+    </section>
+
+    <section class="resources" id="resources">
+        <div class="section-header">
+            <h2>Resources &amp; <span class="hl">links</span></h2>
+            <p>Useful references for Terraform, AWS architecture, and diagram standards.</p>
+        </div>
+        <div class="resources-grid">
+            <div class="resource-group">
+                <h4>Terraform</h4>
+                <ul>
+                    <li><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs" target="_blank">AWS Provider Docs</a></li>
+                    <li><a href="https://developer.hashicorp.com/terraform/language" target="_blank">Terraform Language Reference</a></li>
+                    <li><a href="https://github.com/antonbabenko/terraform-aws-modules" target="_blank">Community AWS Modules</a></li>
+                    <li><a href="https://developer.hashicorp.com/terraform/tutorials/aws-get-started" target="_blank">Getting Started with AWS</a></li>
+                </ul>
+            </div>
+            <div class="resource-group">
+                <h4>AWS Architecture</h4>
+                <ul>
+                    <li><a href="https://aws.amazon.com/architecture/" target="_blank">AWS Architecture Center</a></li>
+                    <li><a href="https://aws.amazon.com/blogs/architecture/" target="_blank">AWS Architecture Blog</a></li>
+                    <li><a href="https://aws.amazon.com/solutions/implementations/" target="_blank">AWS Solution Implementations</a></li>
+                    <li><a href="https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html" target="_blank">Well-Architected Framework</a></li>
+                </ul>
+            </div>
+            <div class="resource-group">
+                <h4>Tools &amp; Related</h4>
+                <ul>
+                    <li><a href="https://app.diagrams.net" target="_blank">diagrams.net (draw.io)</a></li>
+                    <li><a href="https://github.com/mingrammer/diagrams" target="_blank">Diagrams as Code (Python)</a></li>
+                    <li><a href="https://github.com/hashicorp/terraform" target="_blank">Terraform on GitHub</a></li>
+                    <li><a href="https://github.com/pandey-raghvendra" target="_blank">InfraSketch on GitHub</a></li>
+                </ul>
+            </div>
         </div>
     </section>
 
@@ -579,7 +829,16 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
 
 <footer>
     <div class="container">
-        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra" style="color:var(--accent);text-decoration:none">Raghvendra Pandey</a></p>
+        <div class="footer-inner">
+            <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra" style="color:var(--accent);text-decoration:none">Raghvendra Pandey</a></p>
+            <ul class="footer-links">
+                <li><a href="#tool">Tool</a></li>
+                <li><a href="#how-it-works">How it works</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#resources">Resources</a></li>
+                <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
     </div>
 </footer>
 
@@ -1284,6 +1543,7 @@ document.getElementById('btn-generate').addEventListener('click', () => {
             parsed = parseTerraform(code);
         }
 
+        window._lastParsed = parsed;
         loading.classList.remove('active');
         renderDiagram(parsed);
     }, 800);
@@ -1330,6 +1590,288 @@ document.getElementById('btn-export-svg').addEventListener('click', () => {
     const blob = new Blob([svgData], { type: 'image/svg+xml' });
     const link = document.createElement('a');
     link.download = 'infrasketch-diagram.svg';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+});
+
+// ── DRAW.IO XML GENERATOR ──
+function xmlEsc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function generateDrawioXml(parsed) {
+    const { resources, connections, vpcOf = {}, subnetOf = {} } = parsed;
+    if (!resources.length) return null;
+
+    // Draw.io AWS4 shape per category
+    const SHAPE = {
+        vpc:        'shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc_alt;grStroke=0;strokeColor=#147EBA;fillColor=#E6F3FB;fontStyle=1;fontSize=13;verticalLabelPosition=top;verticalAlign=bottom;',
+        subnet:     'shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_subnet;grStroke=0;strokeColor=#48C0B0;fillColor=#E6F9F7;fontStyle=1;fontSize=11;verticalLabelPosition=top;verticalAlign=bottom;',
+        instance:   'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;',
+        eks:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;',
+        ecs:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecs;',
+        lambda:     'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;',
+        autoscaling:'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.auto_scaling;',
+        ecr:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;',
+        rds:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;',
+        dynamodb:   'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;',
+        elasticache:'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elasticache;',
+        s3:         'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;',
+        alb:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.application_load_balancer;',
+        nlb:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_load_balancer;',
+        tg:         'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elb;',
+        sg:         'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;',
+        iam_role:   'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.role;',
+        route53:    'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.route_53;',
+        cloudfront: 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudfront;',
+        sqs:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;',
+        sns:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;',
+        nat:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.nat_gateway;',
+        igw:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.internet_gateway;',
+        eip:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_ip_address;',
+        kms:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kms;',
+        cloudwatch: 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;',
+        waf:        'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.waf;',
+    };
+    const NODE_STYLE_SUFFIX = 'labelBackgroundColor=#ffffff;fontStyle=1;fontSize=11;';
+
+    // Layout constants (draw.io units)
+    const NW = 78, NH = 78, NGAP = 32;
+    const SUB_PAD = 28, SUB_LBL = 50;
+    const VPC_PAD = 40, VPC_LBL = 60;
+    const ZONE_GAP = 40, SEC_GAP = 40;
+    const CP = 50;
+
+    const C_INTERNET  = new Set(['igw', 'cloudfront', 'route53', 'waf']);
+    const C_INGRESS   = new Set(['alb', 'nlb', 'tg']);
+    const C_DATA      = new Set(['rds', 'dynamodb', 'elasticache', 's3']);
+    const C_MESSAGING = new Set(['sqs', 'sns']);
+    const C_SECURITY  = new Set(['sg', 'iam_role', 'kms', 'cloudwatch']);
+    const C_VPC       = new Set(['vpc']);
+    const C_SUBNET    = new Set(['subnet']);
+
+    const vpcRes    = resources.filter(r => C_VPC.has(r.category));
+    const subnetRes = resources.filter(r => C_SUBNET.has(r.category));
+    const secRes    = resources.filter(r => C_SECURITY.has(r.category));
+    const msgRes    = resources.filter(r => C_MESSAGING.has(r.category));
+    const intRes    = resources.filter(r => C_INTERNET.has(r.category));
+    const hasVpc    = vpcRes.length > 0;
+
+    const subnetContents = {};
+    subnetRes.forEach(s => { subnetContents[s.name] = []; });
+    const vpcIngressRes = [], vpcDataRes = [], vpcOtherRes = [];
+
+    for (const res of resources) {
+        const c = res.category;
+        if (C_VPC.has(c) || C_SUBNET.has(c) || C_SECURITY.has(c) || C_MESSAGING.has(c) || C_INTERNET.has(c)) continue;
+        if (subnetOf[res.name] && subnetContents[subnetOf[res.name]] !== undefined) {
+            subnetContents[subnetOf[res.name]].push(res);
+        } else if (C_INGRESS.has(c)) { vpcIngressRes.push(res); }
+        else if (C_DATA.has(c))      { vpcDataRes.push(res); }
+        else                          { vpcOtherRes.push(res); }
+    }
+
+    function gridLayout(nodes, maxCols) {
+        if (!nodes.length) return { pos: {}, W: 0, H: 0 };
+        const cols = Math.min(maxCols, nodes.length);
+        const rows = Math.ceil(nodes.length / cols);
+        const pos = {};
+        nodes.forEach((n, i) => {
+            const r = Math.floor(i / cols), c = i % cols;
+            const ri = Math.min(nodes.length - r * cols, cols);
+            const rw = ri * NW + (ri - 1) * NGAP;
+            const tw = cols * NW + (cols - 1) * NGAP;
+            pos[n.name] = { lx: (tw - rw) / 2 + c * (NW + NGAP), ly: r * (NH + NGAP) };
+        });
+        return { pos, W: cols * NW + (cols - 1) * NGAP, H: Math.ceil(nodes.length / cols) * NH + (Math.ceil(nodes.length / cols) - 1) * NGAP };
+    }
+
+    const subLayouts = {};
+    subnetRes.forEach(s => { subLayouts[s.name] = gridLayout(subnetContents[s.name] || [], 3); });
+
+    function subDim(sn) {
+        const { W, H } = subLayouts[sn] || { W: 0, H: 0 };
+        return { bw: Math.max(W, NW) + SUB_PAD * 2, bh: (H > 0 ? H : NH) + SUB_LBL + SUB_PAD };
+    }
+
+    const inGrid = gridLayout(vpcIngressRes, 5);
+    const daGrid = gridLayout(vpcDataRes, 5);
+    const otGrid = gridLayout(vpcOtherRes, 4);
+    const itGrid = gridLayout(intRes, 6);
+    const mgGrid = gridLayout(msgRes, 5);
+    const scGrid = gridLayout(secRes, 1);
+
+    const subRowW = subnetRes.reduce((a, s, i) => a + subDim(s.name).bw + (i > 0 ? 16 : 0), 0);
+    const subRowH = subnetRes.reduce((a, s) => Math.max(a, subDim(s.name).bh), 0);
+
+    const vpcCW = Math.max(inGrid.W, subRowW, daGrid.W, otGrid.W, NW * 2);
+    const vpcRows2 = [[vpcIngressRes.length, inGrid.H],[subnetRes.length, subRowH],[vpcDataRes.length, daGrid.H],[vpcOtherRes.length, otGrid.H]].filter(([n]) => n > 0);
+    const vpcCH = vpcRows2.reduce((a, [, h], i) => a + h + (i > 0 ? ZONE_GAP : 0), 0) || NH;
+
+    const vpcBW = hasVpc ? vpcCW + VPC_PAD * 2 : vpcCW;
+    const vpcBH = hasVpc ? vpcCH + VPC_LBL + VPC_PAD : vpcCH;
+    const mainW = Math.max(vpcBW, itGrid.W, mgGrid.W);
+
+    // Build absolute positions
+    const absPos = {}; // name → {x, y, w, h, parent}
+    let idSeq = 10;
+    const cellIdMap = {}; // name → drawio cell id
+    function nextId() { return `c${idSeq++}`; }
+
+    let curY = CP;
+    const mainX = CP;
+
+    // Internet zone
+    if (intRes.length) {
+        const zX = mainX + (mainW - itGrid.W) / 2;
+        intRes.forEach(n => {
+            const { lx, ly } = itGrid.pos[n.name];
+            absPos[n.name] = { x: zX + lx, y: curY + 24 + ly, w: NW, h: NH, parent: '1' };
+        });
+        curY += itGrid.H + 24 + ZONE_GAP;
+    }
+
+    const vpcY = curY, vpcX = mainX;
+    const innerX = hasVpc ? vpcX + VPC_PAD : vpcX;
+    let innerY = hasVpc ? vpcY + VPC_LBL : vpcY;
+    const vpcCellId = hasVpc ? nextId() : '1';
+    if (hasVpc) { cellIdMap[vpcRes[0].name] = vpcCellId; }
+
+    // Ingress
+    if (vpcIngressRes.length) {
+        const rX = innerX + (vpcCW - inGrid.W) / 2;
+        vpcIngressRes.forEach(n => {
+            const { lx, ly } = inGrid.pos[n.name];
+            absPos[n.name] = { x: rX + lx, y: innerY + ly, w: NW, h: NH, parent: '1' };
+        });
+        innerY += inGrid.H + ZONE_GAP;
+    }
+
+    // Subnet row
+    if (subnetRes.length) {
+        let subX = innerX + (vpcCW - subRowW) / 2;
+        for (const sub of subnetRes) {
+            const { bw, bh } = subDim(sub.name);
+            const subCellId = nextId();
+            cellIdMap[sub.name] = subCellId;
+            absPos[sub.name] = { x: subX, y: innerY, w: bw, h: bh, parent: '1', isContainer: true };
+
+            const layout = subLayouts[sub.name];
+            const cOffX = subX + SUB_PAD + (bw - SUB_PAD * 2 - layout.W) / 2;
+            const cOffY = innerY + SUB_LBL;
+            (subnetContents[sub.name] || []).forEach(n => {
+                const { lx, ly } = layout.pos[n.name] || {};
+                if (lx !== undefined) absPos[n.name] = { x: cOffX + lx, y: cOffY + ly, w: NW, h: NH, parent: '1' };
+            });
+            subX += bw + 16;
+        }
+        innerY += subRowH + ZONE_GAP;
+    }
+
+    // Data row
+    if (vpcDataRes.length) {
+        const rX = innerX + (vpcCW - daGrid.W) / 2;
+        vpcDataRes.forEach(n => {
+            const { lx, ly } = daGrid.pos[n.name];
+            absPos[n.name] = { x: rX + lx, y: innerY + ly, w: NW, h: NH, parent: '1' };
+        });
+        innerY += daGrid.H + ZONE_GAP;
+    }
+
+    // Other VPC nodes
+    if (vpcOtherRes.length) {
+        const rX = innerX + (vpcCW - otGrid.W) / 2;
+        vpcOtherRes.forEach(n => {
+            const { lx, ly } = otGrid.pos[n.name];
+            absPos[n.name] = { x: rX + lx, y: innerY + ly, w: NW, h: NH, parent: '1' };
+        });
+    }
+
+    curY += vpcBH;
+
+    // Messaging zone
+    if (msgRes.length) {
+        curY += ZONE_GAP;
+        const rX = mainX + (mainW - mgGrid.W) / 2;
+        msgRes.forEach(n => {
+            const { lx, ly } = mgGrid.pos[n.name];
+            absPos[n.name] = { x: rX + lx, y: curY + 16 + ly, w: NW, h: NH, parent: '1' };
+        });
+        curY += mgGrid.H + 40;
+    }
+
+    // Security column
+    if (secRes.length) {
+        const secX = mainX + mainW + SEC_GAP;
+        const secTH = scGrid.H;
+        const secSY = CP + (curY - CP - secTH) / 2;
+        secRes.forEach(n => {
+            const { lx, ly } = scGrid.pos[n.name];
+            absPos[n.name] = { x: secX + lx, y: secSY + ly, w: NW, h: NH, parent: '1' };
+        });
+    }
+
+    // Build XML
+    const cells = [];
+
+    // VPC container
+    if (hasVpc) {
+        cells.push({ id: vpcCellId, value: `VPC: ${vpcRes[0].name}`, style: SHAPE.vpc, vertex: true, parent: '1', geo: { x: vpcX, y: vpcY, w: vpcBW, h: vpcBH } });
+    }
+
+    // Subnet containers
+    for (const sub of subnetRes) {
+        const p = absPos[sub.name];
+        const sid = cellIdMap[sub.name] || nextId();
+        if (!cellIdMap[sub.name]) cellIdMap[sub.name] = sid;
+        cells.push({ id: sid, value: `Subnet: ${sub.name}`, style: SHAPE.subnet, vertex: true, parent: '1', geo: { x: p.x, y: p.y, w: p.w, h: p.h } });
+    }
+
+    // Resource nodes
+    for (const res of resources) {
+        if (res.category === 'vpc' || res.category === 'subnet') continue;
+        const p = absPos[res.name];
+        if (!p) continue;
+        const rid = nextId();
+        cellIdMap[res.name] = rid;
+        const shape = SHAPE[res.category] || 'rounded=1;';
+        cells.push({ id: rid, value: xmlEsc(`${res.label}\n${res.name}`), style: shape + NODE_STYLE_SUFFIX, vertex: true, parent: p.parent || '1', geo: { x: p.x, y: p.y, w: p.w, h: p.h } });
+    }
+
+    // Edges
+    let edgeId = 900;
+    for (const conn of connections) {
+        const src = cellIdMap[conn.from];
+        const tgt = cellIdMap[conn.to];
+        if (!src || !tgt) continue;
+        cells.push({ id: `e${edgeId++}`, value: '', style: 'edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;', edge: true, source: src, target: tgt, parent: '1', geo: { relative: true } });
+    }
+
+    // Serialize to XML
+    let xml = `<mxfile host="InfraSketch" version="1.0">\n  <diagram id="arch" name="Architecture">\n    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">\n      <root>\n        <mxCell id="0"/>\n        <mxCell id="1" parent="0"/>\n`;
+
+    for (const c of cells) {
+        const g = c.geo;
+        const geoAttr = c.edge
+            ? `<mxGeometry relative="1" as="geometry"/>`
+            : `<mxGeometry x="${Math.round(g.x)}" y="${Math.round(g.y)}" width="${Math.round(g.w)}" height="${Math.round(g.h)}" as="geometry"/>`;
+        const edgeAttr  = c.edge   ? ` edge="1" source="${c.source}" target="${c.target}"` : '';
+        const vertAttr  = c.vertex ? ` vertex="1"` : '';
+        xml += `        <mxCell id="${c.id}" value="${xmlEsc(c.value)}" style="${c.style}"${vertAttr}${edgeAttr} parent="${c.parent}">\n          ${geoAttr}\n        </mxCell>\n`;
+    }
+
+    xml += `      </root>\n    </mxGraphModel>\n  </diagram>\n</mxfile>`;
+    return xml;
+}
+
+// Export draw.io XML
+document.getElementById('btn-export-drawio').addEventListener('click', () => {
+    if (!window._lastParsed) { alert('Generate a diagram first.'); return; }
+    const xml = generateDrawioXml(window._lastParsed);
+    if (!xml) { alert('No resources to export.'); return; }
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const link = document.createElement('a');
+    link.download = 'infrasketch-diagram.drawio';
     link.href = URL.createObjectURL(blob);
     link.click();
 });
