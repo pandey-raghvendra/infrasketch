@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — InfraSketch | Free Terraform Diagram Generator</title>
+    <meta name="description" content="InfraSketch is a free, open-source tool that generates architecture diagrams from Terraform code. Built by a DevOps engineer with 9+ years of experience.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}
+        body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+        .container{max-width:800px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+        nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}
+        .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}
+        .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}
+        .logo span{color:var(--accent)}
+        .nav-links{display:flex;gap:24px;list-style:none}
+        .nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}
+        .nav-links a:hover{color:var(--accent)}
+        .page-header{padding:60px 0 40px;border-bottom:1px solid var(--border);margin-bottom:40px}
+        .page-header h1{font-size:36px;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
+        .page-header p{color:var(--text-muted);font-size:16px;max-width:600px}
+        .content h2{font-size:20px;font-weight:600;margin:36px 0 16px;color:var(--accent)}
+        .content p{color:var(--text-muted);margin-bottom:16px;font-size:15px}
+        .content a{color:var(--accent);text-decoration:none}
+        .content a:hover{text-decoration:underline}
+        .features-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+        .feature-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+        .feature-item h3{font-size:14px;font-weight:600;margin-bottom:6px}
+        .feature-item p{font-size:13px;margin:0}
+        .cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}
+        .cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}
+        .cta-box p{margin-bottom:16px}
+        .btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}
+        .btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);transform:translateY(-1px);text-decoration:none}
+        footer{padding:24px 0;border-top:1px solid var(--border);text-align:center;margin-top:60px}
+        footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}
+        footer a{color:var(--accent);text-decoration:none}
+        @media(max-width:640px){.nav-links{display:none}.page-header h1{font-size:28px}.features-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a>
+    <ul class="nav-links">
+        <li><a href="/">Tool</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+        <li><a href="/privacy.html">Privacy</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>About InfraSketch</h1>
+        <p>A free, open-source tool that turns your infrastructure code into clean architecture diagrams — instantly, privately, and without any signup.</p>
+    </div>
+
+    <div class="content">
+
+        <h2>Why InfraSketch exists</h2>
+        <p>Every DevOps engineer knows the pain: you've written hundreds of lines of Terraform, your infrastructure is running perfectly, but when someone asks "can you show me the architecture?" — you're stuck opening draw.io and manually dragging boxes for an hour.</p>
+        <p>Existing tools like Cloudcraft and Hava require you to connect your AWS account, hand over credentials, and pay $49-99/month. That's overkill when all you need is a quick diagram from your existing code.</p>
+        <p>InfraSketch solves this. Paste your Terraform code, get a diagram. No credentials, no signup, no cost. Everything runs in your browser — your code never touches a server.</p>
+
+        <h2>What it does</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <h3>Terraform HCL parsing</h3>
+                <p>Parses 25+ AWS resource types and detects relationships between them.</p>
+            </div>
+            <div class="feature-item">
+                <h3>Docker Compose support</h3>
+                <p>Visualize your container architecture from docker-compose.yml files.</p>
+            </div>
+            <div class="feature-item">
+                <h3>Official AWS icons</h3>
+                <p>Uses the official AWS Architecture Icon set for professional diagrams.</p>
+            </div>
+            <div class="feature-item">
+                <h3>Export PNG & SVG</h3>
+                <p>Download your diagrams in high-resolution PNG or scalable SVG format.</p>
+            </div>
+            <div class="feature-item">
+                <h3>100% client-side</h3>
+                <p>All processing happens in your browser. Zero data sent to any server.</p>
+            </div>
+            <div class="feature-item">
+                <h3>Open source</h3>
+                <p>Fully open source on GitHub. Inspect the code, contribute, or fork it.</p>
+            </div>
+        </div>
+
+        <h2>Who built this</h2>
+        <p>InfraSketch is built by <strong>Raghvendra Pandey</strong>, a Senior DevOps / SRE Engineer with 9+ years of experience building cloud infrastructure in production.</p>
+        <p>Having managed 100+ microservices on AWS EKS, migrated service meshes from Consul to Istio, and written thousands of lines of Terraform — the frustration of manually drawing architecture diagrams was personal. InfraSketch is the tool I wished existed.</p>
+        <p>Find me on <a href="https://github.com/pandey-raghvendra">GitHub</a> and <a href="https://www.linkedin.com/in/raghvendra-pandey-er">LinkedIn</a>.</p>
+
+        <h2>Tech stack</h2>
+        <p>InfraSketch is intentionally simple:</p>
+        <p>The frontend is built with vanilla HTML, CSS, and JavaScript — no frameworks, no build step, no dependencies. The Terraform parser is custom-written JavaScript that extracts resource types, names, and references using regex-based pattern matching. Diagrams are rendered as SVG using the official AWS Architecture Icon set. The site is hosted on GitHub Pages with a custom domain on Cloudflare.</p>
+
+        <h2>Roadmap</h2>
+        <p>InfraSketch is actively being improved. Planned features include CloudFormation template support, Kubernetes manifest visualization, Azure and GCP resource icons, improved auto-layout with better connection routing, Terraform module support, and an interactive diagram editor.</p>
+
+        <div class="cta-box">
+            <h3>Try InfraSketch now</h3>
+            <p>Paste your Terraform code and generate a diagram in seconds.</p>
+            <a href="/" class="btn">Open InfraSketch</a>
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra">Raghvendra Pandey</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p>
+    </div>
+</footer>
+
+</body>
+</html>

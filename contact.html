@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact — InfraSketch</title>
+    <meta name="description" content="Get in touch with the InfraSketch team. Report bugs, request features, or ask questions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}
+        body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+        .container{max-width:800px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+        nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}
+        .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}
+        .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--bg);font-weight:700}
+        .logo span{color:var(--accent)}
+        .nav-links{display:flex;gap:24px;list-style:none}
+        .nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}
+        .nav-links a:hover{color:var(--accent)}
+        .page-header{padding:60px 0 40px;border-bottom:1px solid var(--border);margin-bottom:40px}
+        .page-header h1{font-size:36px;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
+        .page-header p{color:var(--text-muted);font-size:16px}
+        .content h2{font-size:20px;font-weight:600;margin:36px 0 16px;color:var(--accent)}
+        .content p{color:var(--text-muted);margin-bottom:16px;font-size:15px}
+        .content a{color:var(--accent);text-decoration:none}
+        .content a:hover{text-decoration:underline}
+        .contact-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+        .contact-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:all 0.3s;text-decoration:none;color:var(--text);display:block}
+        .contact-card:hover{border-color:rgba(6,214,160,0.3);transform:translateY(-2px);text-decoration:none}
+        .contact-card .icon{font-size:28px;margin-bottom:12px}
+        .contact-card h3{font-size:15px;font-weight:600;margin-bottom:6px}
+        .contact-card p{font-size:13px;margin:0}
+        footer{padding:24px 0;border-top:1px solid var(--border);text-align:center;margin-top:60px}
+        footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}
+        footer a{color:var(--accent);text-decoration:none}
+        @media(max-width:640px){.nav-links{display:none}.page-header h1{font-size:28px}.contact-cards{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="logo"><div class="logo-icon">IS</div>Infra<span>Sketch</span></a>
+    <ul class="nav-links">
+        <li><a href="/">Tool</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+        <li><a href="/privacy.html">Privacy</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Contact Us</h1>
+        <p>Have a question, found a bug, or want to request a feature? We'd love to hear from you.</p>
+    </div>
+
+    <div class="content">
+
+        <div class="contact-cards">
+            <a href="mailto:raghav9329@gmail.com" class="contact-card">
+                <div class="icon">&#9993;</div>
+                <h3>Email</h3>
+                <p>raghav9329@gmail.com<br>For general inquiries and support</p>
+            </a>
+            <a href="https://github.com/pandey-raghvendra/infrasketch/issues" target="_blank" class="contact-card">
+                <div class="icon">&#128736;</div>
+                <h3>GitHub Issues</h3>
+                <p>Report bugs or request features<br>on our GitHub repository</p>
+            </a>
+            <a href="https://www.linkedin.com/in/raghvendra-pandey-er" target="_blank" class="contact-card">
+                <div class="icon">&#128100;</div>
+                <h3>LinkedIn</h3>
+                <p>Connect with the creator<br>Raghvendra Pandey</p>
+            </a>
+            <a href="https://github.com/pandey-raghvendra/infrasketch" target="_blank" class="contact-card">
+                <div class="icon">&#128187;</div>
+                <h3>Open Source</h3>
+                <p>View source code, contribute,<br>or fork the project</p>
+            </a>
+        </div>
+
+        <h2>Bug reports</h2>
+        <p>If you've found a bug or a Terraform resource type that isn't supported, the best way to report it is by opening an issue on our <a href="https://github.com/pandey-raghvendra/infrasketch/issues">GitHub repository</a>. Please include the Terraform code that caused the issue (with any sensitive values removed) so we can reproduce and fix it.</p>
+
+        <h2>Feature requests</h2>
+        <p>We're actively building new features for InfraSketch. If there's something you'd like to see — a new cloud provider, a new input format, better layout options — let us know via GitHub Issues or email. Popular requests get prioritized.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h2 style="color:var(--text);font-size:16px;margin-top:24px">Is InfraSketch really free?</h2>
+        <p>Yes, completely free. The tool is open source and runs entirely in your browser. We sustain the project through non-intrusive advertising.</p>
+
+        <h2 style="color:var(--text);font-size:16px">Is my code safe?</h2>
+        <p>Absolutely. Your Terraform code never leaves your browser. There is no server-side processing, no data transmission, and no storage. You can verify this yourself — the source code is publicly available on GitHub.</p>
+
+        <h2 style="color:var(--text);font-size:16px">Which resource types are supported?</h2>
+        <p>InfraSketch currently supports 25+ AWS resource types including VPC, Subnets, EC2, EKS, ECS, Lambda, RDS, DynamoDB, ElastiCache, S3, ALB/NLB, CloudFront, Route 53, SQS, SNS, IAM, Security Groups, WAF, KMS, CloudWatch, NAT Gateway, Internet Gateway, and more. We're adding new types regularly.</p>
+
+        <h2 style="color:var(--text);font-size:16px">Can I use the diagrams commercially?</h2>
+        <p>Yes. Diagrams you generate with InfraSketch are yours to use however you like — in documentation, presentations, proposals, or any other purpose.</p>
+
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra">Raghvendra Pandey</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p>
+    </div>
+</footer>
+
+</body>
+</html>
