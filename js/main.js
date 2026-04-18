@@ -496,11 +496,155 @@ const SAMPLE_DOCKER_MICROSERVICES = `services:
       - app-db
 `;
 
+// ── Azure sample ──────────────────────────────────────────────────────────────
+const SAMPLE_TERRAFORM_AZURE = `# Production Azure Infrastructure
+resource "azurerm_virtual_network" "main" {
+  name                = "prod-vnet"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  address_space       = ["10.0.0.0/16"]
+}
+
+resource "azurerm_subnet" "public" {
+  name                 = "public"
+  resource_group_name  = "prod-rg"
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_subnet" "private" {
+  name                 = "private"
+  resource_group_name  = "prod-rg"
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.2.0/24"]
+}
+
+resource "azurerm_subnet" "data" {
+  name                 = "data"
+  resource_group_name  = "prod-rg"
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.3.0/24"]
+}
+
+resource "azurerm_cdn_frontdoor_profile" "main" {
+  name                = "prod-frontdoor"
+  resource_group_name = "prod-rg"
+  sku_name            = "Standard_AzureFrontDoor"
+}
+
+resource "azurerm_dns_zone" "main" {
+  name                = "example.com"
+  resource_group_name = "prod-rg"
+}
+
+resource "azurerm_application_gateway" "main" {
+  name                = "prod-appgw"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  gateway_ip_configuration {
+    name      = "appgw-ip-config"
+    subnet_id = azurerm_subnet.public.id
+  }
+}
+
+resource "azurerm_kubernetes_cluster" "main" {
+  name                = "prod-aks"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  default_node_pool {
+    name           = "default"
+    node_count     = 3
+    vnet_subnet_id = azurerm_subnet.private.id
+  }
+  identity { type = "SystemAssigned" }
+}
+
+resource "azurerm_linux_web_app" "api" {
+  name                = "prod-api"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  subnet_id           = azurerm_subnet.private.id
+}
+
+resource "azurerm_linux_function_app" "processor" {
+  name                = "prod-processor"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  subnet_id           = azurerm_subnet.private.id
+}
+
+resource "azurerm_mssql_server" "main" {
+  name                = "prod-sql"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+}
+
+resource "azurerm_postgresql_flexible_server" "main" {
+  name                = "prod-postgres"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  subnet_id           = azurerm_subnet.data.id
+}
+
+resource "azurerm_redis_cache" "main" {
+  name                = "prod-redis"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+}
+
+resource "azurerm_storage_account" "main" {
+  name                     = "prodstorage"
+  resource_group_name      = "prod-rg"
+  location                 = "eastus"
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
+resource "azurerm_servicebus_namespace" "main" {
+  name                = "prod-sb"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+}
+
+resource "azurerm_eventhub_namespace" "main" {
+  name                = "prod-eh"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+}
+
+resource "azurerm_network_security_group" "app" {
+  name                = "app-nsg"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+}
+
+resource "azurerm_key_vault" "main" {
+  name                = "prod-kv"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  sku_name            = "standard"
+}
+
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "prod-logs"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+}
+
+resource "azurerm_application_insights" "main" {
+  name                = "prod-insights"
+  resource_group_name = "prod-rg"
+  location            = "eastus"
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+}
+`;
+
 const EXTRA_SAMPLES = {
     terraform: {
         basic: { label: 'Production AWS stack', code: SAMPLE_TERRAFORM },
-        modules: { label: 'Multi-module (VPC + EKS + RDS + serverless)', code: SAMPLE_TERRAFORM_MODULES },
-        serverless: { label: 'Serverless pipeline (multi-file)', code: SAMPLE_TERRAFORM_SERVERLESS },
+        azure: { label: 'Production Azure stack (VNet + AKS + SQL + messaging)', code: SAMPLE_TERRAFORM_AZURE },
+        modules: { label: 'Multi-module AWS (VPC + EKS + RDS + serverless)', code: SAMPLE_TERRAFORM_MODULES },
+        serverless: { label: 'AWS serverless pipeline (multi-file)', code: SAMPLE_TERRAFORM_SERVERLESS },
     },
     docker: {
         basic: { label: 'Web app (nginx + API + DB + cache)', code: SAMPLE_DOCKER_COMPOSE },

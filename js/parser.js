@@ -123,21 +123,30 @@ export function parseTerraform(code) {
     const subnetOf = {};
 
     for (const block of supportedBlocks) {
+        // AWS VPC containment
         const vpcId = firstReferencedAddress(block.body.match(/\bvpc_id\s*=\s*([^\n]+)/)?.[1] || '', 'aws_(?:default_)?vpc');
         if (vpcId && supportedIds.has(vpcId)) {
             vpcOf[block.id] = vpcId;
         }
 
+        // Azure VNet containment (azurerm_subnet uses virtual_network_name)
+        if (!vpcOf[block.id]) {
+            const vnetId = firstReferencedAddress(block.body.match(/\bvirtual_network_name\s*=\s*([^\n]+)/)?.[1] || '', 'azurerm_virtual_network');
+            if (vnetId && supportedIds.has(vnetId)) {
+                vpcOf[block.id] = vnetId;
+            }
+        }
+
         const subnetId = firstReferencedAddress(
-            block.body.match(/\b(?:subnet_ids?|subnets)\s*=\s*(\[[^\]]*\]|[^\n]+)/)?.[1] || '',
-            'aws_subnet',
+            block.body.match(/\b(?:subnet_ids?|subnets|vnet_subnet_id)\s*=\s*(\[[^\]]*\]|[^\n]+)/)?.[1] || '',
+            'aws_subnet|azurerm_subnet',
         );
         if (subnetId && supportedIds.has(subnetId)) {
             subnetOf[block.id] = subnetId;
         }
     }
 
-    const skipLine = /^\s*(?:vpc_id|subnet_id|subnet_ids|subnets|security_group_ids?|security_groups|allocation_id|cluster_name|db_subnet_group(?:_name)?|target_group_arns|vpc_zone_identifier|availability_zones?|cidr_block|enable_|tags\s*\{?|ingress|egress|from_port|to_port|protocol|master_|password|username|engine|instance_class|node_type|runtime|handler|role\s*=|assume_role|source_arn|bucket\s*=|domain\s*=)\s*[=\[{]/;
+    const skipLine = /^\s*(?:vpc_id|subnet_id|subnet_ids|subnets|vnet_subnet_id|security_group_ids?|security_groups|allocation_id|cluster_name|db_subnet_group(?:_name)?|target_group_arns|vpc_zone_identifier|availability_zones?|cidr_block|enable_|tags\s*\{?|ingress|egress|from_port|to_port|protocol|master_|password|username|engine|instance_class|node_type|runtime|handler|role\s*=|assume_role|source_arn|bucket\s*=|domain\s*=|resource_group_name|virtual_network_name|location\s*=|address_space|address_prefixes|os_profile|storage_profile|network_interface_ids|sku\s*[={]|capacity\s*=|tenant_id)\s*[=\[{]/;
     const connections = [];
     const seen = new Set();
 
