@@ -511,6 +511,62 @@
         .cat-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.05); font-size: 11px; }
         .cat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
+        /* What is InfraSketch */
+        .what-is {
+            padding: 48px 0 32px;
+            border-bottom: 1px solid var(--border);
+        }
+        .what-is h2 {
+            font-size: clamp(22px, 3vw, 28px);
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+        .what-is h2 .hl { color: var(--accent); }
+        .what-is-grid {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 40px;
+            align-items: start;
+        }
+        .what-is-body p {
+            font-size: 15px;
+            color: #a8b0d1;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+        .what-is-body p:last-child { margin-bottom: 0; }
+        .what-is-aside {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .what-is-stat {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+        }
+        .stat-num {
+            display: block;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: var(--mono);
+            line-height: 1.1;
+        }
+        .stat-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        @media (max-width: 768px) {
+            .what-is-grid { grid-template-columns: 1fr; gap: 24px; }
+            .what-is-aside { flex-direction: row; flex-wrap: wrap; }
+            .what-is-stat { flex: 1; min-width: 130px; }
+        }
+
         /* How it works */
         .how-it-works {
             padding: 56px 0 40px;
@@ -877,6 +933,26 @@
         </a>
     </section>
 
+    <section class="what-is" id="what-is">
+        <div class="container">
+            <h2>What is <span class="hl">InfraSketch</span>?</h2>
+            <div class="what-is-grid">
+                <div class="what-is-body">
+                    <p>InfraSketch is a free, browser-based infrastructure diagram generator. Paste your Terraform HCL or Docker Compose YAML and get a clean, exportable architecture diagram in seconds — no account, no cloud credentials, no data ever leaving your browser.</p>
+                    <p>Most teams document infrastructure manually in Lucidchart or draw.io, redrawing the same boxes every time a resource changes. InfraSketch reads your actual code and renders the diagram automatically, so your documentation stays in sync with what is deployed.</p>
+                    <p>The tool supports 25+ AWS resource types — VPCs, subnets, EC2 instances, RDS databases, S3 buckets, load balancers, Lambda functions, EKS clusters, and more — plus Azure resources including VNets, AKS, and Storage Accounts. Detected relationships between resources are drawn as edges, and resources are grouped by category so the diagram is readable without extra layout work.</p>
+                    <p>Diagrams export as PNG for documentation, SVG for vector editing, or draw.io XML for further customization. A shareable URL encodes your code in the fragment so you can send a link directly to a colleague without any server-side storage.</p>
+                </div>
+                <div class="what-is-aside">
+                    <div class="what-is-stat"><span class="stat-num">25+</span><span class="stat-label">AWS &amp; Azure resource types</span></div>
+                    <div class="what-is-stat"><span class="stat-num">0</span><span class="stat-label">Data sent to any server</span></div>
+                    <div class="what-is-stat"><span class="stat-num">3</span><span class="stat-label">Export formats: PNG, SVG, draw.io</span></div>
+                    <div class="what-is-stat"><span class="stat-num">Free</span><span class="stat-label">No signup, no limits, open source</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <div class="workspace" id="tool">
         <div class="editor-panel">
             <div class="panel-header">
@@ -1098,8 +1174,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         <div class="footer-inner">
             <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra" style="color:var(--accent);text-decoration:none">Raghvendra Pandey</a></p>
             <ul class="footer-links">
-                <li><a href="blog/index.html">Blog</a></li>
-                <li><a href="about.html">About</a></li>
+                <li><a href="blog/index.html">Read the Blog</a></li>
+                <li><a href="about.html">About InfraSketch</a></li>
                 <li><a href="contact.html">Contact</a></li>
                 <li><a href="privacy.html">Privacy</a></li>
                 <li><a href="terms.html">Terms</a></li>
