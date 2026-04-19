@@ -131,7 +131,7 @@
 
         .hero p {
             font-size: 17px;
-            color: var(--text-muted);
+            color: #a8b0d1;
             max-width: 600px;
             margin: 0 auto;
             line-height: 1.7;
@@ -318,18 +318,24 @@
         }
 
         .btn-export {
-            padding: 6px 14px;
-            background: transparent;
-            color: var(--text-muted);
+            padding: 8px 16px;
+            background: var(--bg-surface);
+            color: var(--text);
             border: 1px solid var(--border);
             border-radius: 6px;
-            font-size: 11px;
-            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 500;
+            font-family: var(--sans);
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-export:hover {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+        }
 
         /* Diagram SVG area */
         #diagram-svg {
