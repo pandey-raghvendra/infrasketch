@@ -804,8 +804,8 @@
 
     <section class="hero">
         <div class="badge">FREE &middot; NO SIGNUP &middot; NO CREDENTIALS</div>
-        <h1>Paste Terraform.<br><span class="hl">Get architecture diagrams.</span></h1>
-        <p>Instantly visualize your infrastructure. Paste your Terraform HCL or docker-compose file — get a clean, exportable architecture diagram in seconds.</p>
+        <h1>Paste IaC code.<br><span class="hl">Get architecture diagrams.</span></h1>
+        <p>Visualize AWS and Azure infrastructure instantly. Paste Terraform HCL, a <code style="font-family:var(--mono);font-size:0.9em;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">terraform show -json</code> plan, or a docker-compose file — get a clean, exportable diagram in seconds.</p>
     </section>
 
     <div class="workspace" id="tool">
@@ -903,19 +903,19 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <div class="step">
                 <div class="step-number">STEP 01</div>
                 <h3>Paste your IaC code</h3>
-                <p>Copy your Terraform HCL or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and modules.</p>
+                <p>Paste Terraform HCL, the output of <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">terraform show -json tfplan</code>, or a docker-compose.yml. No reformatting needed — InfraSketch auto-detects the format.</p>
                 <div class="step-arrow">&#8250;</div>
             </div>
             <div class="step">
                 <div class="step-number">STEP 02</div>
                 <h3>Auto-detect architecture</h3>
-                <p>The parser reads VPC boundaries, subnet membership (<code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code>, <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_ids</code>), and resource references to build a containment graph — separating structural wiring from actual traffic flow.</p>
+                <p>The parser resolves VPC / VNet boundaries, subnet membership, and resource references for AWS and Azure — separating structural wiring from actual traffic flow connections.</p>
                 <div class="step-arrow">&#8250;</div>
             </div>
             <div class="step">
                 <div class="step-number">STEP 03</div>
                 <h3>Export and share</h3>
-                <p>Download as <strong>PNG</strong> for presentations, <strong>SVG</strong> for docs and READMEs, or <strong>draw.io XML</strong> to keep editing in diagrams.net. All exports are client-side — nothing is uploaded.</p>
+                <p>Download as <strong>PNG</strong>, <strong>SVG</strong>, or <strong>draw.io XML</strong>. Hit <strong>Share</strong> to copy a URL that encodes the full diagram state — anyone with the link sees the same diagram instantly.</p>
             </div>
         </div>
     </section>
@@ -923,7 +923,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
     <section class="features" id="features">
         <div class="features-header">
             <h2>Everything you need</h2>
-            <p>Built for engineers who want diagrams without the overhead of visual tools.</p>
+            <p>Built for engineers who want AWS and Azure diagrams without visual tools or cloud credentials.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#9889;</div>
@@ -932,8 +932,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#127912;</div>
-            <h3>Official AWS icons</h3>
-            <p>Generates diagrams using proper AWS architecture icons. Professional enough for documentation and presentations.</p>
+            <h3>AWS + Azure icons</h3>
+            <p>Official AWS architecture icons and Microsoft Azure service icons for 50+ resource types across both providers.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#128230;</div>
@@ -941,19 +941,19 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <p>Download as PNG or SVG for docs and slides, or export draw.io XML to keep editing the diagram in diagrams.net.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#128272;</div>
-            <h3>100% private</h3>
-            <p>Your code never leaves your browser. No server processing, no storage, no telemetry. Fully client-side.</p>
+            <div class="feature-icon">&#128279;</div>
+            <h3>Shareable URLs</h3>
+            <p>Click <strong>Share</strong> to encode the diagram state into the URL hash. Send the link — recipients see your exact diagram without any server involved.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#128203;</div>
-            <h3>VPC containment layout</h3>
-            <p>Understands that <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">vpc_id</code> and <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code> are structural — renders subnets as nested boxes inside the VPC, not as arrows.</p>
+            <h3>Terraform plan JSON</h3>
+            <p>Run <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">terraform show -json tfplan</code> and paste the output directly. Connection accuracy is higher than HCL parsing because plan JSON contains resolved resource references.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">&#128161;</div>
-            <h3>Clean connection routing</h3>
-            <p>Skips structural wiring references and only draws meaningful flow connections — no spaghetti arrows from every Terraform resource reference.</p>
+            <h3>VPC / VNet containment</h3>
+            <p>Renders subnets nested inside VPCs and VNets. Supports both <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">vpc_id</code> (AWS) and <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">virtual_network_name</code> (Azure).</p>
         </div>
     </section>
 

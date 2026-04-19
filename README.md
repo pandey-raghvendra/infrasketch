@@ -1,100 +1,137 @@
 # InfraSketch
 
-InfraSketch turns infrastructure code into clean architecture diagrams in the browser.
+InfraSketch turns infrastructure code into clean architecture diagrams in the browser — no login, no backend, no cloud credentials required.
 
-Paste Terraform HCL or a `docker-compose.yml`, generate a visual diagram, then export it as PNG, SVG, or draw.io XML. The tool is free, open source, and designed for quick architecture reviews, documentation, and README diagrams without connecting to a cloud account.
+Paste Terraform HCL, a `terraform show -json` plan, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
 
 Live site: https://infrasketch.cloud
 
-## Why InfraSketch?
-
-Infrastructure as code already describes the system, but it is not always easy to scan during reviews, onboarding, or incident discussions. InfraSketch gives you a quick visual layer over that code:
-
-- No cloud credentials required
-- No signup or backend processing
-- Runs as a static site
-- Uses AWS-style architecture icons
-- Groups VPCs, subnets, security resources, messaging resources, and application resources
-- Exports diagrams for docs, slides, and diagrams.net editing
-
 ## Features
 
-- Terraform HCL resource detection for common AWS services
-- Docker Compose parsing via **js-yaml** (full YAML spec support)
-- VPC and subnet containment layout
-- Relationship detection from resource references
-- Client-side SVG rendering
-- PNG export
-- SVG export
-- draw.io / diagrams.net XML export
-- Multiple built-in examples: production AWS stack, multi-module Terraform, serverless pipeline, and microservices Docker Compose
+**Input formats**
+- Terraform HCL (`.tf` files, paste one or many concatenated)
+- Terraform plan JSON (`terraform plan -out=tfplan && terraform show -json tfplan`)
+- Docker Compose YAML (`docker-compose.yml`), parsed with full YAML spec support via **js-yaml**
+
+**Cloud providers**
+- AWS — 30+ resource types with official architecture icons
+- Azure — 22 `azurerm_*` resource types with official Microsoft service icons
+
+**Diagram**
+- VPC / VNet and subnet containment boxes with colour-coded borders
+- Zone overlays: Internet, Messaging, Security
+- Relationship arrows inferred from resource attribute references
+- Scroll-wheel zoom and click-drag pan
+- `+` / `⊡` / `−` zoom controls
+
+**Export**
+- PNG (2× retina scale)
+- SVG (icons inlined as base64 for portability)
+- draw.io / diagrams.net XML
+
+**Other**
+- Shareable URL — click **Share** to encode the current editor state as a base64 URL hash and copy the link to clipboard; recipients land directly on the rendered diagram
+- Resource summary table — collapsible table below the diagram listing every resource with name, type, and category
+- Stats bar — counts by category (VPC/Network, Compute, Database, Storage, Load Balancer)
+- Built-in examples for AWS, Azure, multi-module Terraform, serverless pipeline, and Docker microservices
 - Responsive mobile navigation
-- Static marketing, legal, and blog pages for GitHub Pages hosting
 
-## Supported AWS Resources
+## Supported Resources
 
-InfraSketch currently recognizes these Terraform resource families:
+### AWS
 
-- Networking: VPC, subnet, internet gateway, NAT gateway, elastic IP
-- Compute: EC2, launch template, Auto Scaling group, EKS, ECS, Lambda, ECR
-- Data: RDS, DynamoDB, ElastiCache
-- Storage: S3
-- Load balancing: ALB, NLB, target groups
-- Security and identity: security groups, IAM roles, KMS, WAF
-- Edge and DNS: CloudFront, Route 53
-- Messaging and observability: SQS, SNS, CloudWatch
+| Category | Terraform types |
+|---|---|
+| Networking | `aws_vpc`, `aws_default_vpc`, `aws_subnet`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_eip` |
+| Compute | `aws_instance`, `aws_launch_template`, `aws_autoscaling_group`, `aws_eks_cluster`, `aws_ecs_cluster`, `aws_ecs_service`, `aws_lambda_function`, `aws_ecr_repository` |
+| Data | `aws_db_instance`, `aws_rds_cluster`, `aws_dynamodb_table`, `aws_elasticache_cluster`, `aws_elasticache_replication_group` |
+| Storage | `aws_s3_bucket` |
+| Load balancing | `aws_lb`, `aws_alb`, `aws_lb_target_group` |
+| Security | `aws_security_group`, `aws_iam_role`, `aws_kms_key`, `aws_wafv2_web_acl` |
+| Edge / DNS | `aws_cloudfront_distribution`, `aws_route53_record`, `aws_route53_zone` |
+| Messaging | `aws_sqs_queue`, `aws_sns_topic` |
+| Observability | `aws_cloudwatch_metric_alarm`, `aws_cloudwatch_log_group` |
 
-CloudFormation, Kubernetes manifests, Azure, and GCP are roadmap items rather than complete features today.
+### Azure
+
+| Category | Terraform types |
+|---|---|
+| Networking | `azurerm_virtual_network`, `azurerm_subnet`, `azurerm_network_security_group`, `azurerm_application_gateway`, `azurerm_lb`, `azurerm_frontdoor`, `azurerm_traffic_manager_profile` |
+| Compute | `azurerm_virtual_machine`, `azurerm_virtual_machine_scale_set`, `azurerm_kubernetes_cluster`, `azurerm_container_group`, `azurerm_linux_function_app`, `azurerm_windows_function_app`, `azurerm_linux_web_app`, `azurerm_windows_web_app` |
+| Data | `azurerm_mssql_server`, `azurerm_cosmosdb_account`, `azurerm_postgresql_flexible_server`, `azurerm_redis_cache`, `azurerm_storage_account` |
+| Messaging | `azurerm_servicebus_namespace`, `azurerm_eventhub_namespace` |
+| Security | `azurerm_key_vault` |
+| Observability | `azurerm_monitor_action_group`, `azurerm_application_insights` |
+| DNS | `azurerm_dns_zone` |
 
 ## How It Works
 
 1. The browser reads the pasted infrastructure text.
-2. JavaScript parses known resource declarations and references.
-3. Resources are classified into visual groups such as network, compute, database, storage, security, and messaging.
-4. The layout engine places resources into a generated SVG diagram.
-5. Export buttons serialize the current diagram to PNG, SVG, or draw.io XML.
-
-The HTML shell lives in `index.html`. The parser, layout, renderer, export logic, and app bootstrap live in `js/`. Brand assets live in `assets/`, architecture icon assets in `icons/`, and vendored third-party scripts in `lib/`.
+2. The parser classifies each resource into a category and extracts containment (`vpc_id`, `virtual_network_name`, `subnet_id`, `vnet_subnet_id`) and connection references.
+3. For Terraform plan JSON the parser reads `resource_changes[].change.after` for resource data and `configuration.root_module.resources[].expressions[].references` for relationships — so connections are resolved even when `after` values show `"(known after apply)"`.
+4. The layout engine positions resources into zones and builds container boxes for VPCs and subnets.
+5. The SVG renderer draws the diagram into a `<g class="zoom-layer">` wrapper so zoom and pan work without affecting exports.
+6. Export buttons serialize the current SVG DOM (icons inlined) or generate draw.io XML from the parsed model.
 
 ## Project Structure
 
 ```text
 .
-|-- index.html          # Main InfraSketch app
-|-- js/                 # Parser, layout, renderer, and export modules
-|-- lib/                # Vendored third-party scripts (js-yaml)
-|-- tests/              # Vitest unit and visual regression tests
-|-- assets/             # Brand logo assets
-|-- icons/              # Architecture icon SVG assets
-|-- blog/               # Static blog pages
-|-- about.html          # About page
-|-- contact.html        # Contact page
-|-- privacy.html        # Privacy policy
-|-- terms.html          # Terms of use
-|-- sitemap.xml         # Search engine sitemap
-|-- package.json        # npm scripts and dependencies (dev/test only)
-|-- vitest.config.js    # Test runner configuration
-|-- CNAME               # GitHub Pages custom domain
-`-- LICENSE             # MIT license
+├── index.html          # Main app
+├── js/
+│   ├── parser.js       # Terraform HCL, plan JSON, and Docker Compose parsers
+│   ├── layout.js       # Zone layout and metrics
+│   ├── renderer.js     # SVG diagram renderer
+│   ├── exporters.js    # PNG / SVG / draw.io export
+│   ├── constants.js    # Resource categories, icon paths, layout config
+│   └── main.js         # UI bootstrap, zoom controller, share URL
+├── lib/
+│   └── js-yaml.min.js  # Vendored YAML parser (UMD build, no build step needed)
+├── tests/
+│   ├── parser.test.js  # Parser unit tests (60 tests)
+│   ├── exporters.test.js
+│   ├── visual.test.js  # draw.io snapshot regression tests
+│   └── setup.js
+├── icons/              # AWS + Azure SVG icons
+├── assets/             # Brand assets
+├── azure_icons/        # Source Microsoft Azure icon pack
+├── blog/               # Static blog pages
+├── about.html
+├── contact.html
+├── privacy.html
+├── terms.html
+├── sitemap.xml
+├── package.json
+├── vitest.config.js
+├── CNAME
+└── LICENSE
 ```
+
+## Terraform Plan JSON Workflow
+
+```bash
+terraform plan -out=tfplan
+terraform show -json tfplan
+```
+
+Copy the JSON output and paste it directly into the **Terraform** tab. InfraSketch auto-detects the `{` prefix and switches to the plan parser. This approach has better connection accuracy than pasting HCL because Terraform's `expressions[].references` arrays contain resolved resource addresses even when attribute values are `"(known after apply)"`.
+
+Root-module resources only. Module resources (`module.*`) are skipped.
+
+## Shareable URLs
+
+Click the **Share** button (top-right of the diagram panel) to encode the active tab and editor content as a base64 URL hash and copy the link to clipboard. Opening the link auto-populates the editor and generates the diagram immediately. No server involved — everything is in the URL fragment.
 
 ## Run Locally
 
-Because InfraSketch is a static site, there is no build step. The app uses JavaScript modules, so serve the folder locally instead of opening `index.html` from the filesystem:
+No build step required. Serve the folder over HTTP so browser module loading and icon inlining work correctly:
 
 ```bash
 python3 -m http.server 8000
-```
-
-Then visit:
-
-```text
-http://localhost:8000
+# then open http://localhost:8000
 ```
 
 ## Tests
-
-Install dependencies once, then run the test suite:
 
 ```bash
 npm install
@@ -103,38 +140,24 @@ npm test
 
 The suite covers:
 
-- **Parser unit tests** — Terraform resource detection, VPC/subnet containment, ALB vs NLB classification, connection inference, and Docker Compose `depends_on` in both array and map (condition) forms.
-- **Exporter unit tests** — draw.io XML structure, cell IDs, edge generation, XML escaping, and geometry rounding.
-- **Visual regression snapshots** — draw.io XML output for several canonical inputs is snapshot-tested. Run `npx vitest run -u` to update baselines after an intentional layout change.
+- **Parser unit tests** — Terraform HCL resource detection, VPC/subnet containment, ALB/NLB classification, connection inference, Azure `azurerm_*` categories, Terraform plan JSON parsing (resource extraction, delete skipping, module skipping, nested block expressions, vpcOf/subnetOf/connections), Docker Compose `depends_on` in array and map forms.
+- **Exporter unit tests** — draw.io XML structure, cell IDs, edge generation, XML escaping, geometry rounding.
+- **Visual regression snapshots** — draw.io XML output for canonical inputs is snapshot-tested. Run `npx vitest run -u` to update baselines after an intentional layout change.
 
 ## Deployment
 
-This repository is ready for static hosting. It can be deployed with GitHub Pages, Netlify, Vercel, Cloudflare Pages, or any plain static web server.
+Static hosting — GitHub Pages, Netlify, Vercel, Cloudflare Pages, or any plain HTTP server. `node_modules/` is gitignored. The only runtime dependency (`js-yaml`) is vendored as `lib/js-yaml.min.js`.
 
-For GitHub Pages with the included `CNAME`, configure the repository pages settings to publish from the branch and folder that contain `index.html`.
+## Limitations
 
-`node_modules/` is excluded from the repository via `.gitignore`. The only runtime dependency (`js-yaml`) is vendored as `lib/js-yaml.min.js` so the app works without any build step.
-
-## Current Limitations
-
-InfraSketch is intentionally lightweight, but that also means the Terraform parser is not a full HCL engine.
-
-- Terraform parsing is regex-based and does not evaluate modules, variables, `count`, `for_each`, locals, or dynamic blocks. The multi-file and multi-module examples show how to work around this by pasting concatenated resource blocks.
-- Relationships are inferred from simple resource references and may miss complex expressions.
-- Local development should use a small static server because browser module loading and icon inlining are more reliable over HTTP than `file://`.
+- The HCL parser is regex-based and does not evaluate variables, `count`, `for_each`, locals, dynamic blocks, or cross-file references. Use the plan JSON workflow for accurate multi-file results.
+- Terraform module resources are not yet expanded; only root-module resources appear.
+- The plan JSON parser handles root-module resources only.
 
 ## Contributing
 
-Issues and pull requests are welcome. Good contributions include:
-
-- New supported AWS resource types
-- Better parsing for Terraform relationships
-- Layout and export fixes
-- Accessibility improvements
-- Documentation and examples
-
-When reporting a parser issue, include a small sanitized Terraform or Compose snippet that reproduces the problem.
+Issues and pull requests are welcome. When reporting a parser bug, include a small sanitized Terraform snippet or plan JSON excerpt that reproduces the problem.
 
 ## License
 
-InfraSketch is released under the MIT License. See [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
