@@ -193,7 +193,10 @@ export function renderDiagram(parsed, svg) {
     svg.style.display = 'block';
 
     appendDefs(svg);
-    append(svg, svgElement('rect', {
+
+    const layer = append(svg, svgElement('g', { class: 'zoom-layer' }));
+
+    append(layer, svgElement('rect', {
         width: metrics.svgW,
         height: metrics.svgH,
         fill: '#f0f2f7',
@@ -202,7 +205,7 @@ export function renderDiagram(parsed, svg) {
 
     if (groups.intRes.length) {
         const zoneY = config.CP - 8;
-        append(svg, svgElement('rect', {
+        append(layer, svgElement('rect', {
             x: metrics.absX - 12,
             y: zoneY,
             width: metrics.mainW + 24,
@@ -214,7 +217,7 @@ export function renderDiagram(parsed, svg) {
             'stroke-dasharray': '5 3',
             opacity: 0.85,
         }));
-        appendZoneLabel(svg, { x: metrics.absX + 6, y: zoneY + 15, fill: '#64748b' }, 'INTERNET');
+        appendZoneLabel(layer, { x: metrics.absX + 6, y: zoneY + 15, fill: '#64748b' }, 'INTERNET');
     }
 
     if (metrics.hasVpc) {
@@ -225,7 +228,7 @@ export function renderDiagram(parsed, svg) {
         const labelColor = isAzure ? '#005A9E' : '#b45309';
         const containerLabel = isAzure ? `VNet — ${vpc.name}` : `VPC — ${vpc.name}`;
 
-        append(svg, svgElement('rect', {
+        append(layer, svgElement('rect', {
             x: metrics.vpcX,
             y: metrics.vpcY,
             width: metrics.vpcBoxW,
@@ -235,7 +238,7 @@ export function renderDiagram(parsed, svg) {
             stroke: borderColor,
             'stroke-width': 2,
         }));
-        append(svg, svgElement('rect', {
+        append(layer, svgElement('rect', {
             x: metrics.vpcX,
             y: metrics.vpcY,
             width: metrics.vpcBoxW,
@@ -245,14 +248,14 @@ export function renderDiagram(parsed, svg) {
             stroke: borderColor,
             'stroke-width': 2,
         }));
-        append(svg, svgElement('rect', {
+        append(layer, svgElement('rect', {
             x: metrics.vpcX,
             y: metrics.vpcY + config.VPC_LBL - 4,
             width: metrics.vpcBoxW,
             height: 4,
             fill: headerFill,
         }));
-        append(svg, svgElement('text', {
+        append(layer, svgElement('text', {
             x: metrics.vpcX + 14,
             y: metrics.vpcY + 22,
             'font-family': 'DM Sans,sans-serif',
@@ -266,7 +269,7 @@ export function renderDiagram(parsed, svg) {
         const pos = positions[subnet.id];
         if (!pos) continue;
 
-        append(svg, svgElement('rect', {
+        append(layer, svgElement('rect', {
             x: pos.x,
             y: pos.y,
             width: pos.w,
@@ -277,7 +280,7 @@ export function renderDiagram(parsed, svg) {
             'stroke-width': 1.5,
             'stroke-dasharray': '5 3',
         }));
-        append(svg, svgElement('text', {
+        append(layer, svgElement('text', {
             x: pos.x + 8,
             y: pos.y + 17,
             'font-family': 'DM Sans,sans-serif',
@@ -289,7 +292,7 @@ export function renderDiagram(parsed, svg) {
 
     if (groups.msgRes.length) {
         const msgY = config.CP + metrics.mainH - metrics.msgZoneH;
-        append(svg, svgElement('rect', {
+        append(layer, svgElement('rect', {
             x: metrics.absX - 12,
             y: msgY - 4,
             width: metrics.mainW + 24,
@@ -301,11 +304,11 @@ export function renderDiagram(parsed, svg) {
             'stroke-dasharray': '5 3',
             opacity: 0.85,
         }));
-        appendZoneLabel(svg, { x: metrics.absX + 6, y: msgY + 12, fill: '#e07a5f' }, 'MESSAGING');
+        appendZoneLabel(layer, { x: metrics.absX + 6, y: msgY + 12, fill: '#e07a5f' }, 'MESSAGING');
     }
 
     if (groups.secRes.length) {
-        append(svg, svgElement('rect', {
+        append(layer, svgElement('rect', {
             x: metrics.secX - 12,
             y: metrics.secStartY - 28,
             width: config.NW + 24,
@@ -316,7 +319,7 @@ export function renderDiagram(parsed, svg) {
             'stroke-width': 1.5,
             'stroke-dasharray': '5 3',
         }));
-        appendZoneLabel(svg, {
+        appendZoneLabel(layer, {
             x: metrics.secX,
             y: metrics.secStartY - 12,
             fill: '#8338ec',
@@ -325,13 +328,13 @@ export function renderDiagram(parsed, svg) {
     }
 
     for (const conn of layout.connections) {
-        appendConnection(svg, conn, layout);
+        appendConnection(layer, conn, layout);
     }
 
     for (const resource of layout.resources) {
         const pos = positions[resource.id];
         if (!pos || pos.isSubnet) continue;
-        appendResourceNode(svg, resource, pos, config);
+        appendResourceNode(layer, resource, pos, config);
     }
 
     return layout;
