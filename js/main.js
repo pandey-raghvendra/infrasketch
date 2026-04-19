@@ -697,7 +697,11 @@ const diagramSvg = document.getElementById('diagram-svg');
 const statsBar = document.getElementById('stats-bar');
 const shareButton = document.getElementById('btn-share');
 const zoomControls = document.getElementById('zoom-controls');
+const resourceTablePanel = document.getElementById('resource-table-panel');
+const resourceTableBody = document.getElementById('resource-table-body');
+const toggleTableButton = document.getElementById('btn-toggle-table');
 let lastParsed = null;
+let tableOpen = false;
 
 // ── Zoom controller ──────────────────────────────────────────────────────────
 
@@ -821,10 +825,27 @@ function updateStats(resources) {
     statsBar.style.display = 'flex';
 }
 
+function populateResourceTable(resources) {
+    resourceTableBody.innerHTML = '';
+    resources.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="col-num">${i + 1}</td>
+            <td>${r.name}</td>
+            <td class="col-type">${r.type}</td>
+            <td><span class="cat-badge"><span class="cat-dot" style="background:${r.color}"></span>${r.category}</span></td>
+        `;
+        resourceTableBody.appendChild(tr);
+    });
+}
+
 function hideDiagram() {
     diagramSvg.style.display = 'none';
     statsBar.style.display = 'none';
     zoomControls.style.display = 'none';
+    resourceTablePanel.style.display = 'none';
+    tableOpen = false;
+    toggleTableButton.textContent = 'Resources ▾';
 }
 
 function parseCode(code) {
@@ -894,6 +915,7 @@ generateButton.addEventListener('click', () => {
             resetZoom();
             zoomControls.style.display = 'flex';
             updateStats(parsed.resources);
+            populateResourceTable(parsed.resources);
         } catch (error) {
             loading.classList.remove('active');
             placeholder.style.display = 'block';
@@ -972,5 +994,11 @@ shareButton.addEventListener('click', () => {
 document.getElementById('btn-zoom-in').addEventListener('click', () => stepZoom(1.25));
 document.getElementById('btn-zoom-out').addEventListener('click', () => stepZoom(1 / 1.25));
 document.getElementById('btn-zoom-reset').addEventListener('click', resetZoom);
+
+toggleTableButton.addEventListener('click', () => {
+    tableOpen = !tableOpen;
+    resourceTablePanel.style.display = tableOpen ? 'block' : 'none';
+    toggleTableButton.textContent = tableOpen ? 'Resources ▴' : 'Resources ▾';
+});
 
 loadFromHash();

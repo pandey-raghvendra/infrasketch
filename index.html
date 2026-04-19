@@ -409,6 +409,7 @@
             border-top: 1px solid var(--border);
             display: flex;
             gap: 16px;
+            align-items: center;
             font-size: 11px;
             font-family: var(--mono);
             color: var(--text-muted);
@@ -422,6 +423,67 @@
         .stat-dot.db { background: var(--red); }
         .stat-dot.storage { background: var(--yellow); }
         .stat-dot.lb { background: var(--accent); }
+
+        .btn-toggle-table {
+            margin-left: auto;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-toggle-table:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Resource table */
+        .resource-table-panel {
+            border-top: 1px solid var(--border);
+            max-height: 220px;
+            overflow-y: auto;
+            background: var(--bg-surface);
+        }
+        .resource-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            font-family: var(--mono);
+        }
+        .resource-table thead th {
+            position: sticky;
+            top: 0;
+            padding: 6px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .resource-table tbody tr:hover { background: rgba(59,130,246,0.04); }
+        .resource-table td {
+            padding: 5px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .resource-table td.col-num { color: var(--text-muted); width: 32px; }
+        .resource-table td.col-type { color: var(--text-muted); }
+        .resource-table .cat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .resource-table .cat-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
 
         /* How it works */
         .how-it-works {
@@ -814,6 +876,20 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="stat-item"><span class="stat-dot db"></span> <span id="stat-db">0</span> Database</div>
                 <div class="stat-item"><span class="stat-dot storage"></span> <span id="stat-storage">0</span> Storage</div>
                 <div class="stat-item"><span class="stat-dot lb"></span> <span id="stat-lb">0</span> Load Balancer</div>
+                <button class="btn-toggle-table" id="btn-toggle-table">Resources ▾</button>
+            </div>
+            <div class="resource-table-panel" id="resource-table-panel" style="display:none">
+                <table class="resource-table">
+                    <thead>
+                        <tr>
+                            <th class="col-num">#</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resource-table-body"></tbody>
+                </table>
             </div>
         </div>
     </div>
