@@ -1,6 +1,6 @@
 import { exportDrawio, exportPng, exportSvg } from './exporters.js';
 import { computeStats } from './layout.js';
-import { parseDockerCompose, parseTerraform } from './parser.js';
+import { parseDockerCompose, parseTerraform, parseTerraformPlan } from './parser.js';
 import { renderDiagram } from './renderer.js';
 
 const SAMPLE_TERRAFORM = `# Production AWS Infrastructure
@@ -653,7 +653,7 @@ const EXTRA_SAMPLES = {
 };
 
 const PLACEHOLDERS = {
-    terraform: `# Paste your Terraform code here...
+    terraform: `# Paste Terraform HCL  — or  terraform show -json tfplan output
 
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -849,9 +849,12 @@ function hideDiagram() {
 }
 
 function parseCode(code) {
-    return activeInputType() === 'docker'
-        ? parseDockerCompose(code)
-        : parseTerraform(code);
+    if (activeInputType() === 'docker') return parseDockerCompose(code);
+    if (code.trimStart().startsWith('{')) {
+        const planResult = parseTerraformPlan(code);
+        if (planResult !== null) return planResult;
+    }
+    return parseTerraform(code);
 }
 
 function populateExampleSelect(type) {

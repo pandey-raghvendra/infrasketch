@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseTerraform, parseDockerCompose } from '../js/parser.js';
+import { parseTerraform, parseDockerCompose, parseTerraformPlan } from '../js/parser.js';
 
 // ─── parseTerraform ──────────────────────────────────────────────────────────
 
@@ -405,5 +405,136 @@ resource "azurerm_kubernetes_cluster" "aks" {
 }`;
         const { connections } = parseTerraform(code);
         expect(connections).toEqual([]);
+    });
+});
+
+// ─── parseTerraformPlan ───────────────────────────────────────────────────────
+
+function makePlan(resourceChanges, configResources = []) {
+    return JSON.stringify({
+        format_version: '1.1',
+        resource_changes: resourceChanges,
+        configuration: { root_module: { resources: configResources } },
+    });
+}
+
+describe('parseTerraformPlan', () => {
+    it('returns null for non-JSON input', () => {
+        expect(parseTerraformPlan('not json')).toBeNull();
+    });
+
+    it('returns null for JSON without resource_changes', () => {
+        expect(parseTerraformPlan(JSON.stringify({ foo: 'bar' }))).toBeNull();
+    });
+
+    it('parses a single EC2 instance from plan', () => {
+        const plan = makePlan([{
+            address: 'aws_instance.web', type: 'aws_instance', name: 'web',
+            change: { actions: ['create'], before: null, after: { instance_type: 't3.medium' } },
+        }]);
+        const { resources } = parseTerraformPlan(plan);
+        expect(resources).toHaveLength(1);
+        expect(resources[0]).toMatchObject({ id: 'aws_instance.web', type: 'aws_instance', name: 'web', category: 'instance' });
+    });
+
+    it('skips delete-only changes', () => {
+        const plan = makePlan([{
+            address: 'aws_instance.old', type: 'aws_instance', name: 'old',
+            change: { actions: ['delete'], before: { instance_type: 't2.micro' }, after: null },
+        }]);
+        expect(parseTerraformPlan(plan).resources).toEqual([]);
+    });
+
+    it('skips module resources', () => {
+        const plan = makePlan([{
+            address: 'module.vpc.aws_vpc.main', type: 'aws_vpc', name: 'main',
+            change: { actions: ['create'], before: null, after: {} },
+        }]);
+        expect(parseTerraformPlan(plan).resources).toEqual([]);
+    });
+
+    it('classifies aws_lb as alb or nlb from after block', () => {
+        const alb = makePlan([{ address: 'aws_lb.app', type: 'aws_lb', name: 'app', change: { actions: ['create'], before: null, after: { load_balancer_type: 'application' } } }]);
+        const nlb = makePlan([{ address: 'aws_lb.net', type: 'aws_lb', name: 'net', change: { actions: ['create'], before: null, after: { load_balancer_type: 'network' } } }]);
+        expect(parseTerraformPlan(alb).resources[0].category).toBe('alb');
+        expect(parseTerraformPlan(nlb).resources[0].category).toBe('nlb');
+    });
+
+    it('maps vpcOf from vpc_id expression references', () => {
+        const plan = makePlan(
+            [
+                { address: 'aws_vpc.main', type: 'aws_vpc', name: 'main', change: { actions: ['create'], before: null, after: {} } },
+                { address: 'aws_subnet.pub', type: 'aws_subnet', name: 'pub', change: { actions: ['create'], before: null, after: {} } },
+            ],
+            [
+                { address: 'aws_vpc.main', expressions: {} },
+                { address: 'aws_subnet.pub', expressions: { vpc_id: { references: ['aws_vpc.main.id', 'aws_vpc.main'] } } },
+            ],
+        );
+        expect(parseTerraformPlan(plan).vpcOf['aws_subnet.pub']).toBe('aws_vpc.main');
+    });
+
+    it('maps subnetOf from subnet_id expression references', () => {
+        const plan = makePlan(
+            [
+                { address: 'aws_subnet.priv', type: 'aws_subnet', name: 'priv', change: { actions: ['create'], before: null, after: {} } },
+                { address: 'aws_instance.web', type: 'aws_instance', name: 'web', change: { actions: ['create'], before: null, after: {} } },
+            ],
+            [
+                { address: 'aws_subnet.priv', expressions: {} },
+                { address: 'aws_instance.web', expressions: { subnet_id: { references: ['aws_subnet.priv.id', 'aws_subnet.priv'] } } },
+            ],
+        );
+        expect(parseTerraformPlan(plan).subnetOf['aws_instance.web']).toBe('aws_subnet.priv');
+    });
+
+    it('builds connections from non-structural expression references', () => {
+        const plan = makePlan(
+            [
+                { address: 'aws_sqs_queue.q', type: 'aws_sqs_queue', name: 'q', change: { actions: ['create'], before: null, after: {} } },
+                { address: 'aws_lambda_function.fn', type: 'aws_lambda_function', name: 'fn', change: { actions: ['create'], before: null, after: {} } },
+            ],
+            [
+                { address: 'aws_sqs_queue.q', expressions: {} },
+                { address: 'aws_lambda_function.fn', expressions: {
+                    event_source_arn: { references: ['aws_sqs_queue.q.arn', 'aws_sqs_queue.q'] },
+                } },
+            ],
+        );
+        const { connections } = parseTerraformPlan(plan);
+        expect(connections).toContainEqual({ from: 'aws_sqs_queue.q', to: 'aws_lambda_function.fn' });
+    });
+
+    it('does not create connections for skipped attributes', () => {
+        const plan = makePlan(
+            [
+                { address: 'aws_vpc.main', type: 'aws_vpc', name: 'main', change: { actions: ['create'], before: null, after: {} } },
+                { address: 'aws_eks_cluster.k8s', type: 'aws_eks_cluster', name: 'k8s', change: { actions: ['create'], before: null, after: {} } },
+            ],
+            [
+                { address: 'aws_vpc.main', expressions: {} },
+                { address: 'aws_eks_cluster.k8s', expressions: {
+                    vpc_id: { references: ['aws_vpc.main'] },
+                } },
+            ],
+        );
+        const { connections } = parseTerraformPlan(plan);
+        expect(connections).toEqual([]);
+    });
+
+    it('handles nested block expressions (e.g. default_node_pool.vnet_subnet_id)', () => {
+        const plan = makePlan(
+            [
+                { address: 'azurerm_subnet.priv', type: 'azurerm_subnet', name: 'priv', change: { actions: ['create'], before: null, after: {} } },
+                { address: 'azurerm_kubernetes_cluster.aks', type: 'azurerm_kubernetes_cluster', name: 'aks', change: { actions: ['create'], before: null, after: {} } },
+            ],
+            [
+                { address: 'azurerm_subnet.priv', expressions: {} },
+                { address: 'azurerm_kubernetes_cluster.aks', expressions: {
+                    default_node_pool: [{ vnet_subnet_id: { references: ['azurerm_subnet.priv.id', 'azurerm_subnet.priv'] } }],
+                } },
+            ],
+        );
+        expect(parseTerraformPlan(plan).subnetOf['azurerm_kubernetes_cluster.aks']).toBe('azurerm_subnet.priv');
     });
 });
