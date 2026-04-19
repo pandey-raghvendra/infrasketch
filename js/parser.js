@@ -212,3 +212,106 @@ export function parseDockerCompose(code) {
 
     return { resources, connections, vpcOf: {}, subnetOf: {} };
 }
+
+// ─── parseTerraformPlan ───────────────────────────────────────────────────────
+
+function* iterExprRefs(exprs, prefix) {
+    if (!exprs || typeof exprs !== 'object') return;
+    if (Array.isArray(exprs)) {
+        for (const item of exprs) yield* iterExprRefs(item, prefix);
+        return;
+    }
+    if ('references' in exprs) {
+        yield { attr: prefix, refs: exprs.references };
+        return;
+    }
+    for (const [key, val] of Object.entries(exprs)) {
+        yield* iterExprRefs(val, prefix ? `${prefix}.${key}` : key);
+    }
+}
+
+function normalizeRef(ref) {
+    const parts = ref.split('.');
+    return parts.length >= 2 ? `${parts[0]}.${parts[1]}` : ref;
+}
+
+const PLAN_SKIP_ATTRS = new Set([
+    'vpc_id', 'subnet_id', 'subnet_ids', 'subnets', 'vnet_subnet_id',
+    'security_group_ids', 'security_groups', 'resource_group_name',
+    'virtual_network_name', 'location', 'address_space', 'address_prefixes',
+    'cidr_block', 'availability_zones', 'tags', 'allocation_id',
+    'cluster_name', 'db_subnet_group_name', 'target_group_arns',
+    'vpc_zone_identifier', 'role', 'assume_role_policy', 'source_arn',
+    'bucket', 'domain', 'master_username', 'master_password',
+    'password', 'username', 'engine', 'instance_class', 'node_type',
+    'runtime', 'handler', 'tenant_id', 'sku_name', 'capacity',
+]);
+
+export function parseTerraformPlan(jsonText) {
+    let plan;
+    try { plan = JSON.parse(jsonText); } catch { return null; }
+    if (!plan || !Array.isArray(plan.resource_changes)) return null;
+
+    const changes = plan.resource_changes.filter((c) => {
+        const actions = c.change?.actions || [];
+        return !actions.every((a) => a === 'delete') && !c.address.startsWith('module.');
+    });
+
+    const resources = [];
+    const supportedIds = new Set();
+
+    for (const change of changes) {
+        const { type, name } = change;
+        const after = change.change?.after || {};
+
+        let category;
+        if (type === 'aws_lb' || type === 'aws_alb') {
+            category = after.load_balancer_type === 'network' ? 'nlb' : 'alb';
+        } else {
+            category = categoryForTerraformBlock(type, '');
+        }
+        if (!category) continue;
+
+        const config = RESOURCE_CATEGORIES[category];
+        const id = terraformAddress(type, name);
+        resources.push({ id, type, name, category, label: config.label, color: config.color, icon: config.icon });
+        supportedIds.add(id);
+    }
+
+    const vpcOf = {};
+    const subnetOf = {};
+    const connections = [];
+    const seen = new Set();
+    const configResources = plan.configuration?.root_module?.resources || [];
+
+    for (const confRes of configResources) {
+        const addr = confRes.address;
+        if (!supportedIds.has(addr)) continue;
+
+        for (const { attr, refs } of iterExprRefs(confRes.expressions || {}, '')) {
+            const leaf = attr.split('.').pop();
+            for (const rawRef of refs) {
+                const ref = normalizeRef(rawRef);
+                if (!supportedIds.has(ref) || ref === addr) continue;
+
+                if (leaf === 'vpc_id' || leaf === 'virtual_network_name') {
+                    if (!vpcOf[addr]) vpcOf[addr] = ref;
+                    continue;
+                }
+                if (leaf === 'subnet_id' || leaf === 'subnet_ids' || leaf === 'vnet_subnet_id') {
+                    if (!subnetOf[addr]) subnetOf[addr] = ref;
+                    continue;
+                }
+                if (PLAN_SKIP_ATTRS.has(leaf)) continue;
+
+                const key = `${ref}->${addr}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    connections.push({ from: ref, to: addr });
+                }
+            }
+        }
+    }
+
+    return { resources, connections, vpcOf, subnetOf };
+}
