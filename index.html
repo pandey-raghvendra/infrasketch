@@ -606,9 +606,21 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .workspace { grid-template-columns: 1fr; }
+            .workspace {
+                grid-template-columns: 1fr;
+                margin: 16px 0;
+                border-radius: 12px;
+                min-height: auto;
+            }
             .editor-panel { border-right: none; border-bottom: 1px solid var(--border); }
-            .code-editor { min-height: 200px; }
+            .code-editor { min-height: 180px; padding: 12px; font-size: 12px; }
+            .diagram-canvas { padding: 16px; min-height: 320px; }
+            .panel-header { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+            .editor-actions { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+            .btn-sample { width: 100%; order: 2; }
+            .btn-generate { width: 100%; order: 1; justify-content: center; }
+            .export-actions { flex-wrap: wrap; }
+            .btn-export { flex: 1; min-width: 70px; text-align: center; }
             .features { grid-template-columns: 1fr; }
             .steps { grid-template-columns: 1fr; }
             .step { border-right: none; border-bottom: 1px solid var(--border); }
@@ -617,6 +629,20 @@
             .resources-grid { grid-template-columns: 1fr; }
             .nav-links { display: none; }
             .footer-inner { flex-direction: column; text-align: center; }
+            .hero { padding: 40px 0 24px; }
+            .hero h1 { font-size: 28px; }
+            .hero p { font-size: 15px; padding: 0 8px; }
+            .section-header h2 { font-size: 22px; }
+            .step { padding: 24px 20px; }
+            .feature-card { padding: 20px; }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0 12px; }
+            .hero h1 { font-size: 24px; }
+            .badge { font-size: 11px; padding: 5px 12px; }
+            .btn-generate, .btn-export, .btn-sample { font-size: 11px; padding: 8px 12px; }
+            .panel-title { font-size: 12px; }
         }
 
         /* Loading animation */
