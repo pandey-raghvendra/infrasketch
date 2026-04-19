@@ -691,6 +691,7 @@ services:
 const codeInput = document.getElementById('code-input');
 const generateButton = document.getElementById('btn-generate');
 const exampleSelect = document.getElementById('example-select');
+const btnLoadSample = document.getElementById('btn-load-sample');
 const placeholder = document.getElementById('placeholder');
 const loading = document.getElementById('loading');
 const diagramSvg = document.getElementById('diagram-svg');
@@ -875,6 +876,7 @@ function updateEditorForType(type, previousType = null) {
 
     codeInput.placeholder = PLACEHOLDERS[type];
     populateExampleSelect(type);
+    if (btnLoadSample) btnLoadSample.textContent = type === 'docker' ? 'Load Docker sample' : 'Load Terraform sample';
 
     if (isShowingSample || !currentText) {
         codeInput.value = '';
@@ -887,6 +889,17 @@ exampleSelect.addEventListener('change', () => {
     if (!key) return;
     const sample = EXTRA_SAMPLES[type]?.[key];
     if (sample) codeInput.value = sample.code;
+});
+
+// Load sample button - loads the first example for the current type
+btnLoadSample.addEventListener('click', () => {
+    const type = activeInputType();
+    const extras = EXTRA_SAMPLES[type] || {};
+    const firstKey = Object.keys(extras)[0];
+    if (firstKey) {
+        const sample = extras[firstKey];
+        codeInput.value = sample.code;
+    }
 });
 
 generateButton.addEventListener('click', () => {

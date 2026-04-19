@@ -373,6 +373,108 @@
         .stat-dot.storage { background: var(--yellow); }
         .stat-dot.lb { background: var(--accent); }
 
+        /* Example select dropdown */
+        .example-select {
+            padding: 7px 10px;
+            background: var(--bg-editor);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            outline: none;
+            max-width: 180px;
+        }
+        .example-select:focus { border-color: var(--accent); }
+        .example-select option { background: var(--bg-editor); }
+
+        /* Share button */
+        .btn-share {
+            padding: 8px 16px;
+            background: var(--bg-surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-share:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .btn-share.copied { border-color: #10b981; color: #10b981; }
+
+        /* Zoom controls */
+        #zoom-controls {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            gap: 2px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px;
+            z-index: 10;
+        }
+        .btn-zoom {
+            padding: 5px 10px;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 5px;
+            font-size: 15px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+        .btn-zoom:hover { background: var(--accent-dim); color: var(--accent); }
+
+        /* Resource table toggle */
+        .btn-toggle-table {
+            margin-left: auto;
+            padding: 2px 10px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-toggle-table:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Resource table panel */
+        .resource-table-panel {
+            border-top: 1px solid var(--border);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .resource-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            font-family: var(--mono);
+        }
+        .resource-table th {
+            padding: 7px 12px;
+            text-align: left;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+        .resource-table td { padding: 5px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); }
+        .col-num { width: 36px; color: var(--text-muted) !important; }
+        .col-type { color: var(--text-muted) !important; font-size: 11px; }
+        .cat-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.05); font-size: 11px; }
+        .cat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
         /* How it works */
         .how-it-works {
             padding: 56px 0 40px;
@@ -760,7 +862,10 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
   subnet_id     = aws_subnet.public.id
 }"></textarea>
             <div class="editor-actions">
-                <button class="btn-sample" id="btn-load-sample">Load Terraform sample</button>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <select class="example-select" id="example-select"><option value="">Load an example...</option></select>
+                    <button class="btn-sample" id="btn-load-sample">Load Terraform sample</button>
+                </div>
                 <button class="btn-generate" id="btn-generate">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                     Generate Diagram
@@ -772,6 +877,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <div class="panel-header">
                 <div class="panel-title"><span class="dot"></span> Architecture Diagram</div>
                 <div class="export-actions">
+                    <button class="btn-share" id="btn-share">Share</button>
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
                     <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>
@@ -793,6 +899,11 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <span style="font-size:13px;color:var(--text-muted)">Parsing infrastructure...</span>
                 </div>
                 <svg id="diagram-svg" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div id="zoom-controls" style="display:none">
+                    <button class="btn-zoom" id="btn-zoom-in" title="Zoom in">+</button>
+                    <button class="btn-zoom" id="btn-zoom-reset" title="Reset zoom">1:1</button>
+                    <button class="btn-zoom" id="btn-zoom-out" title="Zoom out">&#8722;</button>
+                </div>
             </div>
             <div class="stats-bar" id="stats-bar" style="display:none">
                 <div class="stat-item"><span class="stat-dot vpc"></span> <span id="stat-vpc">0</span> VPC/Network</div>
@@ -800,6 +911,13 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="stat-item"><span class="stat-dot db"></span> <span id="stat-db">0</span> Database</div>
                 <div class="stat-item"><span class="stat-dot storage"></span> <span id="stat-storage">0</span> Storage</div>
                 <div class="stat-item"><span class="stat-dot lb"></span> <span id="stat-lb">0</span> Load Balancer</div>
+                <button class="btn-toggle-table" id="btn-toggle-table">Resources &#9662;</button>
+            </div>
+            <div class="resource-table-panel" id="resource-table-panel" style="display:none">
+                <table class="resource-table">
+                    <thead><tr><th class="col-num">#</th><th>Name</th><th class="col-type">Type</th><th>Category</th></tr></thead>
+                    <tbody id="resource-table-body"></tbody>
+                </table>
             </div>
         </div>
     </div>
