@@ -638,6 +638,37 @@
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* GitHub star badge */
+        .star-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-top: 20px;
+        }
+
+        .star-badge:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .star-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .star-badge .star-count {
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -662,6 +693,13 @@
         <div class="badge">FREE &middot; NO SIGNUP &middot; NO CREDENTIALS</div>
         <h1>Paste Terraform.<br><span class="hl">Get architecture diagrams.</span></h1>
         <p>Instantly visualize your infrastructure. Paste your Terraform HCL or docker-compose file — get a clean, exportable architecture diagram in seconds.</p>
+        <a href="https://github.com/pandey-raghvendra/infrasketch" target="_blank" class="star-badge" id="star-badge">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
+            </svg>
+            <span class="star-label">Star on GitHub</span>
+            <span class="star-count" id="star-count"></span>
+        </a>
     </section>
 
     <div class="workspace" id="tool">
@@ -881,5 +919,22 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
 </footer>
 
 <script type="module" src="js/main.js"></script>
+<script>
+    // Fetch GitHub star count
+    async function fetchStarCount() {
+        try {
+            const response = await fetch('https://api.github.com/repos/pandey-raghvendra/infrasketch');
+            const data = await response.json();
+            if (data.stargazers_count !== undefined) {
+                const count = data.stargazers_count;
+                const formatted = count >= 1000 ? (count / 1000).toFixed(1) + 'k' : String(count);
+                document.getElementById('star-count').textContent = formatted ? `· ${formatted}` : '';
+            }
+        } catch (e) {
+            // Silently fail - badge still works without count
+        }
+    }
+    fetchStarCount();
+</script>
 </body>
 </html>
