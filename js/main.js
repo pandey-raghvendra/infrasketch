@@ -884,7 +884,6 @@ exampleSelect.addEventListener('change', () => {
     if (!key) return;
     const sample = EXTRA_SAMPLES[type]?.[key];
     if (sample) codeInput.value = sample.code;
-    exampleSelect.value = '';
 });
 
 generateButton.addEventListener('click', () => {
