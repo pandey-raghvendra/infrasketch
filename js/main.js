@@ -696,7 +696,82 @@ const loading = document.getElementById('loading');
 const diagramSvg = document.getElementById('diagram-svg');
 const statsBar = document.getElementById('stats-bar');
 const shareButton = document.getElementById('btn-share');
+const zoomControls = document.getElementById('zoom-controls');
 let lastParsed = null;
+
+// ── Zoom controller ──────────────────────────────────────────────────────────
+
+const zoomState = { scale: 1, tx: 0, ty: 0 };
+
+function applyZoom() {
+    const layer = diagramSvg.querySelector('.zoom-layer');
+    if (layer) layer.setAttribute('transform', `translate(${zoomState.tx},${zoomState.ty}) scale(${zoomState.scale})`);
+}
+
+function resetZoom() {
+    zoomState.scale = 1;
+    zoomState.tx = 0;
+    zoomState.ty = 0;
+    applyZoom();
+}
+
+function stepZoom(factor) {
+    const vb = diagramSvg.viewBox.baseVal;
+    const cx = vb.width / 2;
+    const cy = vb.height / 2;
+    const newScale = Math.min(Math.max(zoomState.scale * factor, 0.1), 8);
+    zoomState.tx = cx - (cx - zoomState.tx) * newScale / zoomState.scale;
+    zoomState.ty = cy - (cy - zoomState.ty) * newScale / zoomState.scale;
+    zoomState.scale = newScale;
+    applyZoom();
+}
+
+(function initZoomListeners() {
+    diagramSvg.addEventListener('wheel', (e) => {
+        if (diagramSvg.style.display === 'none') return;
+        e.preventDefault();
+        const rect = diagramSvg.getBoundingClientRect();
+        const vb = diagramSvg.viewBox.baseVal;
+        const mx = (e.clientX - rect.left) / rect.width * vb.width;
+        const my = (e.clientY - rect.top) / rect.height * vb.height;
+        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+        const newScale = Math.min(Math.max(zoomState.scale * factor, 0.1), 8);
+        zoomState.tx = mx - (mx - zoomState.tx) * newScale / zoomState.scale;
+        zoomState.ty = my - (my - zoomState.ty) * newScale / zoomState.scale;
+        zoomState.scale = newScale;
+        applyZoom();
+    }, { passive: false });
+
+    let dragging = false;
+    let startClientX, startClientY, startTx, startTy;
+
+    diagramSvg.addEventListener('mousedown', (e) => {
+        if (e.button !== 0 || diagramSvg.style.display === 'none') return;
+        dragging = true;
+        startClientX = e.clientX;
+        startClientY = e.clientY;
+        startTx = zoomState.tx;
+        startTy = zoomState.ty;
+        diagramSvg.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const rect = diagramSvg.getBoundingClientRect();
+        const vb = diagramSvg.viewBox.baseVal;
+        const svgPerPx = vb.width / rect.width;
+        zoomState.tx = startTx + (e.clientX - startClientX) * svgPerPx;
+        zoomState.ty = startTy + (e.clientY - startClientY) * svgPerPx;
+        applyZoom();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        diagramSvg.style.cursor = '';
+    });
+}());
 
 function encodeState(type, code) {
     try {
@@ -749,6 +824,7 @@ function updateStats(resources) {
 function hideDiagram() {
     diagramSvg.style.display = 'none';
     statsBar.style.display = 'none';
+    zoomControls.style.display = 'none';
 }
 
 function parseCode(code) {
@@ -815,6 +891,8 @@ generateButton.addEventListener('click', () => {
 
             lastParsed = parsed;
             window._lastParsed = parsed;
+            resetZoom();
+            zoomControls.style.display = 'flex';
             updateStats(parsed.resources);
         } catch (error) {
             loading.classList.remove('active');
@@ -890,5 +968,9 @@ shareButton.addEventListener('click', () => {
         prompt('Copy this link:', url);
     });
 });
+
+document.getElementById('btn-zoom-in').addEventListener('click', () => stepZoom(1.25));
+document.getElementById('btn-zoom-out').addEventListener('click', () => stepZoom(1 / 1.25));
+document.getElementById('btn-zoom-reset').addEventListener('click', resetZoom);
 
 loadFromHash();
