@@ -29,6 +29,12 @@ Live site: https://infrasketch.cloud
 - SVG (icons inlined as base64 for portability)
 - draw.io / diagrams.net XML
 
+**SVG → draw.io import**
+- Upload any SVG architecture diagram and download a native draw.io XML file
+- Shapes are fully editable in draw.io — not embedded as an image
+- Known AWS/Azure icons (matched by filename stem) are mapped to official `mxgraph.aws4` / `mxgraph.azure2` stencils
+- Unknown icons: `data:` URIs are embedded as image cells; relative file paths fall back to a generic labelled rectangle
+
 **Other**
 - Shareable URL — click **Share** to encode the current editor state as a base64 URL hash and copy the link to clipboard; recipients land directly on the rendered diagram
 - Resource summary table — collapsible table below the diagram listing every resource with name, type, and category
@@ -83,6 +89,7 @@ Live site: https://infrasketch.cloud
 │   ├── layout.js       # Zone layout and metrics
 │   ├── renderer.js     # SVG diagram renderer
 │   ├── exporters.js    # PNG / SVG / draw.io export
+│   ├── svg-to-drawio.js# SVG → draw.io XML converter
 │   ├── constants.js    # Resource categories, icon paths, layout config
 │   └── main.js         # UI bootstrap, zoom controller, share URL
 ├── lib/
@@ -117,6 +124,31 @@ terraform show -json tfplan
 Copy the JSON output and paste it directly into the **Terraform** tab. InfraSketch auto-detects the `{` prefix and switches to the plan parser. This approach has better connection accuracy than pasting HCL because Terraform's `expressions[].references` arrays contain resolved resource addresses even when attribute values are `"(known after apply)"`.
 
 Root-module resources only. Module resources (`module.*`) are skipped.
+
+## SVG → draw.io Converter
+
+Click **SVG → draw.io** in the diagram panel toolbar to open a file picker. Select any `.svg` file — InfraSketch's own exports or third-party SVG diagrams.
+
+**What gets converted**
+
+| SVG element | draw.io output |
+|---|---|
+| `<g class="resource-node">` | Single vertex cell; icon detected via filename → AWS/Azure stencil |
+| `<rect>` | Vertex with fill, stroke, and corner radius preserved |
+| `<circle>` / `<ellipse>` | Ellipse vertex |
+| `<text>` | Standalone text cell with font size preserved |
+| `<image>` | AWS/Azure stencil if filename matches; `data:` URI embedded; unknown path → generic rect |
+| `<path>` / `<line>` with `marker-end` | Floating edge with source/target points |
+
+**Unknown icon fallback**
+
+| Icon href | Behaviour |
+|---|---|
+| Matches known filename stem (e.g. `ec2`, `az-aks`) | Mapped to official `mxgraph.*` stencil — fully scalable |
+| `data:image/svg+xml;base64,...` | Embedded as `shape=image` cell — visible, not editable as stencil |
+| Relative file path (e.g. `icons/custom.svg`) | Generic rounded rectangle with label text |
+
+The `.drawio` file downloads automatically. Open it in [draw.io](https://app.diagrams.net) or import into Confluence, Notion, or any draw.io-compatible tool.
 
 ## Shareable URLs
 
