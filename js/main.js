@@ -1,4 +1,5 @@
 import { exportDrawio, exportPng, exportSvg } from './exporters.js';
+import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
 import { parseDockerCompose, parseTerraform, parseTerraformPlan } from './parser.js';
 import { renderDiagram } from './renderer.js';
@@ -1014,6 +1015,37 @@ toggleTableButton.addEventListener('click', () => {
     tableOpen = !tableOpen;
     resourceTablePanel.style.display = tableOpen ? 'block' : 'none';
     toggleTableButton.textContent = tableOpen ? 'Resources ▴' : 'Resources ▾';
+});
+
+// ── SVG → draw.io import ─────────────────────────────────────────────────────
+
+const svgImportInput = document.getElementById('svg-import-input');
+
+document.getElementById('btn-svg-to-drawio').addEventListener('click', () => {
+    svgImportInput.value = '';
+    svgImportInput.click();
+});
+
+svgImportInput.addEventListener('change', () => {
+    const file = svgImportInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const xml = svgToDrawio(e.target.result);
+            const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = file.name.replace(/\.svg$/i, '') + '.drawio';
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Could not convert SVG: ' + (err.message || err));
+        }
+    };
+    reader.readAsText(file);
 });
 
 loadFromHash();

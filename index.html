@@ -440,6 +440,7 @@
         }
         .btn-share:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
         .btn-share.copied { border-color: #10b981; color: #10b981; }
+        .btn-import-svg { border-style: dashed; color: var(--text-muted); }
 
         /* Zoom controls */
         #zoom-controls {
@@ -998,6 +999,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
                     <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>
+                    <button class="btn-export btn-import-svg" id="btn-svg-to-drawio" title="Convert an SVG architecture diagram to draw.io format">SVG &#8594; draw.io</button>
+                    <input type="file" id="svg-import-input" accept=".svg" style="display:none">
                 </div>
             </div>
             <div class="diagram-canvas" id="diagram-canvas">
