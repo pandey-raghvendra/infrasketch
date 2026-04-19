@@ -1,21 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-8PRK40S17H"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-8PRK40S17H');
-</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
-    <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <title>InfraSketch — Terraform to Architecture Diagram | Free Online Tool</title>
     <meta name="description" content="Paste your Terraform code and instantly generate beautiful AWS architecture diagrams. Free, no signup, no cloud credentials needed. Export as PNG or SVG.">
     <meta name="keywords" content="terraform diagram, terraform visualizer, aws architecture diagram generator, terraform to diagram, docker compose diagram, infrastructure diagram, IaC visualizer">
@@ -101,18 +88,6 @@
             transition: color 0.2s;
         }
         .nav-links a:hover { color: var(--accent); }
-
-        .nav-toggle {
-            display: none;
-            background: none;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 6px 8px;
-            cursor: pointer;
-            color: var(--text);
-            line-height: 0;
-        }
-        .nav-toggle svg { display: block; }
 
         /* HERO */
         .hero {
@@ -290,25 +265,6 @@
 
         .btn-sample:hover { border-color: var(--accent); color: var(--accent); }
 
-        .example-select {
-            padding: 8px 12px;
-            background: var(--bg-editor);
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 12px;
-            font-family: var(--mono);
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f99'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            padding-right: 28px;
-            transition: border-color 0.2s, color 0.2s;
-            max-width: 240px;
-        }
-        .example-select:hover, .example-select:focus { border-color: var(--accent); color: var(--accent); outline: none; }
-
         /* Diagram panel */
         .diagram-panel {
             display: flex;
@@ -332,9 +288,14 @@
         }
 
         .diagram-placeholder .icon {
-            font-size: 48px;
             margin-bottom: 16px;
             opacity: 0.3;
+            color: var(--text-muted);
+        }
+
+        .diagram-placeholder .icon svg {
+            display: block;
+            margin: 0 auto;
         }
 
         .diagram-placeholder p {
@@ -361,41 +322,6 @@
 
         .btn-export:hover { border-color: var(--accent); color: var(--accent); }
 
-        .btn-share {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-        .btn-share:hover { background: #2563eb; border-color: #2563eb; color: white; }
-        .btn-share.copied { background: #16a34a; border-color: #16a34a; color: white; }
-
-        .zoom-controls {
-            position: absolute;
-            bottom: 16px;
-            right: 16px;
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            z-index: 10;
-        }
-        .zoom-btn {
-            width: 30px;
-            height: 30px;
-            border: 1px solid var(--border);
-            background: var(--bg-surface);
-            border-radius: 6px;
-            font-size: 15px;
-            line-height: 1;
-            cursor: pointer;
-            color: var(--text-muted);
-            transition: all 0.15s;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
-
         /* Diagram SVG area */
         #diagram-svg {
             width: 100%;
@@ -418,7 +344,6 @@
             border-top: 1px solid var(--border);
             display: flex;
             gap: 16px;
-            align-items: center;
             font-size: 11px;
             font-family: var(--mono);
             color: var(--text-muted);
@@ -432,67 +357,6 @@
         .stat-dot.db { background: var(--red); }
         .stat-dot.storage { background: var(--yellow); }
         .stat-dot.lb { background: var(--accent); }
-
-        .btn-toggle-table {
-            margin-left: auto;
-            background: none;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            padding: 2px 8px;
-            font-size: 10px;
-            font-family: var(--mono);
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .btn-toggle-table:hover { border-color: var(--accent); color: var(--accent); }
-
-        /* Resource table */
-        .resource-table-panel {
-            border-top: 1px solid var(--border);
-            max-height: 220px;
-            overflow-y: auto;
-            background: var(--bg-surface);
-        }
-        .resource-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            font-family: var(--mono);
-        }
-        .resource-table thead th {
-            position: sticky;
-            top: 0;
-            padding: 6px 12px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 10px;
-            color: var(--text-muted);
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .resource-table tbody tr:hover { background: rgba(59,130,246,0.04); }
-        .resource-table td {
-            padding: 5px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            color: var(--text);
-            white-space: nowrap;
-        }
-        .resource-table td.col-num { color: var(--text-muted); width: 32px; }
-        .resource-table td.col-type { color: var(--text-muted); }
-        .resource-table .cat-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .resource-table .cat-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
 
         /* How it works */
         .how-it-works {
@@ -631,8 +495,12 @@
         }
 
         .feature-icon {
-            font-size: 24px;
             margin-bottom: 12px;
+            color: var(--accent);
+        }
+
+        .feature-icon svg {
+            display: block;
         }
 
         /* Resources / links section */
@@ -732,31 +600,8 @@
             .step:last-child { border-bottom: none; }
             .step-arrow { display: none !important; }
             .resources-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
             .footer-inner { flex-direction: column; text-align: center; }
-
-            .nav-toggle { display: flex; }
-            nav { position: relative; }
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: calc(100% + 1px);
-                left: -20px;
-                right: -20px;
-                background: var(--bg-surface);
-                border-bottom: 1px solid var(--border);
-                padding: 12px 20px 16px;
-                flex-direction: column;
-                gap: 0;
-                z-index: 100;
-            }
-            .nav-links.open { display: flex; }
-            .nav-links li { border-bottom: 1px solid var(--border); }
-            .nav-links li:last-child { border-bottom: none; }
-            .nav-links a {
-                display: block;
-                padding: 12px 0;
-                font-size: 15px;
-            }
         }
 
         /* Loading animation */
@@ -794,7 +639,7 @@
         <a href="/" class="logo" aria-label="InfraSketch home">
             <img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud">
         </a>
-        <ul class="nav-links" id="nav-links">
+        <ul class="nav-links">
             <li><a href="#tool">Tool</a></li>
             <li><a href="#how-it-works">How it works</a></li>
             <li><a href="#features">Features</a></li>
@@ -802,19 +647,12 @@
             <li><a href="about.html">About</a></li>
             <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
         </ul>
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <line x1="2" y1="5" x2="18" y2="5"/>
-                <line x1="2" y1="10" x2="18" y2="10"/>
-                <line x1="2" y1="15" x2="18" y2="15"/>
-            </svg>
-        </button>
     </nav>
 
     <section class="hero">
         <div class="badge">FREE &middot; NO SIGNUP &middot; NO CREDENTIALS</div>
-        <h1>Paste IaC code.<br><span class="hl">Get architecture diagrams.</span></h1>
-        <p>Visualize AWS and Azure infrastructure instantly. Paste Terraform HCL, a <code style="font-family:var(--mono);font-size:0.9em;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">terraform show -json</code> plan, or a docker-compose file — get a clean, exportable diagram in seconds.</p>
+        <h1>Paste Terraform.<br><span class="hl">Get architecture diagrams.</span></h1>
+        <p>Instantly visualize your infrastructure. Paste your Terraform HCL or docker-compose file — get a clean, exportable architecture diagram in seconds.</p>
     </section>
 
     <div class="workspace" id="tool">
@@ -843,9 +681,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
   subnet_id     = aws_subnet.public.id
 }"></textarea>
             <div class="editor-actions">
-                <select class="example-select" id="example-select" aria-label="Load an example">
-                    <option value="">Load an example...</option>
-                </select>
+                <button class="btn-sample" id="btn-load-sample">Load Terraform sample</button>
                 <button class="btn-generate" id="btn-generate">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                     Generate Diagram
@@ -857,7 +693,6 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <div class="panel-header">
                 <div class="panel-title"><span class="dot"></span> Architecture Diagram</div>
                 <div class="export-actions">
-                    <button class="btn-export btn-share" id="btn-share" title="Copy shareable link to clipboard">Share</button>
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
                     <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>
@@ -865,7 +700,13 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             </div>
             <div class="diagram-canvas" id="diagram-canvas">
                 <div class="diagram-placeholder" id="placeholder">
-                    <div class="icon">&#9649;</div>
+                    <div class="icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21l-3-3 11-11z"/>
+                        </svg>
+                    </div>
                     <p>Paste Terraform or Docker Compose on the left<br>and click <strong>Generate Diagram</strong></p>
                 </div>
                 <div class="loading-indicator" id="loading">
@@ -873,11 +714,6 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <span style="font-size:13px;color:var(--text-muted)">Parsing infrastructure...</span>
                 </div>
                 <svg id="diagram-svg" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
-                <div class="zoom-controls" id="zoom-controls">
-                    <button class="zoom-btn" id="btn-zoom-in" title="Zoom in">+</button>
-                    <button class="zoom-btn" id="btn-zoom-reset" title="Reset zoom">⊡</button>
-                    <button class="zoom-btn" id="btn-zoom-out" title="Zoom out">−</button>
-                </div>
             </div>
             <div class="stats-bar" id="stats-bar" style="display:none">
                 <div class="stat-item"><span class="stat-dot vpc"></span> <span id="stat-vpc">0</span> VPC/Network</div>
@@ -885,20 +721,6 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="stat-item"><span class="stat-dot db"></span> <span id="stat-db">0</span> Database</div>
                 <div class="stat-item"><span class="stat-dot storage"></span> <span id="stat-storage">0</span> Storage</div>
                 <div class="stat-item"><span class="stat-dot lb"></span> <span id="stat-lb">0</span> Load Balancer</div>
-                <button class="btn-toggle-table" id="btn-toggle-table">Resources ▾</button>
-            </div>
-            <div class="resource-table-panel" id="resource-table-panel" style="display:none">
-                <table class="resource-table">
-                    <thead>
-                        <tr>
-                            <th class="col-num">#</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Category</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resource-table-body"></tbody>
-                </table>
             </div>
         </div>
     </div>
@@ -912,19 +734,19 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <div class="step">
                 <div class="step-number">STEP 01</div>
                 <h3>Paste your IaC code</h3>
-                <p>Paste Terraform HCL, the output of <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">terraform show -json tfplan</code>, or a docker-compose.yml. No reformatting needed — InfraSketch auto-detects the format.</p>
+                <p>Copy your Terraform HCL or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and modules.</p>
                 <div class="step-arrow">&#8250;</div>
             </div>
             <div class="step">
                 <div class="step-number">STEP 02</div>
                 <h3>Auto-detect architecture</h3>
-                <p>The parser resolves VPC / VNet boundaries, subnet membership, and resource references for AWS and Azure — separating structural wiring from actual traffic flow connections.</p>
+                <p>The parser reads VPC boundaries, subnet membership (<code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code>, <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_ids</code>), and resource references to build a containment graph — separating structural wiring from actual traffic flow.</p>
                 <div class="step-arrow">&#8250;</div>
             </div>
             <div class="step">
                 <div class="step-number">STEP 03</div>
                 <h3>Export and share</h3>
-                <p>Download as <strong>PNG</strong>, <strong>SVG</strong>, or <strong>draw.io XML</strong>. Hit <strong>Share</strong> to copy a URL that encodes the full diagram state — anyone with the link sees the same diagram instantly.</p>
+                <p>Download as <strong>PNG</strong> for presentations, <strong>SVG</strong> for docs and READMEs, or <strong>draw.io XML</strong> to keep editing in diagrams.net. All exports are client-side — nothing is uploaded.</p>
             </div>
         </div>
     </section>
@@ -932,37 +754,67 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
     <section class="features" id="features">
         <div class="features-header">
             <h2>Everything you need</h2>
-            <p>Built for engineers who want AWS and Azure diagrams without visual tools or cloud credentials.</p>
+            <p>Built for engineers who want diagrams without the overhead of visual tools.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#9889;</div>
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+            </div>
             <h3>No credentials needed</h3>
             <p>Unlike Cloudcraft or Hava, InfraSketch never touches your cloud account. Just paste code — everything runs in your browser.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#127912;</div>
-            <h3>AWS + Azure icons</h3>
-            <p>Official AWS architecture icons and Microsoft Azure service icons for 50+ resource types across both providers.</p>
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.5-6.5l-4.5 4.5m-4 4L7.5 16.5m9 0l-4.5-4.5m-4 4L3.5 7.5"/>
+                </svg>
+            </div>
+            <h3>Official AWS icons</h3>
+            <p>Generates diagrams using proper AWS architecture icons. Professional enough for documentation and presentations.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#128230;</div>
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+            </div>
             <h3>Three export formats</h3>
             <p>Download as PNG or SVG for docs and slides, or export draw.io XML to keep editing the diagram in diagrams.net.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#128279;</div>
-            <h3>Shareable URLs</h3>
-            <p>Click <strong>Share</strong> to encode the diagram state into the URL hash. Send the link — recipients see your exact diagram without any server involved.</p>
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <h3>100% private</h3>
+            <p>Your code never leaves your browser. No server processing, no storage, no telemetry. Fully client-side.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#128203;</div>
-            <h3>Terraform plan JSON</h3>
-            <p>Run <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">terraform show -json tfplan</code> and paste the output directly. Connection accuracy is higher than HCL parsing because plan JSON contains resolved resource references.</p>
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <rect x="7" y="7" width="10" height="10" rx="1"/>
+                </svg>
+            </div>
+            <h3>VPC containment layout</h3>
+            <p>Understands that <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">vpc_id</code> and <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code> are structural — renders subnets as nested boxes inside the VPC, not as arrows.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">&#128161;</div>
-            <h3>VPC / VNet containment</h3>
-            <p>Renders subnets nested inside VPCs and VNets. Supports both <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">vpc_id</code> (AWS) and <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">virtual_network_name</code> (Azure).</p>
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.31 11.31l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l1.41 1.41"/>
+                    <circle cx="12" cy="12" r="5"/>
+                </svg>
+            </div>
+            <h3>Clean connection routing</h3>
+            <p>Skips structural wiring references and only draws meaningful flow connections — no spaghetti arrows from every Terraform resource reference.</p>
         </div>
     </section>
 
@@ -1019,23 +871,6 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
     </div>
 </footer>
 
-<script src="lib/js-yaml.min.js"></script>
 <script type="module" src="js/main.js"></script>
-<script>
-    (function () {
-        var toggle = document.getElementById('nav-toggle');
-        var links = document.getElementById('nav-links');
-        toggle.addEventListener('click', function () {
-            var open = links.classList.toggle('open');
-            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
-        links.querySelectorAll('a').forEach(function (a) {
-            a.addEventListener('click', function () {
-                links.classList.remove('open');
-                toggle.setAttribute('aria-expanded', 'false');
-            });
-        });
-    })();
-</script>
 </body>
 </html>
