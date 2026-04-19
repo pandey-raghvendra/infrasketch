@@ -695,7 +695,42 @@ const placeholder = document.getElementById('placeholder');
 const loading = document.getElementById('loading');
 const diagramSvg = document.getElementById('diagram-svg');
 const statsBar = document.getElementById('stats-bar');
+const shareButton = document.getElementById('btn-share');
 let lastParsed = null;
+
+function encodeState(type, code) {
+    try {
+        const json = JSON.stringify({ type, code });
+        return btoa(unescape(encodeURIComponent(json)));
+    } catch {
+        return null;
+    }
+}
+
+function decodeState(hash) {
+    try {
+        const b64 = hash.replace(/^#/, '');
+        if (!b64) return null;
+        return JSON.parse(decodeURIComponent(escape(atob(b64))));
+    } catch {
+        return null;
+    }
+}
+
+function loadFromHash() {
+    const state = decodeState(location.hash);
+    if (!state || !state.code || !state.type) return false;
+
+    const tab = document.querySelector(`.input-tab[data-type="${state.type}"]`);
+    if (!tab) return false;
+
+    document.querySelectorAll('.input-tab').forEach((t) => t.classList.remove('active'));
+    tab.classList.add('active');
+    updateEditorForType(state.type);
+    codeInput.value = state.code;
+    generateButton.click();
+    return true;
+}
 
 function activeInputType() {
     return document.querySelector('.input-tab.active').dataset.type;
@@ -830,3 +865,30 @@ document.getElementById('btn-export-drawio').addEventListener('click', () => {
         alert('No resources to export.');
     }
 });
+
+shareButton.addEventListener('click', () => {
+    const code = codeInput.value.trim();
+    if (!code) {
+        alert('Paste some code first, then share.');
+        return;
+    }
+
+    const hash = encodeState(activeInputType(), code);
+    if (!hash) return;
+
+    history.replaceState(null, '', `#${hash}`);
+    const url = location.href;
+
+    navigator.clipboard.writeText(url).then(() => {
+        shareButton.textContent = 'Copied!';
+        shareButton.classList.add('copied');
+        setTimeout(() => {
+            shareButton.textContent = 'Share';
+            shareButton.classList.remove('copied');
+        }, 2000);
+    }).catch(() => {
+        prompt('Copy this link:', url);
+    });
+});
+
+loadFromHash();

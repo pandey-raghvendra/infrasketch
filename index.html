@@ -352,6 +352,14 @@
 
         .btn-export:hover { border-color: var(--accent); color: var(--accent); }
 
+        .btn-share {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .btn-share:hover { background: #2563eb; border-color: #2563eb; color: white; }
+        .btn-share.copied { background: #16a34a; border-color: #16a34a; color: white; }
+
         /* Diagram SVG area */
         #diagram-svg {
             width: 100%;
@@ -751,6 +759,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <div class="panel-header">
                 <div class="panel-title"><span class="dot"></span> Architecture Diagram</div>
                 <div class="export-actions">
+                    <button class="btn-export btn-share" id="btn-share" title="Copy shareable link to clipboard">Share</button>
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
                     <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>
