@@ -137,4 +137,4 @@ When reporting a parser issue, include a small sanitized Terraform or Compose sn
 
 ## License
 
-InfraSketch is released under the MIT License. See [LICENSE](LICENSE).
+InfraSketch is Licensed under [MIT + Commons Clause](./LICENSE) — free to use, not to resell.
