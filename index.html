@@ -719,10 +719,13 @@
             .diagram-canvas { padding: 16px; min-height: 320px; }
             .panel-header { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
             .editor-actions { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
-            .btn-sample { width: 100%; order: 2; }
+            .editor-actions > div { width: 100%; order: 2; flex-wrap: wrap; }
+            .example-select { flex: 1; max-width: none; }
+            .btn-sample { flex: 1; }
             .btn-generate { width: 100%; order: 1; justify-content: center; }
-            .export-actions { flex-wrap: wrap; }
-            .btn-export { flex: 1; min-width: 70px; text-align: center; }
+            .export-actions { flex-wrap: wrap; gap: 6px; }
+            .btn-share, .btn-export { flex: 1; min-width: 60px; text-align: center; }
+            #zoom-controls { bottom: 8px; right: 8px; }
             .features { grid-template-columns: 1fr; }
             .steps { grid-template-columns: 1fr; }
             .step { border-right: none; border-bottom: 1px solid var(--border); }
@@ -743,7 +746,9 @@
             .container { padding: 0 12px; }
             .hero h1 { font-size: 24px; }
             .badge { font-size: 11px; padding: 5px 12px; }
-            .btn-generate, .btn-export, .btn-sample { font-size: 11px; padding: 8px 12px; }
+            .btn-generate, .btn-export, .btn-sample, .btn-share { font-size: 11px; padding: 8px 10px; }
+            .example-select { font-size: 11px; padding: 7px 8px; }
+            .stats-bar { flex-wrap: wrap; gap: 8px; }
             .panel-title { font-size: 12px; }
         }
 
@@ -1068,6 +1073,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
     </div>
 </footer>
 
+<script src="lib/js-yaml.min.js"></script>
 <script type="module" src="js/main.js"></script>
 <script>
     // Fetch GitHub star count
