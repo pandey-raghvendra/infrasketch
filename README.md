@@ -25,6 +25,7 @@ Live site: https://infrasketch.cloud
 **Cloud providers**
 - AWS — 30+ resource types with official architecture icons
 - Azure — 22 `azurerm_*` resource types with official Microsoft service icons
+- GCP — 23 `google_*` resource types with Google Cloud branded icons
 
 **Diagram**
 - VPC / VNet and subnet containment boxes with colour-coded borders
@@ -78,6 +79,21 @@ Live site: https://infrasketch.cloud
 | Security | `azurerm_key_vault` |
 | Observability | `azurerm_monitor_action_group`, `azurerm_application_insights` |
 | DNS | `azurerm_dns_zone` |
+
+### GCP
+
+| Category | Terraform types |
+|---|---|
+| Networking | `google_compute_network`, `google_compute_subnetwork`, `google_compute_firewall`, `google_compute_router`, `google_compute_address`, `google_compute_global_address` |
+| Compute | `google_compute_instance`, `google_compute_instance_group`, `google_compute_instance_template`, `google_compute_autoscaler`, `google_container_cluster`, `google_container_node_pool` |
+| Serverless | `google_cloud_run_service`, `google_cloud_run_v2_service`, `google_cloudfunctions_function`, `google_cloudfunctions2_function` |
+| Data | `google_sql_database_instance`, `google_bigquery_dataset`, `google_spanner_instance`, `google_bigtable_instance`, `google_firestore_document`, `google_redis_instance`, `google_memcache_instance` |
+| Storage | `google_storage_bucket` |
+| Load Balancing | `google_compute_global_forwarding_rule`, `google_compute_forwarding_rule`, `google_compute_backend_service`, `google_compute_url_map` |
+| Security | `google_kms_key_ring`, `google_kms_crypto_key`, `google_secret_manager_secret`, `google_service_account` |
+| Messaging | `google_pubsub_topic`, `google_pubsub_subscription` |
+| DNS | `google_dns_managed_zone` |
+| Observability | `google_monitoring_alert_policy`, `google_logging_metric`, `google_logging_project_sink` |
 
 ## How It Works
 
@@ -241,7 +257,6 @@ Static hosting — GitHub Pages, Netlify, Vercel, Cloudflare Pages, or any plain
 - The HCL parser is regex-based and does not evaluate variables, `count`, `for_each`, locals, dynamic blocks, or cross-file references. Use the plan JSON workflow for accurate multi-file results.
 - Module expansion via ZIP resolves only relative (`./`) source paths. `git::` and `http` sources are not resolved from ZIP.
 - Registry auto-fetch requires network access and CORS support from the Terraform Registry and GitHub APIs. Rate-limited or private modules will fall back to opaque module nodes.
-- Nested modules inside expanded modules are shown as opaque nodes (one level of expansion).
 - Terragrunt: dependency unit names are inferred from `dependency "alias"` block names; the actual unit directory is not resolved.
 - The plan JSON parser does not traverse nested `module_calls` configuration for cross-module connection inference.
 
