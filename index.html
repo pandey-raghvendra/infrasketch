@@ -1150,11 +1150,11 @@
                 <div class="what-is-body">
                     <p>InfraSketch is a free, browser-based infrastructure diagram generator. Paste Terraform HCL, a plan JSON, Terragrunt units, or Docker Compose YAML and get a clean, exportable architecture diagram in seconds — no account, no cloud credentials, no data ever leaving your browser.</p>
                     <p>Most teams document infrastructure manually in Lucidchart or draw.io, redrawing the same boxes every time a resource changes. InfraSketch reads your actual code and renders the diagram automatically, so your documentation stays in sync with what is deployed.</p>
-                    <p>The tool supports 25+ AWS resource types — VPCs, subnets, EC2 instances, RDS databases, S3 buckets, load balancers, Lambda functions, EKS clusters, and more — plus Azure resources including VNets, AKS, and Storage Accounts. Detected relationships between resources are drawn as edges, and resources are grouped by category so the diagram is readable without extra layout work.</p>
-                    <p>Diagrams export as PNG for documentation, SVG for vector editing, or draw.io XML for further customization. You can also go the other way — upload any SVG architecture diagram and convert it to native draw.io XML with editable shapes and official AWS/Azure stencils. A shareable URL encodes your code in the fragment so you can send a link directly to a colleague without any server-side storage.</p>
+                    <p>The tool supports 75+ resource types across AWS, Azure, and GCP — VPCs, subnets, compute clusters, databases, storage, load balancers, serverless functions, messaging queues, and more. Detected relationships are drawn as edges and resources are grouped into logical zones so the diagram is readable without extra layout work. Use the interactive editor to drag nodes into any arrangement you prefer.</p>
+                    <p>Diagrams export as PNG for documentation, SVG for vector editing, or draw.io XML for further customization in diagrams.net. You can also go the other way — upload any SVG architecture diagram and convert it to native draw.io XML with editable shapes and official AWS/Azure stencils. A shareable URL encodes your code in the fragment so you can send a link directly to a colleague without any server-side storage.</p>
                 </div>
                 <div class="what-is-aside">
-                    <div class="what-is-stat"><span class="stat-num">25+</span><span class="stat-label">AWS &amp; Azure resource types</span></div>
+                    <div class="what-is-stat"><span class="stat-num">75+</span><span class="stat-label">AWS, Azure &amp; GCP resource types</span></div>
                     <div class="what-is-stat"><span class="stat-num">0</span><span class="stat-label">Data sent to any server</span></div>
                     <div class="what-is-stat"><span class="stat-num">4</span><span class="stat-label">Export formats + SVG→draw.io import</span></div>
                     <div class="what-is-stat"><span class="stat-num">Free</span><span class="stat-label">No signup, no limits, open source</span></div>
@@ -1314,8 +1314,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.5-6.5l-4.5 4.5m-4 4L7.5 16.5m9 0l-4.5-4.5m-4 4L3.5 7.5"/>
                 </svg>
             </div>
-            <h3>Official AWS icons</h3>
-            <p>Generates diagrams using proper AWS architecture icons. Professional enough for documentation and presentations.</p>
+            <h3>Official cloud icons</h3>
+            <p>Generates diagrams using official AWS, Azure, and GCP icons. Professional enough for documentation, presentations, and architecture reviews.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">
@@ -1357,6 +1357,15 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             </div>
             <h3>Clean connection routing</h3>
             <p>Skips structural wiring references and only draws meaningful flow connections — no spaghetti arrows from every Terraform resource reference.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 9l4 4 10-10"/><rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+            </div>
+            <h3>Interactive editor</h3>
+            <p>Click <strong>Edit</strong> to drag any node to a new position. Connection arrows update live. Click <strong>Reset Layout</strong> to restore the original auto-layout at any time.</p>
         </div>
     </section>
 
