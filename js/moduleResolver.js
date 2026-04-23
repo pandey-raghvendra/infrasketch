@@ -41,8 +41,10 @@ export async function buildVirtualFS(zipFile) {
 
 // ── Path resolution ───────────────────────────────────────────────────────────
 
-function resolveDirPath(source) {
-    const parts = source.split('/').filter(Boolean);
+function resolveDirPath(base, source) {
+    // Resolve source relative to base dir (base may be '' for root)
+    const combined = base ? `${base}/${source}` : source;
+    const parts = combined.split('/').filter(Boolean);
     const resolved = [];
     for (const p of parts) {
         if (p === '..') resolved.pop();
@@ -122,20 +124,21 @@ export async function fetchRegistryModuleFiles(source) {
 
 // ── Module expansion ──────────────────────────────────────────────────────────
 
+const MAX_EXPAND_DEPTH = 3;
+
 function prefixParsedResult(parsed, modulePrefix) {
     const p = id => `${modulePrefix}.${id}`;
     return {
-        resources: parsed.resources
-            .filter(r => r.type !== 'tf_module')
-            .map(r => ({ ...r, id: p(r.id) })),
+        // Preserve unexpanded tf_module nodes as opaque prefixed nodes
+        resources: parsed.resources.map(r => ({ ...r, id: p(r.id) })),
         connections: parsed.connections.map(c => ({ from: p(c.from), to: p(c.to) })),
         vpcOf: Object.fromEntries(Object.entries(parsed.vpcOf).map(([k, v]) => [p(k), p(v)])),
         subnetOf: Object.fromEntries(Object.entries(parsed.subnetOf).map(([k, v]) => [p(k), p(v)])),
     };
 }
 
-export async function expandModules(rootParsed, rootCode, { virtualFS = null, fetchRegistry = false } = {}) {
-    if (!virtualFS?.size && !fetchRegistry) return rootParsed;
+async function expandModulesRecursive(rootParsed, rootCode, virtualFS, fetchRegistry, callerDir, depth) {
+    if (depth >= MAX_EXPAND_DEPTH || (!virtualFS?.size && !fetchRegistry)) return rootParsed;
 
     const moduleBlocks = extractModuleBlocks(rootCode);
     if (!moduleBlocks.length) return rootParsed;
@@ -148,9 +151,11 @@ export async function expandModules(rootParsed, rootCode, { virtualFS = null, fe
         if (!source) continue;
 
         let moduleCode = null;
+        let nextCallerDir = '';
 
         if ((source.startsWith('./') || source.startsWith('../')) && virtualFS?.size) {
-            const dir = resolveDirPath(source);
+            const dir = resolveDirPath(callerDir, source);
+            nextCallerDir = dir;
             const files = getModuleFilesFromVirtualFS(virtualFS, dir);
             if (files.length) moduleCode = files.join('\n\n');
         } else if (
@@ -166,8 +171,13 @@ export async function expandModules(rootParsed, rootCode, { virtualFS = null, fe
 
         expandedModuleIds.add(mod.id);
         const moduleParsed = parseTerraform(moduleCode);
-        const prefixed = prefixParsedResult(moduleParsed, `module.${mod.name}`);
 
+        // Recurse into this module's nested modules
+        const fullyExpanded = await expandModulesRecursive(
+            moduleParsed, moduleCode, virtualFS, fetchRegistry, nextCallerDir, depth + 1
+        );
+
+        const prefixed = prefixParsedResult(fullyExpanded, `module.${mod.name}`);
         extra.resources.push(...prefixed.resources);
         extra.connections.push(...prefixed.connections);
         Object.assign(extra.vpcOf, prefixed.vpcOf);
@@ -185,4 +195,8 @@ export async function expandModules(rootParsed, rootCode, { virtualFS = null, fe
         vpcOf: { ...rootParsed.vpcOf, ...extra.vpcOf },
         subnetOf: { ...rootParsed.subnetOf, ...extra.subnetOf },
     };
+}
+
+export async function expandModules(rootParsed, rootCode, { virtualFS = null, fetchRegistry = false } = {}) {
+    return expandModulesRecursive(rootParsed, rootCode, virtualFS, fetchRegistry, '', 0);
 }
