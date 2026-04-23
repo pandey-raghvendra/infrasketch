@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>What's New in InfraSketch — April 2026: Interactive Editor, GCP Support & More</title>
+    <meta name="description" content="InfraSketch April 2026 update: interactive drag-and-drop diagram editor, full GCP support with 23 resource types, new AWS networking resources, data zone visualization, and UI polish.">
+    <meta name="keywords" content="infrasketch update, terraform diagram editor, GCP terraform diagram, interactive architecture diagram, infrastructure diagram tool, terraform visualization">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/whats-new-april-2026.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+        .changelog-item{display:flex;gap:16px;margin-bottom:28px;align-items:flex-start}.changelog-badge{flex-shrink:0;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px}.badge-new{background:rgba(6,214,160,0.15);color:var(--accent);border:1px solid rgba(6,214,160,0.3)}.badge-improved{background:rgba(17,138,178,0.15);color:#38bdf8;border:1px solid rgba(17,138,178,0.3)}.badge-fix{background:rgba(239,71,111,0.12);color:#f472b6;border:1px solid rgba(239,71,111,0.25)}.changelog-content h3{font-size:15px;font-weight:600;margin:0 0 4px;color:var(--text)}.changelog-content p{font-size:14px;color:var(--text-muted);margin:0;line-height:1.7}
+        .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}@media(max-width:600px){.feature-grid{grid-template-columns:1fr}}.feature-tile{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:20px}.feature-tile h4{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}.feature-tile p{font-size:13px;color:var(--text-muted);line-height:1.6;margin:0}
+        .resource-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}.resource-table th{text-align:left;padding:10px 14px;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}.resource-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:#b0b8d1}.resource-table tr:last-child td{border-bottom:none}.resource-table code{font-family:var(--mono);font-size:12px;color:var(--accent);background:rgba(6,214,160,0.08);padding:2px 5px;border-radius:3px}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Release Notes</span>
+        <h1>What's New in InfraSketch — April 2026</h1>
+        <div class="meta">By Raghvendra Pandey &middot; April 2026 &middot; 5 min read</div>
+    </div>
+
+    <article>
+
+        <p>This is a big update. We shipped an interactive drag-and-drop diagram editor, full GCP support across 23 resource types, new AWS networking resources that were previously missing from diagrams, a data zone visualization, and a round of UI polish across the board. Here's everything that changed.</p>
+
+        <h2>Interactive Diagram Editor</h2>
+
+        <p>The most requested feature since launch. After generating a diagram, click <strong>Edit</strong> in the toolbar to enter interactive mode. In edit mode you can drag any node to reposition it — connection arrows update live as you drag, following both endpoints in real time.</p>
+
+        <p>When you're happy with the layout, click <strong>Done</strong> to lock it in. If you want to go back to the auto-generated layout at any point, click <strong>Reset Layout</strong>. The original positions are always preserved.</p>
+
+        <p>A few technical details worth knowing:</p>
+
+        <ul>
+            <li>Dragging works correctly at any zoom level — the coordinate math accounts for the current zoom scale and pan offset, so nodes land exactly where you drop them regardless of how zoomed in or out you are.</li>
+            <li>Clicking the diagram background deselects the current node.</li>
+            <li>In edit mode, pan is disabled on nodes (so you can drag them) but still works on empty canvas areas.</li>
+            <li>Exported PNG, SVG, and draw.io XML reflect your repositioned layout.</li>
+        </ul>
+
+        <div class="cta-box">
+            <h3>Try the editor</h3>
+            <p>Generate any diagram and click <strong>Edit</strong> in the toolbar to start repositioning nodes.</p>
+            <a href="/" class="btn">Open InfraSketch</a>
+        </div>
+
+        <h2>Full GCP Support</h2>
+
+        <p>InfraSketch now supports 23 Google Cloud resource types across all major categories, with official Google Cloud category icons in every diagram.</p>
+
+        <table class="resource-table">
+            <thead>
+                <tr><th>Category</th><th>Terraform types</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Networking</td><td><code>google_compute_network</code>, <code>google_compute_subnetwork</code>, <code>google_compute_firewall</code>, <code>google_compute_router</code>, <code>google_compute_address</code></td></tr>
+                <tr><td>Compute</td><td><code>google_compute_instance</code>, <code>google_compute_instance_group</code>, <code>google_compute_autoscaler</code>, <code>google_container_cluster</code>, <code>google_container_node_pool</code></td></tr>
+                <tr><td>Serverless</td><td><code>google_cloud_run_service</code>, <code>google_cloud_run_v2_service</code>, <code>google_cloudfunctions_function</code>, <code>google_cloudfunctions2_function</code></td></tr>
+                <tr><td>Data</td><td><code>google_sql_database_instance</code>, <code>google_bigquery_dataset</code>, <code>google_spanner_instance</code>, <code>google_bigtable_instance</code>, <code>google_firestore_document</code>, <code>google_redis_instance</code></td></tr>
+                <tr><td>Storage</td><td><code>google_storage_bucket</code></td></tr>
+                <tr><td>Security</td><td><code>google_kms_key_ring</code>, <code>google_secret_manager_secret</code>, <code>google_service_account</code></td></tr>
+                <tr><td>Messaging</td><td><code>google_pubsub_topic</code>, <code>google_pubsub_subscription</code></td></tr>
+                <tr><td>Observability</td><td><code>google_monitoring_alert_policy</code>, <code>google_logging_metric</code>, <code>google_logging_project_sink</code></td></tr>
+            </tbody>
+        </table>
+
+        <p>GCP resources follow the same layout logic as AWS and Azure: VPC networks become containment boxes, subnets group their member resources, Pub/Sub lands in the Messaging zone, security resources cluster in the Security zone, and Load Balancer resources appear in the Ingress row.</p>
+
+        <p>To try it, select the Terraform tab, load the <strong>Production GCP stack</strong> example from the dropdown, and click Generate Diagram.</p>
+
+        <h2>New AWS Networking Resources</h2>
+
+        <p>Four resource types that commonly appear in real-world Terraform configs were previously silently dropped from diagrams. They're now fully supported:</p>
+
+        <div class="feature-grid">
+            <div class="feature-tile">
+                <h4>Route Tables</h4>
+                <p><code>aws_route_table</code>, <code>aws_route_table_association</code>, <code>aws_main_route_table_association</code> — placed in the Internet zone alongside the IGW they route through.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Transit Gateway</h4>
+                <p><code>aws_transit_gateway</code>, <code>aws_transit_gateway_attachment</code>, <code>aws_transit_gateway_vpc_attachment</code> — the hub for multi-VPC and hybrid connectivity.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>VPN Gateway</h4>
+                <p><code>aws_vpn_gateway</code>, <code>aws_vpn_connection</code>, <code>aws_customer_gateway</code> — for site-to-site VPN connections to on-premises networks.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Network Interfaces</h4>
+                <p><code>aws_network_interface</code>, <code>aws_network_interface_attachment</code> — explicit ENI definitions, common in appliance and multi-homed instance configs.</p>
+            </div>
+        </div>
+
+        <p>If you've been pasting real production Terraform configs and wondering why certain networking resources didn't appear — this is the fix.</p>
+
+        <h2>Data Zone Visualization</h2>
+
+        <p>Database and storage resources — RDS, DynamoDB, ElastiCache, S3, Cloud SQL, BigQuery, Azure SQL, and all the others — now render inside a labelled <strong>DATA</strong> zone box. Previously these resources appeared without any visual grouping, making it hard to distinguish the data tier from compute at a glance.</p>
+
+        <p>The zone uses the same dashed-border pattern as the existing Internet, Messaging, and Security zones, keeping the visual language consistent across the diagram.</p>
+
+        <h2>Toast Notifications</h2>
+
+        <p>Every error and confirmation in InfraSketch previously used the browser's built-in <code>alert()</code> dialog — a blocking modal that interrupts your flow and looks out of place in a dark-themed tool.</p>
+
+        <p>All nine of those alerts are now in-page toast notifications that appear at the bottom of the screen. They dismiss automatically after a few seconds, or immediately on click. Errors are red, successes are green, and informational messages are muted. Parse errors also give you specific guidance now — if you paste <code>terraform plan</code> text output instead of JSON, you'll see a message telling you to run <code>terraform show -json</code> instead of a generic "no resources found".</p>
+
+        <h2>UI Polish</h2>
+
+        <p>A set of smaller visual improvements that add up:</p>
+
+        <ul>
+            <li><strong>Generate button gradient</strong> — the flat green button is now a teal-to-blue gradient with a stronger glow on hover.</li>
+            <li><strong>Node hover animation</strong> — hovering a resource node now scales it up slightly (<code>scale(1.05)</code>) with a green drop shadow, making the diagram feel interactive even in view mode.</li>
+            <li><strong>Code editor focus indicator</strong> — a green left border appears when the editor textarea is focused, giving a clear active state.</li>
+            <li><strong>Diagram panel accent border</strong> — the diagram panel now has a subtle green top border, visually distinguishing it from the editor panel.</li>
+            <li><strong>Export toolbar separator</strong> — a thin vertical divider separates the Share/Edit buttons from the format export buttons (PNG, SVG, draw.io), reducing visual noise.</li>
+            <li><strong>Edit button default state</strong> — the Edit button previously showed a permanent accent border even before any diagram existed. It now looks like any other export button and only lights up when edit mode is active.</li>
+            <li><strong>Feature card hover</strong> — homepage feature cards now pick up a subtle green background tint on hover alongside the existing lift animation.</li>
+        </ul>
+
+        <h2>What's Next</h2>
+
+        <p>A few things on the near-term roadmap:</p>
+
+        <ul>
+            <li><strong>Keyboard shortcuts</strong> — <kbd>E</kbd> for edit mode, <kbd>R</kbd> for reset layout, <kbd>Escape</kbd> to deselect.</li>
+            <li><strong>Snap-to-grid in the editor</strong> — hold Shift while dragging to snap nodes to a 16px grid.</li>
+            <li><strong>Multi-select</strong> — Shift-click to select multiple nodes and move them as a group.</li>
+            <li><strong>GCP zone grouping</strong> — region and zone containment boxes for GCP, similar to how AWS diagrams show AZ grouping.</li>
+            <li><strong>CloudFormation support</strong> — parsing <code>.yaml</code> CloudFormation stacks as a new input format.</li>
+        </ul>
+
+        <p>If there's a specific resource type that's missing from your diagrams, or a workflow that doesn't work as expected, <a href="/contact.html">open an issue or send a note</a>. Real-world Terraform configs are the best test cases we have.</p>
+
+        <div class="cta-box">
+            <h3>Try everything in your browser</h3>
+            <p>No account, no install. Paste your Terraform, plan JSON, Terragrunt, or docker-compose.yml and generate a diagram in seconds.</p>
+            <a href="/" class="btn">Open InfraSketch →</a>
+        </div>
+
+    </article>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra">Raghvendra Pandey</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p>
+    </div>
+</footer>
+</body>
+</html>
