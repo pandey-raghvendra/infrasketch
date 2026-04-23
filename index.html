@@ -251,12 +251,15 @@
             line-height: 1.7;
             color: #b0b8d1;
             border: none;
+            border-left: 3px solid transparent;
             outline: none;
             resize: none;
             width: 100%;
             tab-size: 2;
+            transition: border-color 0.2s;
         }
 
+        .code-editor:focus { border-left-color: var(--accent); }
         .code-editor::placeholder { color: #3a3f5c; }
 
         .module-options {
@@ -331,7 +334,7 @@
 
         .btn-generate {
             padding: 10px 28px;
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent) 0%, #00b4d8 100%);
             color: var(--bg);
             border: none;
             border-radius: 8px;
@@ -346,8 +349,9 @@
         }
 
         .btn-generate:hover {
-            box-shadow: 0 0 24px var(--accent-glow);
+            box-shadow: 0 0 28px var(--accent-glow), 0 4px 16px rgba(0,180,216,0.25);
             transform: translateY(-1px);
+            filter: brightness(1.08);
         }
 
         .btn-generate:disabled {
@@ -376,6 +380,11 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-surface);
+            border-top: 2px solid rgba(6, 214, 160, 0.25);
+        }
+
+        .diagram-panel .panel-header {
+            background: rgba(6, 214, 160, 0.03);
         }
 
         .diagram-canvas {
@@ -411,7 +420,16 @@
 
         .export-actions {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .export-sep {
+            width: 1px;
+            height: 18px;
+            background: var(--border);
+            margin: 0 2px;
+            flex-shrink: 0;
         }
 
         .btn-export {
@@ -444,6 +462,14 @@
         /* Resource nodes in diagram */
         .resource-node {
             cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .resource-node:hover {
+            transform-box: fill-box;
+            transform-origin: center;
+            transform: scale(1.05);
+            filter: drop-shadow(0 4px 12px rgba(6, 214, 160, 0.2));
         }
 
         .resource-node:hover rect {
@@ -451,9 +477,9 @@
         }
 
         /* Edit mode */
-        .btn-edit-toggle { border-color: var(--accent); color: var(--accent); }
         .btn-edit-toggle.edit-active {
             background: var(--accent);
+            border-color: var(--accent);
             color: #0c0f1a;
             font-weight: 600;
         }
@@ -757,12 +783,14 @@
             background: var(--bg-surface);
             border: 1px solid var(--border);
             border-radius: 12px;
-            transition: all 0.3s;
+            transition: all 0.25s;
         }
 
         .feature-card:hover {
-            border-color: rgba(6, 214, 160, 0.3);
-            transform: translateY(-2px);
+            border-color: rgba(6, 214, 160, 0.35);
+            background: rgba(6, 214, 160, 0.04);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(6, 214, 160, 0.1);
         }
 
         .feature-card h3 {
@@ -1221,6 +1249,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <button class="btn-share" id="btn-share">Share</button>
                     <button class="btn-export btn-edit-toggle" id="btn-edit" title="Toggle interactive edit mode — drag nodes to reposition">Edit</button>
                     <button class="btn-export btn-reset-layout" id="btn-reset-layout" title="Reset all nodes to original layout" style="display:none">Reset Layout</button>
+                    <span class="export-sep"></span>
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
                     <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>
