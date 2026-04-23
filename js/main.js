@@ -699,10 +699,102 @@ inputs = {
 }
 `;
 
+const SAMPLE_TERRAFORM_GCP = `# GCP Production Stack: VPC + GKE + Cloud SQL + GCS + Pub/Sub + Cloud Run
+resource "google_compute_network" "main" {
+  name                    = "prod-vpc"
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "gke" {
+  name          = "gke-subnet"
+  network       = google_compute_network.main.id
+  ip_cidr_range = "10.0.1.0/24"
+}
+
+resource "google_compute_subnetwork" "services" {
+  name          = "services-subnet"
+  network       = google_compute_network.main.id
+  ip_cidr_range = "10.0.2.0/24"
+}
+
+resource "google_compute_firewall" "allow_internal" {
+  name    = "allow-internal"
+  network = google_compute_network.main.id
+}
+
+resource "google_container_cluster" "primary" {
+  name       = "prod-gke"
+  subnetwork = google_compute_subnetwork.gke.id
+  network    = google_compute_network.main.id
+}
+
+resource "google_container_node_pool" "primary_nodes" {
+  name    = "primary-pool"
+  cluster = google_container_cluster.primary.id
+}
+
+resource "google_cloud_run_v2_service" "api" {
+  name = "api-service"
+}
+
+resource "google_cloudfunctions2_function" "processor" {
+  name = "event-processor"
+}
+
+resource "google_sql_database_instance" "postgres" {
+  name             = "prod-postgres"
+  database_version = "POSTGRES_15"
+}
+
+resource "google_redis_instance" "cache" {
+  name           = "prod-cache"
+  memory_size_gb = 4
+}
+
+resource "google_storage_bucket" "assets" {
+  name = "prod-assets"
+}
+
+resource "google_bigquery_dataset" "analytics" {
+  dataset_id = "analytics"
+}
+
+resource "google_pubsub_topic" "events" {
+  name = "events-topic"
+}
+
+resource "google_pubsub_subscription" "events_sub" {
+  name  = "events-sub"
+  topic = google_pubsub_topic.events.id
+}
+
+resource "google_secret_manager_secret" "db_password" {
+  secret_id = "db-password"
+}
+
+resource "google_kms_key_ring" "main" {
+  name = "prod-keyring"
+}
+
+resource "google_dns_managed_zone" "public" {
+  name     = "prod-zone"
+  dns_name = "example.com."
+}
+
+resource "google_monitoring_alert_policy" "high_latency" {
+  display_name = "High Latency"
+}
+
+resource "google_service_account" "gke_sa" {
+  account_id = "gke-workload"
+}
+`;
+
 const EXTRA_SAMPLES = {
     terraform: {
         basic: { label: 'Production AWS stack', code: SAMPLE_TERRAFORM },
         azure: { label: 'Production Azure stack (VNet + AKS + SQL + messaging)', code: SAMPLE_TERRAFORM_AZURE },
+        gcp: { label: 'Production GCP stack (VPC + GKE + SQL + Pub/Sub)', code: SAMPLE_TERRAFORM_GCP },
         modules: { label: 'Multi-module AWS (VPC + EKS + RDS + serverless)', code: SAMPLE_TERRAFORM_MODULES },
         serverless: { label: 'AWS serverless pipeline (multi-file)', code: SAMPLE_TERRAFORM_SERVERLESS },
     },

@@ -164,6 +164,14 @@ export function parseTerraform(code) {
             }
         }
 
+        // GCP network containment
+        if (!vpcOf[block.id]) {
+            const gcpNetId = firstReferencedAddress(block.body.match(/\bnetwork\s*=\s*([^\n]+)/)?.[1] || '', 'google_compute_network');
+            if (gcpNetId && supportedIds.has(gcpNetId)) {
+                vpcOf[block.id] = gcpNetId;
+            }
+        }
+
         const subnetId = firstReferencedAddress(
             block.body.match(/\b(?:subnet_ids?|subnets|vnet_subnet_id)\s*=\s*(\[[^\]]*\]|[^\n]+)/)?.[1] || '',
             'aws_subnet|azurerm_subnet',
@@ -171,9 +179,17 @@ export function parseTerraform(code) {
         if (subnetId && supportedIds.has(subnetId)) {
             subnetOf[block.id] = subnetId;
         }
+
+        // GCP subnetwork containment
+        if (!subnetOf[block.id]) {
+            const gcpSubnetId = firstReferencedAddress(block.body.match(/\bsubnetwork\s*=\s*([^\n]+)/)?.[1] || '', 'google_compute_subnetwork');
+            if (gcpSubnetId && supportedIds.has(gcpSubnetId)) {
+                subnetOf[block.id] = gcpSubnetId;
+            }
+        }
     }
 
-    const skipLine = /^\s*(?:vpc_id|subnet_id|subnet_ids|subnets|vnet_subnet_id|security_group_ids?|security_groups|allocation_id|cluster_name|db_subnet_group(?:_name)?|target_group_arns|vpc_zone_identifier|availability_zones?|cidr_block|enable_|tags\s*\{?|ingress|egress|from_port|to_port|protocol|master_|password|username|engine|instance_class|node_type|runtime|handler|role\s*=|assume_role|source_arn|bucket\s*=|domain\s*=|resource_group_name|virtual_network_name|location\s*=|address_space|address_prefixes|os_profile|storage_profile|network_interface_ids|sku\s*[={]|capacity\s*=|tenant_id)\s*[=\[{]/;
+    const skipLine = /^\s*(?:vpc_id|subnet_id|subnet_ids|subnets|vnet_subnet_id|security_group_ids?|security_groups|allocation_id|cluster_name|db_subnet_group(?:_name)?|target_group_arns|vpc_zone_identifier|availability_zones?|cidr_block|enable_|tags\s*\{?|ingress|egress|from_port|to_port|protocol|master_|password|username|engine|instance_class|node_type|runtime|handler|role\s*=|assume_role|source_arn|bucket\s*=|domain\s*=|resource_group_name|virtual_network_name|location\s*=|address_space|address_prefixes|os_profile|storage_profile|network_interface_ids|sku\s*[={]|capacity\s*=|tenant_id|network\s*=|subnetwork\s*=|ip_cidr_range|region\s*=|zone\s*=|project\s*=|machine_type|disk_size|image\s*=|key_ring\s*=)\s*[=\[{]/;
     const connections = [];
     const seen = new Set();
 
@@ -283,6 +299,7 @@ const PLAN_SKIP_ATTRS = new Set([
     'bucket', 'domain', 'master_username', 'master_password',
     'password', 'username', 'engine', 'instance_class', 'node_type',
     'runtime', 'handler', 'tenant_id', 'sku_name', 'capacity',
+    'network', 'subnetwork', 'region', 'zone', 'project', 'machine_type', 'key_ring',
 ]);
 
 export function parseTerraformPlan(jsonText) {
@@ -333,11 +350,11 @@ export function parseTerraformPlan(jsonText) {
                 const ref = normalizeRef(rawRef);
                 if (!supportedIds.has(ref) || ref === addr) continue;
 
-                if (leaf === 'vpc_id' || leaf === 'virtual_network_name') {
+                if (leaf === 'vpc_id' || leaf === 'virtual_network_name' || leaf === 'network') {
                     if (!vpcOf[addr]) vpcOf[addr] = ref;
                     continue;
                 }
-                if (leaf === 'subnet_id' || leaf === 'subnet_ids' || leaf === 'vnet_subnet_id') {
+                if (leaf === 'subnet_id' || leaf === 'subnet_ids' || leaf === 'vnet_subnet_id' || leaf === 'subnetwork') {
                     if (!subnetOf[addr]) subnetOf[addr] = ref;
                     continue;
                 }
