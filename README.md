@@ -1,12 +1,10 @@
 # InfraSketch
-<img width="740" height="135" alt="image" src="https://github.com/user-attachments/assets/f77e697a-2a8a-4255-9115-2aaad1b13c17" />
 
 ![Stars](https://img.shields.io/github/stars/pandey-raghvendra/infrasketch?style=flat&color=orange)
 ![License](https://img.shields.io/github/license/pandey-raghvendra/infrasketch?style=flat&color=blue)
 ![Open Source](https://img.shields.io/badge/open%20source-forever-brightgreen?style=flat)
 
-<img width="800" height="336" alt="image" src="https://github.com/user-attachments/assets/88c94785-8c7b-4406-876a-ff44fd3dd6c1" />
-
+<img width="740" height="135" alt="image" src="https://github.com/user-attachments/assets/f77e697a-2a8a-4255-9115-2aaad1b13c17" />
 
 InfraSketch turns infrastructure code into clean architecture diagrams in the browser — no login, no backend, no cloud credentials required.
 
