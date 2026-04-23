@@ -188,8 +188,13 @@ export function buildDiagramLayout(parsed, config = SVG_LAYOUT) {
         innerY += subnetRowH + ZONE_GAP;
     }
 
+    let dataRowAbsX = null, dataRowAbsY = null, dataRowW = null, dataRowH = null;
     if (vpcDataRes.length) {
         const rowX = innerX + (vpcContentW - dataGrid.W) / 2;
+        dataRowAbsX = innerX;
+        dataRowAbsY = innerY;
+        dataRowW = vpcContentW;
+        dataRowH = dataGrid.H;
         placeGridNodes(vpcDataRes, dataGrid, rowX, innerY, positions, config);
         innerY += dataGrid.H + ZONE_GAP;
     }
@@ -246,6 +251,10 @@ export function buildDiagramLayout(parsed, config = SVG_LAYOUT) {
             secX,
             secStartY,
             secGridH: secGrid.H,
+            dataRowAbsX,
+            dataRowAbsY,
+            dataRowW,
+            dataRowH,
         },
     };
 }

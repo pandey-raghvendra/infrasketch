@@ -292,6 +292,23 @@ export function renderDiagram(parsed, svg) {
         }, `subnet - ${subnet.name}`));
     }
 
+    if (groups.vpcDataRes.length && metrics.dataRowAbsY !== null) {
+        const pad = 12;
+        append(layer, svgElement('rect', {
+            x: metrics.dataRowAbsX - pad,
+            y: metrics.dataRowAbsY - 8,
+            width: metrics.dataRowW + pad * 2,
+            height: metrics.dataRowH + 20,
+            rx: 8,
+            fill: '#f0f9ff',
+            stroke: '#38bdf8',
+            'stroke-width': 1,
+            'stroke-dasharray': '5 3',
+            opacity: 0.7,
+        }));
+        appendZoneLabel(layer, { x: metrics.dataRowAbsX + 4, y: metrics.dataRowAbsY + 10, fill: '#0369a1' }, 'DATA');
+    }
+
     if (groups.msgRes.length) {
         const msgY = config.CP + metrics.mainH - metrics.msgZoneH;
         append(layer, svgElement('rect', {

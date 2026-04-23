@@ -860,6 +860,26 @@ dependency "vpc" {
 }`,
 };
 
+// ── Toast notifications ───────────────────────────────────────────────────────
+
+function showToast(message, type = 'error', duration = 4500) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    const dismiss = () => {
+        if (!toast.parentNode) return;
+        toast.classList.add('fade-out');
+        toast.addEventListener('animationend', () => toast.remove(), { once: true });
+    };
+
+    const timer = setTimeout(dismiss, duration);
+    toast.addEventListener('click', () => { clearTimeout(timer); dismiss(); });
+}
+
 const codeInput = document.getElementById('code-input');
 const generateButton = document.getElementById('btn-generate');
 const exampleSelect = document.getElementById('example-select');
@@ -1082,7 +1102,7 @@ btnLoadSample.addEventListener('click', () => {
 generateButton.addEventListener('click', async () => {
     const code = codeInput.value.trim();
     if (!code) {
-        alert('Please paste some Terraform or docker-compose code first.');
+        showToast('Paste some code first — Terraform HCL, plan JSON, Terragrunt, or docker-compose.yml.', 'info');
         return;
     }
 
@@ -1097,7 +1117,15 @@ generateButton.addEventListener('click', async () => {
 
         if (!layout) {
             placeholder.style.display = 'block';
-            alert('No supported resources found. Check your code and try again.');
+            const looksLikeHcl = /^\s*resource\s+"/.test(code) || /^\s*module\s+"/.test(code);
+            const looksLikePlanText = /^Terraform will perform/.test(code) || /^An execution plan/.test(code);
+            if (looksLikePlanText) {
+                showToast('Looks like terraform plan text output — use terraform show -json tfplan instead for JSON.');
+            } else if (looksLikeHcl) {
+                showToast('HCL parsed but no recognized resource types found. Check the supported resource list.');
+            } else {
+                showToast('No recognized resources found. Check your code format and try again.');
+            }
             return;
         }
 
@@ -1112,7 +1140,14 @@ generateButton.addEventListener('click', async () => {
     } catch (error) {
         loading.classList.remove('active');
         placeholder.style.display = 'block';
-        alert(error.message || 'Could not generate the diagram.');
+        const msg = error.message || '';
+        if (msg.toLowerCase().includes('json')) {
+            showToast('Invalid JSON — if pasting a plan, use: terraform show -json tfplan');
+        } else if (msg.toLowerCase().includes('yaml')) {
+            showToast('Invalid YAML — check your docker-compose.yml syntax.');
+        } else {
+            showToast(msg || 'Could not generate the diagram.');
+        }
     }
 });
 
@@ -1154,7 +1189,7 @@ zipUploadInput?.addEventListener('change', async (e) => {
         zipUploadLabel?.classList.add('loaded');
         btnClearZip.hidden = false;
     } catch (err) {
-        alert('Could not read ZIP: ' + (err.message || err));
+        showToast('Could not read ZIP: ' + (err.message || err));
         currentVirtualFS = null;
     }
     zipUploadInput.value = '';
@@ -1177,7 +1212,7 @@ document.getElementById('btn-export-png').addEventListener('click', async () => 
     try {
         await exportPng(diagramSvg);
     } catch (error) {
-        alert(error.message || 'Could not export PNG.');
+        showToast(error.message || 'Could not export PNG.');
     }
 });
 
@@ -1187,7 +1222,7 @@ document.getElementById('btn-export-svg').addEventListener('click', async () => 
     try {
         await exportSvg(diagramSvg);
     } catch (error) {
-        alert(error.message || 'Could not export SVG.');
+        showToast(error.message || 'Could not export SVG.');
     }
 });
 
@@ -1232,13 +1267,13 @@ document.getElementById('drawio-modal-download').addEventListener('click', () =>
 
 document.getElementById('btn-export-drawio').addEventListener('click', () => {
     if (!lastParsed) {
-        alert('Generate a diagram first.');
+        showToast('Generate a diagram first.', 'info');
         return;
     }
 
     const xml = generateDrawioXml(lastParsed);
     if (!xml) {
-        alert('No resources to export.');
+        showToast('No resources to export.', 'info');
         return;
     }
 
@@ -1255,7 +1290,7 @@ document.getElementById('btn-export-drawio').addEventListener('click', () => {
 shareButton.addEventListener('click', () => {
     const code = codeInput.value.trim();
     if (!code) {
-        alert('Paste some code first, then share.');
+        showToast('Paste some code first, then share.', 'info');
         return;
     }
 
@@ -1268,12 +1303,13 @@ shareButton.addEventListener('click', () => {
     navigator.clipboard.writeText(url).then(() => {
         shareButton.textContent = 'Copied!';
         shareButton.classList.add('copied');
+        showToast('Link copied to clipboard!', 'success', 3000);
         setTimeout(() => {
             shareButton.textContent = 'Share';
             shareButton.classList.remove('copied');
         }, 2000);
     }).catch(() => {
-        prompt('Copy this link:', url);
+        showToast('Could not copy automatically — copy the URL from the address bar.', 'info');
     });
 });
 
@@ -1315,7 +1351,7 @@ svgImportInput.addEventListener('change', () => {
             const filename = file.name.replace(/\.svg$/i, '') + '.drawio';
             openDrawioModal(xml, filename, svgEl);
         } catch (err) {
-            alert('Could not convert SVG: ' + (err.message || err));
+            showToast('Could not convert SVG: ' + (err.message || err));
         }
     };
     reader.readAsText(file);

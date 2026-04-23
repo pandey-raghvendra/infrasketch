@@ -168,7 +168,7 @@ Click **Share** to encode the active tab and editor content as a base64 URL hash
 
 | Category | Terraform types |
 |---|---|
-| Networking | `aws_vpc`, `aws_default_vpc`, `aws_subnet`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_eip` |
+| Networking | `aws_vpc`, `aws_default_vpc`, `aws_subnet`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_eip`, `aws_route_table`, `aws_transit_gateway`, `aws_transit_gateway_attachment`, `aws_vpn_gateway`, `aws_vpn_connection`, `aws_customer_gateway`, `aws_network_interface` |
 | Compute | `aws_instance`, `aws_launch_template`, `aws_autoscaling_group`, `aws_eks_cluster`, `aws_ecs_cluster`, `aws_ecs_service`, `aws_lambda_function`, `aws_ecr_repository` |
 | Data | `aws_db_instance`, `aws_rds_cluster`, `aws_dynamodb_table`, `aws_elasticache_cluster`, `aws_elasticache_replication_group` |
 | Storage | `aws_s3_bucket` |

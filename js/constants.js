@@ -112,7 +112,11 @@ export const RESOURCE_CATEGORIES = {
     kms:         { match: ['aws_kms_key'], color: '#8338ec', label: 'KMS', icon: 'KMS' },
     cloudwatch:  { match: ['aws_cloudwatch_log_group', 'aws_cloudwatch_metric_alarm'], color: '#e07a5f', label: 'CloudWatch', icon: 'CW' },
     autoscaling: { match: ['aws_autoscaling_group'], color: '#ff6b35', label: 'ASG', icon: 'ASG' },
-    waf:         { match: ['aws_wafv2_web_acl'], color: '#8338ec', label: 'WAF', icon: 'WAF' },
+    waf:          { match: ['aws_wafv2_web_acl'], color: '#8338ec', label: 'WAF', icon: 'WAF' },
+    route_table:  { match: ['aws_route_table', 'aws_route_table_association', 'aws_main_route_table_association'], color: '#118ab2', label: 'Route Table', icon: 'IGW' },
+    transit_gw:   { match: ['aws_transit_gateway', 'aws_transit_gateway_attachment', 'aws_transit_gateway_vpc_attachment'], color: '#118ab2', label: 'Transit GW', icon: 'VPC' },
+    vpn_gw:       { match: ['aws_vpn_gateway', 'aws_vpn_connection', 'aws_customer_gateway'], color: '#118ab2', label: 'VPN GW', icon: 'IGW' },
+    network_iface: { match: ['aws_network_interface', 'aws_network_interface_attachment'], color: '#118ab2', label: 'Network IF', icon: 'EIP' },
     // ── Azure ────────────────────────────────────────────────────────────────
     az_vm:       { match: ['azurerm_virtual_machine', 'azurerm_linux_virtual_machine', 'azurerm_windows_virtual_machine'], color: '#0078D4', label: 'VM', icon: 'AzVM' },
     az_vmss:     { match: ['azurerm_virtual_machine_scale_set', 'azurerm_linux_virtual_machine_scale_set', 'azurerm_windows_virtual_machine_scale_set'], color: '#0078D4', label: 'Scale Set', icon: 'AzVMSS' },
@@ -166,7 +170,7 @@ export const RESOURCE_CATEGORIES = {
 };
 
 export const CATEGORY_GROUPS = {
-    INTERNET:  new Set(['igw', 'cloudfront', 'route53', 'waf', 'az_frontdoor', 'az_dns', 'az_trafficmgr', 'gcp_dns', 'gcp_ip']),
+    INTERNET:  new Set(['igw', 'cloudfront', 'route53', 'waf', 'transit_gw', 'vpn_gw', 'az_frontdoor', 'az_dns', 'az_trafficmgr', 'gcp_dns', 'gcp_ip']),
     INGRESS:   new Set(['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'gcp_lb']),
     DATA:      new Set(['rds', 'dynamodb', 'elasticache', 's3', 'az_sql', 'az_cosmos', 'az_postgres', 'az_redis', 'az_storage', 'gcp_sql', 'gcp_bq', 'gcp_spanner', 'gcp_bigtable', 'gcp_firestore', 'gcp_memstore', 'gcp_gcs']),
     MESSAGING: new Set(['sqs', 'sns', 'az_servicebus', 'az_eventhub', 'gcp_pubsub']),
@@ -176,7 +180,7 @@ export const CATEGORY_GROUPS = {
 };
 
 export const STAT_CATEGORY_MAP = {
-    vpc:     ['vpc', 'subnet', 'nat', 'igw', 'eip', 'gcp_vpc', 'gcp_subnet', 'gcp_router'],
+    vpc:     ['vpc', 'subnet', 'nat', 'igw', 'eip', 'route_table', 'transit_gw', 'vpn_gw', 'network_iface', 'gcp_vpc', 'gcp_subnet', 'gcp_router'],
     compute: ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling', 'az_vm', 'az_vmss', 'az_aks', 'az_aci', 'az_function', 'az_appservice', 'gcp_gce', 'gcp_gke', 'gcp_run', 'gcp_fn'],
     db:      ['rds', 'dynamodb', 'elasticache', 'az_sql', 'az_cosmos', 'az_postgres', 'az_redis', 'gcp_sql', 'gcp_bq', 'gcp_spanner', 'gcp_bigtable', 'gcp_firestore', 'gcp_memstore'],
     storage: ['s3', 'az_storage', 'gcp_gcs'],

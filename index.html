@@ -972,6 +972,51 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Toast notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 8px;
+            z-index: 9999;
+            pointer-events: none;
+            align-items: center;
+        }
+
+        .toast {
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: var(--sans);
+            font-weight: 500;
+            max-width: 440px;
+            min-width: 180px;
+            text-align: center;
+            pointer-events: auto;
+            cursor: pointer;
+            border: 1px solid;
+            animation: toast-in 0.22s ease forwards;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .toast.error   { background: #170a0e; border-color: #ef476f; color: #f9a8c0; }
+        .toast.success { background: #031a10; border-color: var(--accent); color: var(--accent); }
+        .toast.info    { background: #0c0f1a; border-color: var(--border); color: var(--text-muted); }
+
+        .toast.fade-out { animation: toast-out 0.28s ease forwards; }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(10px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toast-out {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to   { opacity: 0; transform: translateY(6px) scale(0.97); }
+        }
+
         /* GitHub star badge */
         .star-badge {
             display: inline-flex;
@@ -1492,5 +1537,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
     }
     fetchStarCount();
 </script>
+
+<div id="toast-container"></div>
 </body>
 </html>
