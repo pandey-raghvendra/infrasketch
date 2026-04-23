@@ -1,5 +1,9 @@
 # InfraSketch
 
+![Stars](https://img.shields.io/github/stars/pandey-raghvendra/infrasketch?style=flat&color=orange)
+![License](https://img.shields.io/github/license/pandey-raghvendra/infrasketch?style=flat&color=blue)
+![Open Source](https://img.shields.io/badge/open%20source-forever-brightgreen?style=flat)
+
 InfraSketch turns infrastructure code into clean architecture diagrams in the browser — no login, no backend, no cloud credentials required.
 
 Paste Terraform HCL, a `terraform show -json` plan, a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
