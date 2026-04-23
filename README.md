@@ -33,6 +33,7 @@ Live site: https://infrasketch.cloud
 - Relationship arrows inferred from resource attribute references
 - Scroll-wheel zoom and click-drag pan
 - `+` / `⊡` / `−` zoom controls
+- **Interactive editor** — click **Edit** to drag nodes to any position; connection arrows follow in real time; **Reset Layout** restores the original auto-layout
 
 **Export**
 - PNG (2× retina scale)
@@ -113,6 +114,7 @@ Live site: https://infrasketch.cloud
 │   ├── parser.js       # Terraform HCL, plan JSON, Terragrunt, and Docker Compose parsers
 │   ├── layout.js       # Zone layout and metrics
 │   ├── renderer.js     # SVG diagram renderer
+│   ├── editor.js       # Interactive node drag editor
 │   ├── exporters.js    # PNG / SVG / draw.io export
 │   ├── svg-to-drawio.js# SVG → draw.io XML converter
 │   ├── constants.js    # Resource categories, icon paths, layout config

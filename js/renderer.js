@@ -122,6 +122,8 @@ function appendConnection(svg, conn, layout) {
 
     append(svg, svgElement('path', {
         d,
+        'data-from': conn.from,
+        'data-to': conn.to,
         fill: 'none',
         stroke: isSec ? '#8338ec' : '#374151',
         'stroke-width': 1.5,
@@ -132,7 +134,7 @@ function appendConnection(svg, conn, layout) {
 }
 
 function appendResourceNode(svg, resource, position, config) {
-    const group = append(svg, svgElement('g', { class: 'resource-node', filter: 'url(#shadow)' }));
+    const group = append(svg, svgElement('g', { class: 'resource-node', 'data-node-id': resource.id, filter: 'url(#shadow)' }));
 
     append(group, svgElement('rect', {
         x: position.x,

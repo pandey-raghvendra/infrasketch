@@ -450,6 +450,18 @@
             filter: brightness(1.1);
         }
 
+        /* Edit mode */
+        .btn-edit-toggle { border-color: var(--accent); color: var(--accent); }
+        .btn-edit-toggle.edit-active {
+            background: var(--accent);
+            color: #0c0f1a;
+            font-weight: 600;
+        }
+        .btn-reset-layout { border-color: var(--yellow); color: var(--yellow); }
+        .btn-reset-layout:hover { background: rgba(255,209,102,0.1); border-color: var(--yellow); color: var(--yellow); }
+        .diagram-canvas.edit-mode { outline: 2px dashed rgba(6,214,160,0.35); outline-offset: -2px; }
+        .diagram-canvas.edit-mode #diagram-svg { cursor: default; }
+
         /* Stats bar */
         .stats-bar {
             padding: 8px 16px;
@@ -1207,6 +1219,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="panel-title"><span class="dot"></span> Architecture Diagram</div>
                 <div class="export-actions">
                     <button class="btn-share" id="btn-share">Share</button>
+                    <button class="btn-export btn-edit-toggle" id="btn-edit" title="Toggle interactive edit mode — drag nodes to reposition">Edit</button>
+                    <button class="btn-export btn-reset-layout" id="btn-reset-layout" title="Reset all nodes to original layout" style="display:none">Reset Layout</button>
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
                     <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>

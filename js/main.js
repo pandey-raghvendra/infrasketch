@@ -4,6 +4,7 @@ import { computeStats } from './layout.js';
 import { parseDockerCompose, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
 import { buildVirtualFS, expandModules } from './moduleResolver.js';
 import { renderDiagram } from './renderer.js';
+import { initEditor, destroyEditor, resetLayout } from './editor.js';
 
 let currentVirtualFS = null;
 let autoFetchRegistry = false;
@@ -873,7 +874,9 @@ const resourceTablePanel = document.getElementById('resource-table-panel');
 const resourceTableBody = document.getElementById('resource-table-body');
 const toggleTableButton = document.getElementById('btn-toggle-table');
 let lastParsed = null;
+let lastLayout = null;
 let tableOpen = false;
+let editMode = false;
 
 // ── Zoom controller ──────────────────────────────────────────────────────────
 
@@ -1099,11 +1102,13 @@ generateButton.addEventListener('click', async () => {
         }
 
         lastParsed = parsed;
+        lastLayout = layout;
         window._lastParsed = parsed;
         resetZoom();
         zoomControls.style.display = 'flex';
         updateStats(parsed.resources);
         populateResourceTable(parsed.resources);
+        if (editMode) initEditor(diagramSvg, layout, zoomState);
     } catch (error) {
         loading.classList.remove('active');
         placeholder.style.display = 'block';
@@ -1314,6 +1319,30 @@ svgImportInput.addEventListener('change', () => {
         }
     };
     reader.readAsText(file);
+});
+
+// ── Interactive editor ────────────────────────────────────────────────────────
+
+const btnEdit = document.getElementById('btn-edit');
+const btnResetLayout = document.getElementById('btn-reset-layout');
+const diagramCanvas = document.getElementById('diagram-canvas');
+
+btnEdit?.addEventListener('click', () => {
+    editMode = !editMode;
+    btnEdit.textContent = editMode ? 'Done' : 'Edit';
+    btnEdit.classList.toggle('edit-active', editMode);
+    diagramCanvas.classList.toggle('edit-mode', editMode);
+    btnResetLayout.style.display = editMode ? '' : 'none';
+
+    if (editMode && lastLayout) {
+        initEditor(diagramSvg, lastLayout, zoomState);
+    } else {
+        destroyEditor();
+    }
+});
+
+btnResetLayout?.addEventListener('click', () => {
+    resetLayout();
 });
 
 loadFromHash();
