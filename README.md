@@ -18,6 +18,10 @@ Live site: https://infrasketch.cloud
 - Terragrunt (`terragrunt.hcl`) — paste one or multiple units separated by `# --- unit: name ---` markers
 - Docker Compose YAML (`docker-compose.yml`), parsed with full YAML spec support via **js-yaml**
 
+**Full module expansion**
+- **ZIP upload** — zip your Terraform project directory and upload it; local `module "name" { source = "./modules/vpc" }` blocks are fully expanded, rendering every resource inside the module with correct icons and relationships
+- **Registry auto-fetch** — toggle *Auto-fetch registry modules* to pull public modules (e.g. `terraform-aws-modules/vpc/aws`, `Azure/compute/azurerm`) from the Terraform Registry and expand their resources inline — no credentials needed
+
 **Cloud providers**
 - AWS — 30+ resource types with official architecture icons
 - Azure — 22 `azurerm_*` resource types with official Microsoft service icons
@@ -152,6 +156,31 @@ dependency "vpc" {
 
 Each unit becomes a node. `dependency "name" {}` blocks become directed edges — InfraSketch automatically adds any dependency units not listed as explicit `# --- unit: ---` sections.
 
+## Module Expansion
+
+InfraSketch can fully expand Terraform `module "name" {}` blocks to show every resource inside the module with correct icons and relationships.
+
+### ZIP upload (local modules)
+
+1. Zip your Terraform project root (the directory containing `main.tf` and your `modules/` folder).
+2. In the Terraform tab, click **Upload modules ZIP** and select the file.
+3. Paste your root HCL (or the file is already in the ZIP) and click **Generate Diagram**.
+
+Module blocks with `source = "./modules/vpc"` are resolved against the ZIP, their resources prefixed as `module.vpc.*`, and rendered inline.
+
+### Registry auto-fetch (public modules)
+
+Toggle **Auto-fetch registry modules** in the Terraform tab. When a module block has a registry source like:
+
+```hcl
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.5.1"
+}
+```
+
+InfraSketch queries the Terraform Registry API and fetches the module's root `.tf` files from GitHub, then expands the resources inline. Works for any public module on `registry.terraform.io`.
+
 ## SVG → draw.io Converter
 
 Click **SVG → draw.io** in the diagram panel toolbar to open a file picker. Select any `.svg` file — InfraSketch's own exports or third-party SVG diagrams.
@@ -210,7 +239,9 @@ Static hosting — GitHub Pages, Netlify, Vercel, Cloudflare Pages, or any plain
 ## Limitations
 
 - The HCL parser is regex-based and does not evaluate variables, `count`, `for_each`, locals, dynamic blocks, or cross-file references. Use the plan JSON workflow for accurate multi-file results.
-- HCL `module "name" {}` blocks are shown as opaque nodes — the resources inside the module are not expanded (use plan JSON to see individual module resources).
+- Module expansion via ZIP resolves only relative (`./`) source paths. `git::` and `http` sources are not resolved from ZIP.
+- Registry auto-fetch requires network access and CORS support from the Terraform Registry and GitHub APIs. Rate-limited or private modules will fall back to opaque module nodes.
+- Nested modules inside expanded modules are shown as opaque nodes (one level of expansion).
 - Terragrunt: dependency unit names are inferred from `dependency "alias"` block names; the actual unit directory is not resolved.
 - The plan JSON parser does not traverse nested `module_calls` configuration for cross-module connection inference.
 

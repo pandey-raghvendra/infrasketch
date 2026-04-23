@@ -259,6 +259,67 @@
 
         .code-editor::placeholder { color: #3a3f5c; }
 
+        .module-options {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 16px;
+            border-top: 1px solid var(--border);
+            background: rgba(255,255,255,0.01);
+            font-size: 12px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .mod-zip-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: var(--mono);
+            transition: border-color 0.2s, color 0.2s;
+            white-space: nowrap;
+        }
+
+        .mod-zip-label:hover { border-color: var(--text-muted); color: var(--text); }
+        .mod-zip-label.loaded { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+        .mod-clear-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 2px 4px;
+        }
+
+        .mod-clear-btn:hover { color: var(--text); }
+
+        .mod-divider {
+            width: 1px;
+            height: 14px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        .mod-registry-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-family: var(--mono);
+            white-space: nowrap;
+        }
+
+        .mod-registry-toggle input[type="checkbox"] {
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
         .editor-actions {
             padding: 12px 16px;
             display: flex;
@@ -1116,6 +1177,19 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
   instance_type = &quot;t3.medium&quot;
   subnet_id     = aws_subnet.public.id
 }"></textarea>
+            <div id="module-options" class="module-options">
+                <label id="zip-upload-label" class="mod-zip-label" for="zip-upload-input">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span id="zip-status-text">Upload modules ZIP</span>
+                </label>
+                <input type="file" id="zip-upload-input" accept=".zip" style="display:none">
+                <button id="btn-clear-zip" class="mod-clear-btn" hidden title="Remove ZIP">&#x2715;</button>
+                <div class="mod-divider"></div>
+                <label class="mod-registry-toggle">
+                    <input type="checkbox" id="toggle-registry">
+                    Auto-fetch registry modules
+                </label>
+            </div>
             <div class="editor-actions">
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                     <select class="example-select" id="example-select"><option value="">Load an example...</option></select>
@@ -1257,8 +1331,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <rect x="7" y="7" width="10" height="10" rx="1"/>
                 </svg>
             </div>
-            <h3>Modules &amp; Terragrunt</h3>
-            <p>Renders Terraform <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">module</code> blocks as nodes with connections, includes plan JSON module resources, and maps Terragrunt <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">dependency</code> blocks as directed edges between units.</p>
+            <h3>Full module expansion</h3>
+            <p>Upload a ZIP of your Terraform project to expand local modules inline, or toggle <em>Auto-fetch registry modules</em> to pull public modules like <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">terraform-aws-modules/vpc/aws</code> from the Terraform Registry and render every resource inside.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">
@@ -1347,6 +1421,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
 </div>
 
 <script src="lib/js-yaml.min.js"></script>
+<script src="lib/jszip.min.js"></script>
 <script type="module" src="js/main.js"></script>
 <script>
     // Fetch GitHub star count

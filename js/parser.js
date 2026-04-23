@@ -87,7 +87,7 @@ function extractTerraformBlocks(code) {
     return blocks;
 }
 
-function extractModuleBlocks(code) {
+export function extractModuleBlocks(code) {
     const blocks = [];
     const headerRe = /\bmodule\s+"([^"]+)"\s*\{/g;
     let match;

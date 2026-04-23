@@ -2,7 +2,11 @@ import { exportPng, exportSvg, generateDrawioXml } from './exporters.js';
 import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
 import { parseDockerCompose, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
+import { buildVirtualFS, expandModules } from './moduleResolver.js';
 import { renderDiagram } from './renderer.js';
+
+let currentVirtualFS = null;
+let autoFetchRegistry = false;
 
 const SAMPLE_TERRAFORM = `# Production AWS Infrastructure
 resource "aws_vpc" "main" {
@@ -924,7 +928,7 @@ function hideDiagram() {
     toggleTableButton.textContent = 'Resources ▾';
 }
 
-function parseCode(code) {
+async function parseCode(code) {
     const type = activeInputType();
     if (type === 'docker') return parseDockerCompose(code);
     if (type === 'terragrunt') return parseTerragrunt(code);
@@ -932,7 +936,8 @@ function parseCode(code) {
         const planResult = parseTerraformPlan(code);
         if (planResult !== null) return planResult;
     }
-    return parseTerraform(code);
+    const rootParsed = parseTerraform(code);
+    return expandModules(rootParsed, code, { virtualFS: currentVirtualFS, fetchRegistry: autoFetchRegistry });
 }
 
 function populateExampleSelect(type) {
@@ -979,7 +984,7 @@ btnLoadSample.addEventListener('click', () => {
     }
 });
 
-generateButton.addEventListener('click', () => {
+generateButton.addEventListener('click', async () => {
     const code = codeInput.value.trim();
     if (!code) {
         alert('Please paste some Terraform or docker-compose code first.');
@@ -990,30 +995,28 @@ generateButton.addEventListener('click', () => {
     hideDiagram();
     loading.classList.add('active');
 
-    setTimeout(() => {
-        try {
-            const parsed = parseCode(code);
-            const layout = renderDiagram(parsed, diagramSvg);
-            loading.classList.remove('active');
+    try {
+        const parsed = await parseCode(code);
+        const layout = renderDiagram(parsed, diagramSvg);
+        loading.classList.remove('active');
 
-            if (!layout) {
-                placeholder.style.display = 'block';
-                alert('No supported resources found. Check your code and try again.');
-                return;
-            }
-
-            lastParsed = parsed;
-            window._lastParsed = parsed;
-            resetZoom();
-            zoomControls.style.display = 'flex';
-            updateStats(parsed.resources);
-            populateResourceTable(parsed.resources);
-        } catch (error) {
-            loading.classList.remove('active');
+        if (!layout) {
             placeholder.style.display = 'block';
-            alert(error.message || 'Could not generate the diagram.');
+            alert('No supported resources found. Check your code and try again.');
+            return;
         }
-    }, 300);
+
+        lastParsed = parsed;
+        window._lastParsed = parsed;
+        resetZoom();
+        zoomControls.style.display = 'flex';
+        updateStats(parsed.resources);
+        populateResourceTable(parsed.resources);
+    } catch (error) {
+        loading.classList.remove('active');
+        placeholder.style.display = 'block';
+        alert(error.message || 'Could not generate the diagram.');
+    }
 });
 
 document.querySelectorAll('.input-tab').forEach((tab) => {
@@ -1022,10 +1025,54 @@ document.querySelectorAll('.input-tab').forEach((tab) => {
         document.querySelectorAll('.input-tab').forEach((item) => item.classList.remove('active'));
         tab.classList.add('active');
         updateEditorForType(tab.dataset.type, previousType);
+        updateModuleOptionsVisibility(tab.dataset.type);
     });
 });
 
 updateEditorForType(activeInputType());
+
+// ── Module expansion UI ───────────────────────────────────────────────────────
+
+const moduleOptionsBar = document.getElementById('module-options');
+const zipUploadInput = document.getElementById('zip-upload-input');
+const zipStatusText = document.getElementById('zip-status-text');
+const zipUploadLabel = document.getElementById('zip-upload-label');
+const btnClearZip = document.getElementById('btn-clear-zip');
+const toggleRegistry = document.getElementById('toggle-registry');
+
+function updateModuleOptionsVisibility(type) {
+    if (!moduleOptionsBar) return;
+    moduleOptionsBar.style.display = (type === 'terraform') ? 'flex' : 'none';
+}
+
+updateModuleOptionsVisibility(activeInputType());
+
+zipUploadInput?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+        currentVirtualFS = await buildVirtualFS(file);
+        const tfCount = currentVirtualFS.size;
+        zipStatusText.textContent = `${file.name} (${tfCount} .tf file${tfCount !== 1 ? 's' : ''})`;
+        zipUploadLabel?.classList.add('loaded');
+        btnClearZip.hidden = false;
+    } catch (err) {
+        alert('Could not read ZIP: ' + (err.message || err));
+        currentVirtualFS = null;
+    }
+    zipUploadInput.value = '';
+});
+
+btnClearZip?.addEventListener('click', () => {
+    currentVirtualFS = null;
+    zipStatusText.textContent = 'Upload modules ZIP';
+    zipUploadLabel?.classList.remove('loaded');
+    btnClearZip.hidden = true;
+});
+
+toggleRegistry?.addEventListener('change', () => {
+    autoFetchRegistry = toggleRegistry.checked;
+});
 
 document.getElementById('btn-export-png').addEventListener('click', async () => {
     if (diagramSvg.style.display === 'none') return;

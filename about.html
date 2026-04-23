@@ -37,8 +37,8 @@
         .cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}
         .cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}
         .cta-box p{margin-bottom:16px}
-        .btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}
-        .btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);transform:translateY(-1px);text-decoration:none}
+        .btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg)!important;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none!important;transition:all 0.2s}
+        .btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);transform:translateY(-1px)}
         footer{padding:24px 0;border-top:1px solid var(--border);text-align:center;margin-top:60px}
         footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}
         footer a{color:var(--accent);text-decoration:none}
@@ -77,8 +77,8 @@
                 <p>Parses 30+ AWS and 22+ Azure resource types. Paste HCL directly or use <code style="font-family:var(--mono);font-size:12px;color:var(--accent)">terraform show -json</code> for fully resolved resources including module expansion.</p>
             </div>
             <div class="feature-item">
-                <h3>Terraform module blocks</h3>
-                <p><code style="font-family:var(--mono);font-size:12px;color:var(--accent)">module "name" {}</code> calls are rendered as nodes with connection arrows from module outputs. Plan JSON includes all module-prefixed resources with correct icons.</p>
+                <h3>Full module expansion</h3>
+                <p>Upload a ZIP of your Terraform project — local modules are fully expanded inline, showing every resource inside each module with correct icons and relationships. Toggle <em>Auto-fetch registry modules</em> to pull public modules (e.g. <code style="font-family:var(--mono);font-size:12px;color:var(--accent)">terraform-aws-modules/vpc/aws</code>) directly from the Terraform Registry.</p>
             </div>
             <div class="feature-item">
                 <h3>Terragrunt</h3>
@@ -116,8 +116,8 @@
         <p>The frontend is built with vanilla HTML, CSS, and JavaScript — no frameworks, no build step, no dependencies. The Terraform parser is custom-written JavaScript that extracts resource types, names, and references using regex-based pattern matching. Diagrams are rendered as SVG using the official AWS Architecture Icon set. The site is hosted on GitHub Pages with a custom domain on Cloudflare.</p>
 
         <h2>Roadmap</h2>
-        <p>InfraSketch is actively being improved. Recently shipped: Azure resource support (22+ types), Terraform module blocks, Terragrunt dependency graphs, and a draw.io visual preview before download.</p>
-        <p>Planned next: Terraform Registry module auto-expansion (fetch public module sources and render their resources inline), CloudFormation template support, Kubernetes manifest visualization, GCP resource icons, and an interactive diagram editor.</p>
+        <p>InfraSketch is actively being improved. Recently shipped: Azure resource support (22+ types), Terraform module blocks, Terragrunt dependency graphs, draw.io visual preview, full local module expansion via ZIP upload, and Terraform Registry module auto-fetch.</p>
+        <p>Planned next: CloudFormation template support, Kubernetes manifest visualization, GCP resource icons, nested module recursion, and an interactive diagram editor.</p>
 
         <div class="cta-box">
             <h3>Try InfraSketch now</h3>
