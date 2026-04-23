@@ -901,6 +901,142 @@
         .star-badge .star-count {
             font-weight: 600;
         }
+
+        /* ── draw.io preview modal ───────────────────────────────────────────── */
+        .drawio-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+        .drawio-modal-overlay[hidden] { display: none; }
+
+        .drawio-modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: min(92vw, 860px);
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+        }
+
+        .drawio-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .drawio-modal-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drawio-modal-badge {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent-glow);
+        }
+
+        .drawio-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            line-height: 1;
+            transition: color 0.15s, background 0.15s;
+        }
+        .drawio-modal-close:hover { color: var(--text); background: var(--accent-dim); }
+
+        .drawio-modal-body {
+            flex: 1;
+            overflow: auto;
+            background: var(--bg-canvas);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 24px;
+            min-height: 0;
+        }
+
+        .drawio-modal-body svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .drawio-modal-body img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .drawio-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+            gap: 10px;
+        }
+
+        .drawio-modal-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .drawio-modal-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-drawio-download {
+            padding: 8px 18px;
+            background: var(--accent);
+            color: #0c0f1a;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .btn-drawio-download:hover { opacity: 0.88; }
+
+        .btn-drawio-cancel {
+            padding: 8px 16px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .btn-drawio-cancel:hover { color: var(--text); border-color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -961,6 +1097,7 @@
                 <div class="input-tabs">
                     <button class="input-tab active" data-type="terraform">Terraform</button>
                     <button class="input-tab" data-type="docker">Docker Compose</button>
+                    <button class="input-tab" data-type="terragrunt">Terragrunt</button>
                 </div>
             </div>
             <textarea class="code-editor" id="code-input" placeholder="# Paste your Terraform code here...
@@ -1051,7 +1188,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <div class="step">
                 <div class="step-number">STEP 01</div>
                 <h3>Paste your IaC code</h3>
-                <p>Copy your Terraform HCL or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and modules.</p>
+                <p>Copy Terraform HCL, a plan JSON, Terragrunt units, or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and module blocks.</p>
                 <div class="step-arrow">&#8250;</div>
             </div>
             <div class="step">
@@ -1080,7 +1217,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 </svg>
             </div>
             <h3>No credentials needed</h3>
-            <p>Unlike Cloudcraft or Hava, InfraSketch never touches your cloud account. Just paste code — everything runs in your browser.</p>
+            <p>Unlike Cloudcraft or Hava, InfraSketch never touches your cloud account. Paste Terraform HCL, plan JSON, Terragrunt units, or Docker Compose — everything runs in your browser.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">
@@ -1101,7 +1238,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 </svg>
             </div>
             <h3>Export &amp; import draw.io</h3>
-            <p>Download as PNG, SVG, or draw.io XML. Or upload any SVG diagram and convert it to native draw.io format with editable AWS/Azure stencils — no server involved.</p>
+            <p>Download as PNG, SVG, or draw.io XML. A visual preview shows your diagram before download. Or upload any SVG and convert it to native draw.io format with editable AWS/Azure stencils.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">
@@ -1120,8 +1257,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <rect x="7" y="7" width="10" height="10" rx="1"/>
                 </svg>
             </div>
-            <h3>VPC containment layout</h3>
-            <p>Understands that <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">vpc_id</code> and <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code> are structural — renders subnets as nested boxes inside the VPC, not as arrows.</p>
+            <h3>Modules &amp; Terragrunt</h3>
+            <p>Renders Terraform <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">module</code> blocks as nodes with connections, includes plan JSON module resources, and maps Terragrunt <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">dependency</code> blocks as directed edges between units.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">
@@ -1187,6 +1324,27 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         </div>
     </div>
 </footer>
+
+<!-- draw.io preview modal -->
+<div class="drawio-modal-overlay" id="drawio-modal" hidden>
+    <div class="drawio-modal">
+        <div class="drawio-modal-header">
+            <span class="drawio-modal-title">
+                draw.io Preview
+                <span class="drawio-modal-badge" id="drawio-modal-badge">diagram</span>
+            </span>
+            <button class="drawio-modal-close" id="drawio-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="drawio-modal-body" id="drawio-modal-body"></div>
+        <div class="drawio-modal-footer">
+            <span class="drawio-modal-hint">Preview reflects your diagram. Download to open in draw.io / diagrams.net.</span>
+            <div class="drawio-modal-actions">
+                <button class="btn-drawio-cancel" id="drawio-modal-cancel">Cancel</button>
+                <button class="btn-drawio-download" id="drawio-modal-download">Download .drawio</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="lib/js-yaml.min.js"></script>
 <script type="module" src="js/main.js"></script>

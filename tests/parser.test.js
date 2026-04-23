@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseTerraform, parseDockerCompose, parseTerraformPlan } from '../js/parser.js';
+import { parseTerraform, parseDockerCompose, parseTerraformPlan, parseTerragrunt } from '../js/parser.js';
 
 // ─── parseTerraform ──────────────────────────────────────────────────────────
 
@@ -445,12 +445,14 @@ describe('parseTerraformPlan', () => {
         expect(parseTerraformPlan(plan).resources).toEqual([]);
     });
 
-    it('skips module resources', () => {
+    it('includes module resources', () => {
         const plan = makePlan([{
             address: 'module.vpc.aws_vpc.main', type: 'aws_vpc', name: 'main',
             change: { actions: ['create'], before: null, after: {} },
         }]);
-        expect(parseTerraformPlan(plan).resources).toEqual([]);
+        const { resources } = parseTerraformPlan(plan);
+        expect(resources).toHaveLength(1);
+        expect(resources[0]).toMatchObject({ id: 'module.vpc.aws_vpc.main', category: 'vpc' });
     });
 
     it('classifies aws_lb as alb or nlb from after block', () => {
@@ -536,5 +538,190 @@ describe('parseTerraformPlan', () => {
             ],
         );
         expect(parseTerraformPlan(plan).subnetOf['azurerm_kubernetes_cluster.aks']).toBe('azurerm_subnet.priv');
+    });
+});
+
+// ─── parseTerraform — module blocks ─────────────────────────────────────────
+
+describe('parseTerraform — module blocks', () => {
+    it('parses module blocks as tf_module resources', () => {
+        const code = `
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+}`;
+        const { resources } = parseTerraform(code);
+        expect(resources).toHaveLength(1);
+        expect(resources[0]).toMatchObject({
+            id: 'module.vpc',
+            type: 'tf_module',
+            name: 'vpc',
+            category: 'tf_module',
+        });
+    });
+
+    it('parses module blocks alongside resource blocks', () => {
+        const code = `
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+}
+resource "aws_lambda_function" "fn" {
+  function_name = "my-fn"
+  subnet_id     = module.vpc.subnet_ids[0]
+}`;
+        const { resources } = parseTerraform(code);
+        const ids = resources.map((r) => r.id);
+        expect(ids).toContain('module.vpc');
+        expect(ids).toContain('aws_lambda_function.fn');
+    });
+
+    it('creates connection from module to referencing resource', () => {
+        const code = `
+module "artifacts" {
+  source = "./modules/artifacts"
+}
+resource "aws_lambda_function" "fn" {
+  function_name = "my-fn"
+  image_uri     = module.artifacts.ecr_image_uri
+}`;
+        const { connections } = parseTerraform(code);
+        expect(connections).toContainEqual({ from: 'module.artifacts', to: 'aws_lambda_function.fn' });
+    });
+
+    it('returns empty resources for only unsupported resources and no modules', () => {
+        const code = `resource "aws_route_table" "rt" { vpc_id = "vpc-1" }`;
+        const { resources } = parseTerraform(code);
+        expect(resources).toHaveLength(0);
+    });
+});
+
+// ─── parseTerraformPlan — module resources ───────────────────────────────────
+
+describe('parseTerraformPlan — module resources', () => {
+    function makePlan(changes, configResources = []) {
+        return JSON.stringify({
+            resource_changes: changes,
+            configuration: { root_module: { resources: configResources } },
+        });
+    }
+
+    it('includes module-prefixed resources', () => {
+        const plan = makePlan([
+            { address: 'module.vpc.aws_vpc.main', type: 'aws_vpc', name: 'main', change: { actions: ['create'], after: {} } },
+        ]);
+        const { resources } = parseTerraformPlan(plan);
+        expect(resources).toHaveLength(1);
+        expect(resources[0]).toMatchObject({ id: 'module.vpc.aws_vpc.main', category: 'vpc' });
+    });
+
+    it('uses full address as id for module resources', () => {
+        const plan = makePlan([
+            { address: 'module.a.aws_instance.web', type: 'aws_instance', name: 'web', change: { actions: ['create'], after: {} } },
+            { address: 'module.b.aws_instance.web', type: 'aws_instance', name: 'web', change: { actions: ['create'], after: {} } },
+        ]);
+        const { resources } = parseTerraformPlan(plan);
+        expect(resources).toHaveLength(2);
+        const ids = resources.map((r) => r.id);
+        expect(ids).toContain('module.a.aws_instance.web');
+        expect(ids).toContain('module.b.aws_instance.web');
+    });
+
+    it('still includes root resources alongside module resources', () => {
+        const plan = makePlan([
+            { address: 'aws_vpc.main', type: 'aws_vpc', name: 'main', change: { actions: ['create'], after: {} } },
+            { address: 'module.compute.aws_instance.app', type: 'aws_instance', name: 'app', change: { actions: ['create'], after: {} } },
+        ]);
+        const { resources } = parseTerraformPlan(plan);
+        expect(resources).toHaveLength(2);
+    });
+});
+
+// ─── parseTerragrunt ─────────────────────────────────────────────────────────
+
+describe('parseTerragrunt', () => {
+    it('parses multiple units separated by # --- unit: name ---', () => {
+        const code = `
+# --- unit: vpc ---
+terraform {
+  source = "git::https://example.com//vpc"
+}
+
+# --- unit: app ---
+terraform {
+  source = "git::https://example.com//app"
+}
+`;
+        const { resources } = parseTerragrunt(code);
+        const ids = resources.map((r) => r.id);
+        expect(ids).toContain('tg.vpc');
+        expect(ids).toContain('tg.app');
+    });
+
+    it('creates connections from dependency blocks', () => {
+        const code = `
+# --- unit: vpc ---
+terraform { source = "git::https://example.com//vpc" }
+
+# --- unit: app ---
+terraform { source = "git::https://example.com//app" }
+
+dependency "vpc" {
+  config_path = "../vpc"
+}
+`;
+        const { connections } = parseTerragrunt(code);
+        expect(connections).toContainEqual({ from: 'tg.vpc', to: 'tg.app' });
+    });
+
+    it('adds implicit dependency nodes not listed as units', () => {
+        const code = `
+# --- unit: app ---
+terraform { source = "git::https://example.com//app" }
+
+dependency "shared-db" {
+  config_path = "../../shared/rds"
+}
+`;
+        const { resources } = parseTerragrunt(code);
+        const ids = resources.map((r) => r.id);
+        expect(ids).toContain('tg.app');
+        expect(ids).toContain('tg.shared-db');
+    });
+
+    it('deduplicates connections', () => {
+        const code = `
+# --- unit: svc-a ---
+dependency "vpc" { config_path = "../vpc" }
+
+# --- unit: svc-b ---
+dependency "vpc" { config_path = "../vpc" }
+`;
+        const { connections } = parseTerragrunt(code);
+        const vpcConns = connections.filter((c) => c.from === 'tg.vpc');
+        expect(vpcConns).toHaveLength(2);
+        const toSet = new Set(vpcConns.map((c) => c.to));
+        expect(toSet).toContain('tg.svc-a');
+        expect(toSet).toContain('tg.svc-b');
+    });
+
+    it('returns tg_unit category for all resources', () => {
+        const code = `
+# --- unit: vpc ---
+terraform { source = "git::https://example.com//vpc" }
+`;
+        const { resources } = parseTerragrunt(code);
+        expect(resources[0].category).toBe('tg_unit');
+    });
+
+    it('parses single unit without separator', () => {
+        const code = `
+terraform { source = "git::https://example.com//modules/vpc" }
+
+dependency "base" {
+  config_path = "../base"
+}
+`;
+        const { resources, connections } = parseTerragrunt(code);
+        expect(resources.length).toBeGreaterThanOrEqual(1);
+        expect(connections).toHaveLength(1);
     });
 });

@@ -87,6 +87,22 @@ function extractTerraformBlocks(code) {
     return blocks;
 }
 
+function extractModuleBlocks(code) {
+    const blocks = [];
+    const headerRe = /\bmodule\s+"([^"]+)"\s*\{/g;
+    let match;
+
+    while ((match = headerRe.exec(code)) !== null) {
+        const openIndex = headerRe.lastIndex - 1;
+        const closeIndex = findMatchingBrace(code, openIndex);
+        const body = code.slice(headerRe.lastIndex, closeIndex);
+        blocks.push({ name: match[1], id: `module.${match[1]}`, body });
+        headerRe.lastIndex = closeIndex + 1;
+    }
+
+    return blocks;
+}
+
 function firstReferencedAddress(body, resourceTypePattern) {
     const match = body.match(new RegExp(`\\b(${resourceTypePattern})\\.(\\w+)`));
     return match ? terraformAddress(match[1], match[2]) : null;
@@ -108,15 +124,26 @@ function collectReferences(line, resources) {
 
 export function parseTerraform(code) {
     const blocks = extractTerraformBlocks(code);
-    const resources = blocks
-        .map(resourceFromBlock)
-        .filter(Boolean);
+    const moduleBlocks = extractModuleBlocks(code);
 
-    const supportedIds = new Set(resources.map((resource) => resource.id));
+    const resources = blocks.map(resourceFromBlock).filter(Boolean);
+    const { tf_module: modCfg } = RESOURCE_CATEGORIES;
+    const moduleResources = moduleBlocks.map((b) => ({
+        id: b.id,
+        type: 'tf_module',
+        name: b.name,
+        category: 'tf_module',
+        label: modCfg.label,
+        color: modCfg.color,
+        icon: modCfg.icon,
+    }));
+
+    const allResources = [...resources, ...moduleResources];
+    const supportedIds = new Set(resources.map((r) => r.id));
     const supportedBlocks = blocks.filter((block) => supportedIds.has(block.id));
 
-    if (!resources.length) {
-        return { resources, connections: [], vpcOf: {}, subnetOf: {} };
+    if (!allResources.length) {
+        return { resources: allResources, connections: [], vpcOf: {}, subnetOf: {} };
     }
 
     const vpcOf = {};
@@ -162,10 +189,21 @@ export function parseTerraform(code) {
                     connections.push({ from: fromId, to: block.id });
                 }
             }
+
+            // Detect module.name.output references → connection from module to this resource
+            for (const mod of moduleResources) {
+                if (new RegExp(`\\b${escapeRegExp(mod.id)}\\.`).test(line)) {
+                    const key = `${mod.id}->${block.id}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        connections.push({ from: mod.id, to: block.id });
+                    }
+                }
+            }
         }
     }
 
-    return { resources, connections, vpcOf, subnetOf };
+    return { resources: allResources, connections, vpcOf, subnetOf };
 }
 
 function normalizeDependsOn(dependsOn) {
@@ -254,14 +292,14 @@ export function parseTerraformPlan(jsonText) {
 
     const changes = plan.resource_changes.filter((c) => {
         const actions = c.change?.actions || [];
-        return !actions.every((a) => a === 'delete') && !c.address.startsWith('module.');
+        return !actions.every((a) => a === 'delete');
     });
 
     const resources = [];
     const supportedIds = new Set();
 
     for (const change of changes) {
-        const { type, name } = change;
+        const { type, name, address } = change;
         const after = change.change?.after || {};
 
         let category;
@@ -273,9 +311,10 @@ export function parseTerraformPlan(jsonText) {
         if (!category) continue;
 
         const config = RESOURCE_CATEGORIES[category];
-        const id = terraformAddress(type, name);
-        resources.push({ id, type, name, category, label: config.label, color: config.color, icon: config.icon });
-        supportedIds.add(id);
+        if (!supportedIds.has(address)) {
+            resources.push({ id: address, type, name, category, label: config.label, color: config.color, icon: config.icon });
+            supportedIds.add(address);
+        }
     }
 
     const vpcOf = {};
@@ -314,4 +353,74 @@ export function parseTerraformPlan(jsonText) {
     }
 
     return { resources, connections, vpcOf, subnetOf };
+}
+
+// ─── parseTerragrunt ─────────────────────────────────────────────────────────
+
+function parseTerragruntUnit(unitCode) {
+    const deps = [];
+    const depRe = /\bdependency\s+"([^"]+)"\s*\{/g;
+    let match;
+
+    while ((match = depRe.exec(unitCode)) !== null) {
+        const openIndex = depRe.lastIndex - 1;
+        const closeIndex = findMatchingBrace(unitCode, openIndex);
+        const body = unitCode.slice(depRe.lastIndex, closeIndex);
+        const configPath = body.match(/\bconfig_path\s*=\s*"([^"]+)"/)?.[1] || '';
+        deps.push({ alias: match[1], configPath });
+        depRe.lastIndex = closeIndex + 1;
+    }
+
+    return deps;
+}
+
+function tgUnitResource(name) {
+    const cfg = RESOURCE_CATEGORIES.tg_unit;
+    return { id: `tg.${name}`, type: 'tg_unit', name, category: 'tg_unit', label: cfg.label, color: cfg.color, icon: cfg.icon };
+}
+
+export function parseTerragrunt(code) {
+    // Units delimited by: # --- unit: name ---
+    const separatorRe = /^#\s*---\s*unit:\s*(\S+)\s*---\s*$/gm;
+    const separators = [...code.matchAll(separatorRe)];
+
+    const unitEntries = [];
+
+    if (separators.length === 0) {
+        // Single unit — infer name from source or default to "unit"
+        const sourceMatch = code.match(/\bsource\s*=\s*"([^"]+)"/);
+        const source = sourceMatch?.[1] || '';
+        const nameMatch = source.match(/\/\/([^/?]+)|\/([^/?]+)(?:[?]|$)/);
+        const name = nameMatch ? (nameMatch[1] || nameMatch[2]) : 'unit';
+        unitEntries.push({ name, deps: parseTerragruntUnit(code) });
+    } else {
+        for (let i = 0; i < separators.length; i++) {
+            const m = separators[i];
+            const name = m[1];
+            const start = m.index + m[0].length;
+            const end = i + 1 < separators.length ? separators[i + 1].index : code.length;
+            unitEntries.push({ name, deps: parseTerragruntUnit(code.slice(start, end)) });
+        }
+    }
+
+    const knownNames = new Set(unitEntries.map((u) => u.name));
+    const resources = unitEntries.map((u) => tgUnitResource(u.name));
+    const connections = [];
+    const seen = new Set();
+
+    for (const unit of unitEntries) {
+        for (const dep of unit.deps) {
+            if (!knownNames.has(dep.alias)) {
+                knownNames.add(dep.alias);
+                resources.push(tgUnitResource(dep.alias));
+            }
+            const key = `tg.${dep.alias}->tg.${unit.name}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                connections.push({ from: `tg.${dep.alias}`, to: `tg.${unit.name}` });
+            }
+        }
+    }
+
+    return { resources, connections, vpcOf: {}, subnetOf: {} };
 }

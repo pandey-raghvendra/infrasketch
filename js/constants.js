@@ -31,6 +31,7 @@ export const ICON_PATHS = {
     SNS: 'icons/sns.svg',
     CW: 'icons/cloudwatch.svg',
     Docker: 'icons/docker.svg',
+    TFModule: 'icons/terraform.svg',
     // Azure
     AzVM: 'icons/az-vm.svg',
     AzVMSS: 'icons/az-vmss.svg',
@@ -111,6 +112,9 @@ export const RESOURCE_CATEGORIES = {
     az_dns:      { match: ['azurerm_dns_zone', 'azurerm_private_dns_zone'], color: '#6B4C9A', label: 'DNS Zone', icon: 'AzDNS' },
     az_monitor:  { match: ['azurerm_log_analytics_workspace', 'azurerm_monitor_action_group'], color: '#e07a5f', label: 'Monitor', icon: 'AzMonitor' },
     az_appinsights: { match: ['azurerm_application_insights'], color: '#e07a5f', label: 'App Insights', icon: 'AzInsights' },
+    // ── Terraform Modules & Terragrunt ────────────────────────────────────────
+    tf_module: { match: ['tf_module'], color: '#7B42BC', label: 'Module', icon: 'TFModule' },
+    tg_unit:   { match: ['tg_unit'],   color: '#00BEF3', label: 'TG Unit', icon: 'TFModule' },
 };
 
 export const CATEGORY_GROUPS = {

@@ -2,15 +2,16 @@
 
 InfraSketch turns infrastructure code into clean architecture diagrams in the browser — no login, no backend, no cloud credentials required.
 
-Paste Terraform HCL, a `terraform show -json` plan, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
+Paste Terraform HCL, a `terraform show -json` plan, a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
 
 Live site: https://infrasketch.cloud
 
 ## Features
 
 **Input formats**
-- Terraform HCL (`.tf` files, paste one or many concatenated)
-- Terraform plan JSON (`terraform plan -out=tfplan && terraform show -json tfplan`)
+- Terraform HCL (`.tf` files, paste one or many concatenated) — includes `module "name" {}` blocks
+- Terraform plan JSON (`terraform plan -out=tfplan && terraform show -json tfplan`) — includes module resources
+- Terragrunt (`terragrunt.hcl`) — paste one or multiple units separated by `# --- unit: name ---` markers
 - Docker Compose YAML (`docker-compose.yml`), parsed with full YAML spec support via **js-yaml**
 
 **Cloud providers**
@@ -27,10 +28,10 @@ Live site: https://infrasketch.cloud
 **Export**
 - PNG (2× retina scale)
 - SVG (icons inlined as base64 for portability)
-- draw.io / diagrams.net XML
+- draw.io / diagrams.net XML — with visual preview before download
 
 **SVG → draw.io import**
-- Upload any SVG architecture diagram and download a native draw.io XML file
+- Upload any SVG architecture diagram — a visual preview appears before download
 - Shapes are fully editable in draw.io — not embedded as an image
 - Known AWS/Azure icons (matched by filename stem) are mapped to official `mxgraph.aws4` / `mxgraph.azure2` stencils
 - Unknown icons: `data:` URIs are embedded as image cells; relative file paths fall back to a generic labelled rectangle
@@ -39,7 +40,7 @@ Live site: https://infrasketch.cloud
 - Shareable URL — click **Share** to encode the current editor state as a base64 URL hash and copy the link to clipboard; recipients land directly on the rendered diagram
 - Resource summary table — collapsible table below the diagram listing every resource with name, type, and category
 - Stats bar — counts by category (VPC/Network, Compute, Database, Storage, Load Balancer)
-- Built-in examples for AWS, Azure, multi-module Terraform, serverless pipeline, and Docker microservices
+- Built-in examples for AWS, Azure, multi-module Terraform, Terragrunt stacks, serverless pipeline, and Docker microservices
 - Responsive mobile navigation
 
 ## Supported Resources
@@ -85,7 +86,7 @@ Live site: https://infrasketch.cloud
 .
 ├── index.html          # Main app
 ├── js/
-│   ├── parser.js       # Terraform HCL, plan JSON, and Docker Compose parsers
+│   ├── parser.js       # Terraform HCL, plan JSON, Terragrunt, and Docker Compose parsers
 │   ├── layout.js       # Zone layout and metrics
 │   ├── renderer.js     # SVG diagram renderer
 │   ├── exporters.js    # PNG / SVG / draw.io export
@@ -123,7 +124,29 @@ terraform show -json tfplan
 
 Copy the JSON output and paste it directly into the **Terraform** tab. InfraSketch auto-detects the `{` prefix and switches to the plan parser. This approach has better connection accuracy than pasting HCL because Terraform's `expressions[].references` arrays contain resolved resource addresses even when attribute values are `"(known after apply)"`.
 
-Root-module resources only. Module resources (`module.*`) are skipped.
+Module resources (`module.vpc.aws_vpc.main` etc.) are now included — each appears as an independent node with its real resource type and icon.
+
+## Terragrunt Workflow
+
+Select the **Terragrunt** tab and paste the content of one or more `terragrunt.hcl` files. Separate multiple units with a comment marker:
+
+```
+# --- unit: vpc ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//vpc?ref=v2.0.0"
+}
+
+# --- unit: app ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//ecs-service?ref=v2.0.0"
+}
+
+dependency "vpc" {
+  config_path = "../vpc"
+}
+```
+
+Each unit becomes a node. `dependency "name" {}` blocks become directed edges — InfraSketch automatically adds any dependency units not listed as explicit `# --- unit: ---` sections.
 
 ## SVG → draw.io Converter
 
@@ -148,7 +171,7 @@ Click **SVG → draw.io** in the diagram panel toolbar to open a file picker. Se
 | `data:image/svg+xml;base64,...` | Embedded as `shape=image` cell — visible, not editable as stencil |
 | Relative file path (e.g. `icons/custom.svg`) | Generic rounded rectangle with label text |
 
-The `.drawio` file downloads automatically. Open it in [draw.io](https://app.diagrams.net) or import into Confluence, Notion, or any draw.io-compatible tool.
+A visual preview of the diagram appears in a modal before any file is downloaded. Click **Download .drawio** in the modal to save the file. Open it in [draw.io](https://app.diagrams.net) or import into Confluence, Notion, or any draw.io-compatible tool.
 
 ## Shareable URLs
 
@@ -172,7 +195,7 @@ npm test
 
 The suite covers:
 
-- **Parser unit tests** — Terraform HCL resource detection, VPC/subnet containment, ALB/NLB classification, connection inference, Azure `azurerm_*` categories, Terraform plan JSON parsing (resource extraction, delete skipping, module skipping, nested block expressions, vpcOf/subnetOf/connections), Docker Compose `depends_on` in array and map forms.
+- **Parser unit tests** — Terraform HCL resource detection, VPC/subnet containment, ALB/NLB classification, connection inference, `module "name" {}` block parsing, module output references, Azure `azurerm_*` categories, Terraform plan JSON (module resource inclusion, delete skipping, nested block expressions, vpcOf/subnetOf/connections), Terragrunt unit parsing and dependency edges, Docker Compose `depends_on` in array and map forms.
 - **Exporter unit tests** — draw.io XML structure, cell IDs, edge generation, XML escaping, geometry rounding.
 - **Visual regression snapshots** — draw.io XML output for canonical inputs is snapshot-tested. Run `npx vitest run -u` to update baselines after an intentional layout change.
 
@@ -183,8 +206,9 @@ Static hosting — GitHub Pages, Netlify, Vercel, Cloudflare Pages, or any plain
 ## Limitations
 
 - The HCL parser is regex-based and does not evaluate variables, `count`, `for_each`, locals, dynamic blocks, or cross-file references. Use the plan JSON workflow for accurate multi-file results.
-- Terraform module resources are not yet expanded; only root-module resources appear.
-- The plan JSON parser handles root-module resources only.
+- HCL `module "name" {}` blocks are shown as opaque nodes — the resources inside the module are not expanded (use plan JSON to see individual module resources).
+- Terragrunt: dependency unit names are inferred from `dependency "alias"` block names; the actual unit directory is not resolved.
+- The plan JSON parser does not traverse nested `module_calls` configuration for cross-module connection inference.
 
 ## Contributing
 

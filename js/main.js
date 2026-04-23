@@ -1,7 +1,7 @@
-import { exportDrawio, exportPng, exportSvg } from './exporters.js';
+import { exportPng, exportSvg, generateDrawioXml } from './exporters.js';
 import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
-import { parseDockerCompose, parseTerraform, parseTerraformPlan } from './parser.js';
+import { parseDockerCompose, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
 import { renderDiagram } from './renderer.js';
 
 const SAMPLE_TERRAFORM = `# Production AWS Infrastructure
@@ -640,6 +640,61 @@ resource "azurerm_application_insights" "main" {
 }
 `;
 
+const SAMPLE_TERRAGRUNT = `# --- unit: vpc ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//vpc?ref=v2.1.0"
+}
+
+# --- unit: rds ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//rds?ref=v2.1.0"
+}
+
+dependency "vpc" {
+  config_path = "../vpc"
+}
+
+inputs = {
+  vpc_id = dependency.vpc.outputs.vpc_id
+}
+
+# --- unit: eks ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//eks?ref=v2.1.0"
+}
+
+dependency "vpc" {
+  config_path = "../vpc"
+}
+
+inputs = {
+  vpc_id = dependency.vpc.outputs.vpc_id
+}
+
+# --- unit: app ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//ecs-service?ref=v2.1.0"
+}
+
+dependency "vpc" {
+  config_path = "../vpc"
+}
+
+dependency "rds" {
+  config_path = "../rds"
+}
+
+dependency "eks" {
+  config_path = "../eks"
+}
+
+inputs = {
+  vpc_id   = dependency.vpc.outputs.vpc_id
+  db_url   = dependency.rds.outputs.endpoint
+  cluster  = dependency.eks.outputs.cluster_name
+}
+`;
+
 const EXTRA_SAMPLES = {
     terraform: {
         basic: { label: 'Production AWS stack', code: SAMPLE_TERRAFORM },
@@ -650,6 +705,9 @@ const EXTRA_SAMPLES = {
     docker: {
         basic: { label: 'Web app (nginx + API + DB + cache)', code: SAMPLE_DOCKER_COMPOSE },
         microservices: { label: 'Microservices platform (9 services)', code: SAMPLE_DOCKER_MICROSERVICES },
+    },
+    terragrunt: {
+        basic: { label: 'Multi-unit stack (VPC + RDS + EKS + app)', code: SAMPLE_TERRAGRUNT },
     },
 };
 
@@ -687,6 +745,22 @@ services:
 
   db:
     image: postgres:16-alpine`,
+    terragrunt: `# Paste terragrunt.hcl content — separate multiple units with:
+# --- unit: name ---
+
+# --- unit: vpc ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//vpc"
+}
+
+# --- unit: app ---
+terraform {
+  source = "git::https://github.com/myorg/tf-modules//ecs-service"
+}
+
+dependency "vpc" {
+  config_path = "../vpc"
+}`,
 };
 
 const codeInput = document.getElementById('code-input');
@@ -851,7 +925,9 @@ function hideDiagram() {
 }
 
 function parseCode(code) {
-    if (activeInputType() === 'docker') return parseDockerCompose(code);
+    const type = activeInputType();
+    if (type === 'docker') return parseDockerCompose(code);
+    if (type === 'terragrunt') return parseTerragrunt(code);
     if (code.trimStart().startsWith('{')) {
         const planResult = parseTerraformPlan(code);
         if (planResult !== null) return planResult;
@@ -877,7 +953,7 @@ function updateEditorForType(type, previousType = null) {
 
     codeInput.placeholder = PLACEHOLDERS[type];
     populateExampleSelect(type);
-    if (btnLoadSample) btnLoadSample.textContent = type === 'docker' ? 'Load Docker sample' : 'Load Terraform sample';
+    if (btnLoadSample) btnLoadSample.textContent = type === 'docker' ? 'Load Docker sample' : type === 'terragrunt' ? 'Load Terragrunt sample' : 'Load Terraform sample';
 
     if (isShowingSample || !currentText) {
         codeInput.value = '';
@@ -971,15 +1047,65 @@ document.getElementById('btn-export-svg').addEventListener('click', async () => 
     }
 });
 
+// ── draw.io preview modal ─────────────────────────────────────────────────────
+
+let drawioModalXml = null;
+let drawioModalFilename = 'infrasketch-diagram.drawio';
+
+const drawioModal = document.getElementById('drawio-modal');
+const drawioModalBody = document.getElementById('drawio-modal-body');
+const drawioModalBadge = document.getElementById('drawio-modal-badge');
+
+function openDrawioModal(xml, filename, previewNode) {
+    drawioModalXml = xml;
+    drawioModalFilename = filename;
+    drawioModalBody.innerHTML = '';
+    drawioModalBody.appendChild(previewNode);
+    drawioModalBadge.textContent = filename;
+    drawioModal.hidden = false;
+}
+
+function closeDrawioModal() {
+    drawioModal.hidden = true;
+    drawioModalBody.innerHTML = '';
+    drawioModalXml = null;
+}
+
+document.getElementById('drawio-modal-close').addEventListener('click', closeDrawioModal);
+document.getElementById('drawio-modal-cancel').addEventListener('click', closeDrawioModal);
+drawioModal.addEventListener('click', (e) => { if (e.target === drawioModal) closeDrawioModal(); });
+
+document.getElementById('drawio-modal-download').addEventListener('click', () => {
+    if (!drawioModalXml) return;
+    const blob = new Blob([drawioModalXml], { type: 'application/xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = drawioModalFilename;
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
 document.getElementById('btn-export-drawio').addEventListener('click', () => {
     if (!lastParsed) {
         alert('Generate a diagram first.');
         return;
     }
 
-    if (!exportDrawio(lastParsed)) {
+    const xml = generateDrawioXml(lastParsed);
+    if (!xml) {
         alert('No resources to export.');
+        return;
     }
+
+    const svgClone = diagramSvg.cloneNode(true);
+    svgClone.removeAttribute('id');
+    svgClone.style.display = '';
+    svgClone.style.maxWidth = '100%';
+    const zoomLayer = svgClone.querySelector('.zoom-layer');
+    if (zoomLayer) zoomLayer.setAttribute('transform', '');
+
+    openDrawioModal(xml, 'infrasketch-diagram.drawio', svgClone);
 });
 
 shareButton.addEventListener('click', () => {
@@ -1033,14 +1159,17 @@ svgImportInput.addEventListener('change', () => {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const xml = svgToDrawio(e.target.result);
-            const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.download = file.name.replace(/\.svg$/i, '') + '.drawio';
-            a.href = url;
-            a.click();
-            URL.revokeObjectURL(url);
+            const svgText = e.target.result;
+            const xml = svgToDrawio(svgText);
+
+            const parser = new DOMParser();
+            const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+            const svgEl = svgDoc.documentElement.cloneNode(true);
+            svgEl.style.maxWidth = '100%';
+            svgEl.style.height = 'auto';
+
+            const filename = file.name.replace(/\.svg$/i, '') + '.drawio';
+            openDrawioModal(xml, filename, svgEl);
         } catch (err) {
             alert('Could not convert SVG: ' + (err.message || err));
         }
