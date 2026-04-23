@@ -251,4 +251,4 @@ Issues and pull requests are welcome. When reporting a parser bug, include a sma
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+AGPL-3.0 — see [LICENSE](LICENSE).
