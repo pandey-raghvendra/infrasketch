@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <title>About — InfraSketch | Free Terraform Diagram Generator</title>
-    <meta name="description" content="InfraSketch is a free, open-source tool that generates architecture diagrams from Terraform code. Built by a DevOps engineer with 9+ years of experience.">
+    <meta name="description" content="InfraSketch is a free, open-source tool that generates architecture diagrams from Terraform HCL, plan JSON, Terragrunt, and Docker Compose. Built by a DevOps engineer with 9+ years of experience.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -73,24 +73,32 @@
         <h2>What it does</h2>
         <div class="features-grid">
             <div class="feature-item">
-                <h3>Terraform HCL parsing</h3>
-                <p>Parses 25+ AWS resource types and detects relationships between them.</p>
+                <h3>Terraform HCL &amp; plan JSON</h3>
+                <p>Parses 30+ AWS and 22+ Azure resource types. Paste HCL directly or use <code style="font-family:var(--mono);font-size:12px;color:var(--accent)">terraform show -json</code> for fully resolved resources including module expansion.</p>
             </div>
             <div class="feature-item">
-                <h3>Docker Compose support</h3>
-                <p>Visualize your container architecture from docker-compose.yml files.</p>
+                <h3>Terraform module blocks</h3>
+                <p><code style="font-family:var(--mono);font-size:12px;color:var(--accent)">module "name" {}</code> calls are rendered as nodes with connection arrows from module outputs. Plan JSON includes all module-prefixed resources with correct icons.</p>
             </div>
             <div class="feature-item">
-                <h3>Official AWS icons</h3>
-                <p>Uses the official AWS Architecture Icon set for professional diagrams.</p>
+                <h3>Terragrunt</h3>
+                <p>Paste one or more <code style="font-family:var(--mono);font-size:12px;color:var(--accent)">terragrunt.hcl</code> units separated by <code style="font-family:var(--mono);font-size:12px;color:var(--accent)"># --- unit: name ---</code> markers. Dependency blocks become directed edges between units.</p>
             </div>
             <div class="feature-item">
-                <h3>Export PNG & SVG</h3>
-                <p>Download your diagrams in high-resolution PNG or scalable SVG format.</p>
+                <h3>Docker Compose</h3>
+                <p>Visualize container architecture from docker-compose.yml files. Supports array and map-form <code style="font-family:var(--mono);font-size:12px;color:var(--accent)">depends_on</code> syntax.</p>
+            </div>
+            <div class="feature-item">
+                <h3>AWS &amp; Azure icons</h3>
+                <p>Official AWS Architecture Icon set and Microsoft Azure service icons. Resources are auto-categorised into zones: Internet, Ingress, VPC, Data, Messaging, Security.</p>
+            </div>
+            <div class="feature-item">
+                <h3>Export &amp; draw.io preview</h3>
+                <p>Download as PNG (2× retina), SVG (icons inlined), or draw.io XML. A visual preview appears before download. Upload any SVG and convert it to native draw.io format with editable stencils.</p>
             </div>
             <div class="feature-item">
                 <h3>100% client-side</h3>
-                <p>All processing happens in your browser. Zero data sent to any server.</p>
+                <p>All processing happens in your browser. Zero data sent to any server. Works offline once loaded.</p>
             </div>
             <div class="feature-item">
                 <h3>Open source</h3>
@@ -108,11 +116,12 @@
         <p>The frontend is built with vanilla HTML, CSS, and JavaScript — no frameworks, no build step, no dependencies. The Terraform parser is custom-written JavaScript that extracts resource types, names, and references using regex-based pattern matching. Diagrams are rendered as SVG using the official AWS Architecture Icon set. The site is hosted on GitHub Pages with a custom domain on Cloudflare.</p>
 
         <h2>Roadmap</h2>
-        <p>InfraSketch is actively being improved. Planned features include CloudFormation template support, Kubernetes manifest visualization, Azure and GCP resource icons, improved auto-layout with better connection routing, Terraform module support, and an interactive diagram editor.</p>
+        <p>InfraSketch is actively being improved. Recently shipped: Azure resource support (22+ types), Terraform module blocks, Terragrunt dependency graphs, and a draw.io visual preview before download.</p>
+        <p>Planned next: Terraform Registry module auto-expansion (fetch public module sources and render their resources inline), CloudFormation template support, Kubernetes manifest visualization, GCP resource icons, and an interactive diagram editor.</p>
 
         <div class="cta-box">
             <h3>Try InfraSketch now</h3>
-            <p>Paste your Terraform code and generate a diagram in seconds.</p>
+            <p>Paste Terraform HCL, a plan JSON, Terragrunt units, or Docker Compose and get a diagram in seconds.</p>
             <a href="/" class="btn">Open InfraSketch</a>
         </div>
 
