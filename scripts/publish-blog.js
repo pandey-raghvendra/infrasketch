@@ -218,7 +218,7 @@ async function postToDevTo() {
       published: true,
       description,
       canonical_url: canonical || undefined,
-      tags: tags.map(t => t.toLowerCase().replace(/[^a-z0-9]/g, '')).slice(0, 4),
+      tags: tags.map(t => t.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30)).slice(0, 4),
     },
   };
 
