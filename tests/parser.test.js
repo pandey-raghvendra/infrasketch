@@ -14,7 +14,7 @@ describe('parseTerraform', () => {
 
     it('returns empty result for unsupported resource types', () => {
         const code = `
-resource "aws_route_table" "main" {
+resource "aws_unknown_fictional_resource" "main" {
   vpc_id = "vpc-123"
 }`;
         const result = parseTerraform(code);
@@ -151,18 +151,18 @@ resource "aws_iam_role" "eks" { name = "eks-role" }`;
 // ─── parseDockerCompose ──────────────────────────────────────────────────────
 
 describe('parseDockerCompose', () => {
-    it('returns empty result for empty services', () => {
-        const result = parseDockerCompose('services: {}');
+    it('returns empty result for empty services', async () => {
+        const result = await parseDockerCompose('services: {}');
         expect(result.resources).toEqual([]);
         expect(result.connections).toEqual([]);
     });
 
-    it('parses a single service', () => {
+    it('parses a single service', async () => {
         const code = `
 services:
   web:
     image: nginx:alpine`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         expect(result.resources).toHaveLength(1);
         expect(result.resources[0]).toMatchObject({
             id: 'docker.web',
@@ -172,7 +172,7 @@ services:
         });
     });
 
-    it('parses multiple services', () => {
+    it('parses multiple services', async () => {
         const code = `
 services:
   api:
@@ -181,14 +181,14 @@ services:
     image: postgres:16-alpine
   cache:
     image: redis:7-alpine`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         const names = result.resources.map((r) => r.name);
         expect(names).toContain('api');
         expect(names).toContain('db');
         expect(names).toContain('cache');
     });
 
-    it('creates connections from array-form depends_on', () => {
+    it('creates connections from array-form depends_on', async () => {
         const code = `
 services:
   web:
@@ -197,11 +197,11 @@ services:
       - api
   api:
     image: node:20-alpine`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         expect(result.connections).toContainEqual({ from: 'docker.api', to: 'docker.web' });
     });
 
-    it('creates connections from map-form depends_on (condition syntax)', () => {
+    it('creates connections from map-form depends_on (condition syntax)', async () => {
         const code = `
 services:
   api:
@@ -215,23 +215,23 @@ services:
     image: postgres:16-alpine
   cache:
     image: redis:7-alpine`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         expect(result.connections).toContainEqual({ from: 'docker.db', to: 'docker.api' });
         expect(result.connections).toContainEqual({ from: 'docker.cache', to: 'docker.api' });
     });
 
-    it('ignores depends_on entries that reference non-existent services', () => {
+    it('ignores depends_on entries that reference non-existent services', async () => {
         const code = `
 services:
   web:
     image: nginx:alpine
     depends_on:
       - ghost-service`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         expect(result.connections).toEqual([]);
     });
 
-    it('does not duplicate connections', () => {
+    it('does not duplicate connections', async () => {
         const code = `
 services:
   api:
@@ -240,12 +240,12 @@ services:
       - db
   db:
     image: postgres:16-alpine`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         const dupes = result.connections.filter((c) => c.from === 'docker.db' && c.to === 'docker.api');
         expect(dupes).toHaveLength(1);
     });
 
-    it('handles YAML with comments correctly', () => {
+    it('handles YAML with comments correctly', async () => {
         const code = `
 # My compose file
 services:
@@ -255,17 +255,17 @@ services:
       - api  # wait for API
   api:
     image: node:20-alpine`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         expect(result.resources).toHaveLength(2);
         expect(result.connections).toHaveLength(1);
     });
 
-    it('sets vpcOf and subnetOf to empty objects', () => {
+    it('sets vpcOf and subnetOf to empty objects', async () => {
         const code = `
 services:
   web:
     image: nginx:alpine`;
-        const result = parseDockerCompose(code);
+        const result = await parseDockerCompose(code);
         expect(result.vpcOf).toEqual({});
         expect(result.subnetOf).toEqual({});
     });
@@ -588,7 +588,7 @@ resource "aws_lambda_function" "fn" {
     });
 
     it('returns empty resources for only unsupported resources and no modules', () => {
-        const code = `resource "aws_route_table" "rt" { vpc_id = "vpc-1" }`;
+        const code = `resource "aws_unknown_fictional_resource" "rt" { vpc_id = "vpc-1" }`;
         const { resources } = parseTerraform(code);
         expect(resources).toHaveLength(0);
     });

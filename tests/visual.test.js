@@ -119,8 +119,8 @@ describe('draw.io XML visual regression', () => {
         expect(xml).toMatchSnapshot();
     });
 
-    it('Docker Compose sample produces consistent XML', () => {
-        const parsed = parseDockerCompose(SAMPLE_DOCKER_COMPOSE);
+    it('Docker Compose sample produces consistent XML', async () => {
+        const parsed = await parseDockerCompose(SAMPLE_DOCKER_COMPOSE);
         const xml = generateDrawioXml(parsed);
         expect(xml).toMatchSnapshot();
     });
@@ -174,13 +174,13 @@ describe('parsed resource count regression', () => {
         expect(resources.length).toMatchSnapshot();
     });
 
-    it('Docker Compose sample yields expected service count', () => {
-        const { resources } = parseDockerCompose(SAMPLE_DOCKER_COMPOSE);
+    it('Docker Compose sample yields expected service count', async () => {
+        const { resources } = await parseDockerCompose(SAMPLE_DOCKER_COMPOSE);
         expect(resources.length).toBe(4);
     });
 
-    it('Docker Compose sample yields expected connection count', () => {
-        const { connections } = parseDockerCompose(SAMPLE_DOCKER_COMPOSE);
+    it('Docker Compose sample yields expected connection count', async () => {
+        const { connections } = await parseDockerCompose(SAMPLE_DOCKER_COMPOSE);
         // web→api, api→db, api→cache
         expect(connections.length).toBe(3);
     });

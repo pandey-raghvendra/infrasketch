@@ -2,6 +2,17 @@ import { RESOURCE_CATEGORIES } from './constants.js';
 
 const DOCKER_COLOR = '#ff6b35';
 
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.head.appendChild(s);
+    });
+}
+
 function terraformAddress(type, name) {
     return `${type}.${name}`;
 }
@@ -228,9 +239,10 @@ function normalizeDependsOn(dependsOn) {
     return [];
 }
 
-export function parseDockerCompose(code) {
+export async function parseDockerCompose(code) {
+    if (!globalThis.jsyaml) await loadScript('/lib/js-yaml.min.js');
     const yamlParser = globalThis.jsyaml;
-    if (!yamlParser) throw new Error('YAML parser (js-yaml) not loaded.');
+    if (!yamlParser) throw new Error('YAML parser (js-yaml) could not be loaded.');
 
     const doc = yamlParser.load(code) || {};
     const servicesMap = (doc && typeof doc === 'object') ? (doc.services || {}) : {};

@@ -1,6 +1,17 @@
 import { extractModuleBlocks, parseTerraform } from './parser.js';
 
 const REGISTRY_API = 'https://registry.terraform.io/v1/modules';
+
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.head.appendChild(s);
+    });
+}
 const GH_RAW = 'https://raw.githubusercontent.com';
 const GH_API = 'https://api.github.com/repos';
 
@@ -19,8 +30,9 @@ function findCommonPrefix(paths) {
 }
 
 export async function buildVirtualFS(zipFile) {
+    if (!globalThis.JSZip) await loadScript('/lib/jszip.min.js');
     const JSZip = globalThis.JSZip;
-    if (!JSZip) throw new Error('JSZip not loaded — ensure lib/jszip.min.js is included.');
+    if (!JSZip) throw new Error('JSZip could not be loaded.');
 
     const zip = await JSZip.loadAsync(zipFile);
     const allPaths = Object.keys(zip.files).filter(p => !zip.files[p].dir && p.endsWith('.tf'));
