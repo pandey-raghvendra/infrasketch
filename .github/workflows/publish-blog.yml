@@ -1,0 +1,64 @@
+name: Publish Blog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'blog/**.html'
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Specific blog file to publish (e.g. blog/my-post.html). Leave blank to publish all.'
+        required: false
+        default: ''
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Resolve files to publish
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            input="${{ github.event.inputs.file }}"
+            if [ -n "$input" ]; then
+              files="$input"
+            else
+              files=$(find blog -maxdepth 1 -name '*.html' ! -name 'index.html' | sort)
+            fi
+          else
+            files=$(git diff --name-status HEAD^ HEAD \
+              | awk '$1 == "A" && $2 ~ /^blog\/.+\.html$/ && $2 != "blog/index.html" { print $2 }')
+          fi
+
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$files" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$files" ]; then
+            echo "No blog posts to publish."
+          else
+            echo "Posts to publish:"
+            echo "$files"
+          fi
+
+      - name: Publish to dev.to and Hashnode
+        if: steps.resolve.outputs.files != ''
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
+          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
+        run: |
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            echo "--- Publishing $file ---"
+            node scripts/publish-blog.js "$file"
+          done <<< "${{ steps.resolve.outputs.files }}"
