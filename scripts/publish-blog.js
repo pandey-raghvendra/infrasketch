@@ -22,16 +22,28 @@ const html = fs.readFileSync(filePath, 'utf8');
 
 // ── metadata extraction ──────────────────────────────────────────────────────
 
+function attrValue(tag, attr) {
+  const m = tag.match(new RegExp(`${attr}="([^"]*)"`, 'i'))
+    || tag.match(new RegExp(`${attr}='([^']*)'`, 'i'));
+  return m ? m[1] : null;
+}
+
 function getMeta(name) {
-  const m = html.match(new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, 'i'))
-    || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${name}["']`, 'i'));
-  return m ? m[1] : '';
+  const tags = [...html.matchAll(/<meta([^>]+)>/gi)].map(m => m[1]);
+  for (const tag of tags) {
+    const n = attrValue(tag, 'name');
+    if (n && n.toLowerCase() === name.toLowerCase()) return attrValue(tag, 'content') ?? '';
+  }
+  return '';
 }
 
 function getOgMeta(property) {
-  const m = html.match(new RegExp(`<meta[^>]+property=["']${property}["'][^>]+content=["']([^"']+)["']`, 'i'))
-    || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${property}["']`, 'i'));
-  return m ? m[1] : '';
+  const tags = [...html.matchAll(/<meta([^>]+)>/gi)].map(m => m[1]);
+  for (const tag of tags) {
+    const p = attrValue(tag, 'property');
+    if (p && p.toLowerCase() === property.toLowerCase()) return attrValue(tag, 'content') ?? '';
+  }
+  return '';
 }
 
 function getCanonical() {
