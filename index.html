@@ -12,15 +12,15 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfraSketch — Terraform &amp; CloudFormation Architecture Diagrams</title>
-    <meta name="description" content="Paste Terraform HCL, CloudFormation YAML/JSON, or Docker Compose and instantly get AWS, Azure &amp; GCP architecture diagrams. Free, no signup, 100% browser-based.">
-    <meta name="keywords" content="terraform diagram, cloudformation diagram, terraform visualizer, aws architecture diagram generator, terraform to diagram, cloudformation visualizer, docker compose diagram, infrastructure diagram, IaC visualizer, azure diagram">
+    <title>InfraSketch — Terraform, CloudFormation &amp; CDK Architecture Diagrams</title>
+    <meta name="description" content="Paste Terraform HCL, CloudFormation YAML/JSON, CDK synth output, or Docker Compose and instantly get AWS, Azure &amp; GCP architecture diagrams. Free, no signup, 100% browser-based.">
+    <meta name="keywords" content="terraform diagram, cloudformation diagram, cdk diagram, terraform visualizer, aws architecture diagram generator, terraform to diagram, cloudformation visualizer, cdk synth diagram, docker compose diagram, infrastructure diagram, IaC visualizer">
     <link rel="canonical" href="https://infrasketch.cloud/">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://infrasketch.cloud/">
-    <meta property="og:title" content="InfraSketch — Terraform &amp; CloudFormation Architecture Diagrams">
+    <meta property="og:title" content="InfraSketch — Terraform, CloudFormation &amp; CDK Architecture Diagrams">
     <meta property="og:description" content="Paste Terraform HCL or Docker Compose and instantly get AWS &amp; Azure architecture diagrams. Free, no signup, 100% browser-based.">
     <meta property="og:image" content="https://infrasketch.cloud/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -28,7 +28,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="InfraSketch — Terraform &amp; CloudFormation Architecture Diagrams">
+    <meta name="twitter:title" content="InfraSketch — Terraform, CloudFormation &amp; CDK Architecture Diagrams">
     <meta name="twitter:description" content="Paste Terraform HCL or Docker Compose and instantly get AWS &amp; Azure architecture diagrams. Free, no signup, 100% browser-based.">
     <meta name="twitter:image" content="https://infrasketch.cloud/assets/og-image.png">
 
@@ -1206,7 +1206,7 @@
     <section class="hero">
         <div class="badge">FREE &middot; NO SIGNUP &middot; NO CREDENTIALS</div>
         <h1>Paste Terraform.<br><span class="hl">Get architecture diagrams.</span></h1>
-        <p>Instantly visualize your infrastructure. Paste Terraform HCL, CloudFormation YAML/JSON, a plan JSON, Terragrunt units, or a docker-compose file — get a clean, exportable architecture diagram in seconds.</p>
+        <p>Instantly visualize your infrastructure. Paste Terraform HCL, CloudFormation YAML/JSON, CDK synth output, Terragrunt units, or a docker-compose file — get a clean, exportable architecture diagram in seconds.</p>
         <a href="https://github.com/pandey-raghvendra/infrasketch" target="_blank" class="star-badge" id="star-badge">
             <svg viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
@@ -1243,6 +1243,7 @@
                 <div class="input-tabs">
                     <button class="input-tab active" data-type="terraform">Terraform</button>
                     <button class="input-tab" data-type="cloudformation">CloudFormation</button>
+                    <button class="input-tab" data-type="cdk">CDK</button>
                     <button class="input-tab" data-type="docker">Docker Compose</button>
                     <button class="input-tab" data-type="terragrunt">Terragrunt</button>
                 </div>
@@ -1312,7 +1313,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                             <path d="M21 15l-5-5L5 21l-3-3 11-11z"/>
                         </svg>
                     </div>
-                    <p>Paste Terraform, CloudFormation, Terragrunt, or Docker Compose on the left<br>and click <strong>Generate Diagram</strong></p>
+                    <p>Paste Terraform, CloudFormation, CDK, Terragrunt, or Docker Compose on the left<br>and click <strong>Generate Diagram</strong></p>
                 </div>
                 <div class="loading-indicator" id="loading">
                     <div class="loading-ring"></div>
@@ -1351,7 +1352,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <div class="step">
                 <div class="step-number">STEP 01</div>
                 <h3>Paste your IaC code</h3>
-                <p>Copy Terraform HCL, a plan JSON, CloudFormation YAML/JSON, Terragrunt units, or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and module blocks.</p>
+                <p>Copy Terraform HCL, CloudFormation YAML/JSON, CDK synth output, Terragrunt units, or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and module blocks.</p>
                 <div class="step-arrow">&#8250;</div>
             </div>
             <div class="step">
@@ -1380,7 +1381,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 </svg>
             </div>
             <h3>No credentials needed</h3>
-            <p>Unlike Cloudcraft or Hava, InfraSketch never touches your cloud account. Paste Terraform HCL, CloudFormation YAML/JSON, Terragrunt units, or Docker Compose — everything runs in your browser.</p>
+            <p>Unlike Cloudcraft or Hava, InfraSketch never touches your cloud account. Paste Terraform HCL, CloudFormation YAML/JSON, CDK synth output, Terragrunt units, or Docker Compose — everything runs in your browser.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">

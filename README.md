@@ -9,7 +9,7 @@ If InfraSketch saved you time, consider starring the repo ⭐
 
 InfraSketch turns infrastructure code into clean architecture diagrams in the browser — no login, no backend, no cloud credentials required.
 
-Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (YAML or JSON), a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
+Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (YAML or JSON), `cdk synth` output, a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
 
 **Live site: https://infrasketch.cloud**
 
@@ -18,7 +18,7 @@ Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (Y
 ## Quick Start
 
 1. Open https://infrasketch.cloud
-2. Paste your Terraform HCL, plan JSON, CloudFormation YAML/JSON, Terragrunt `.hcl`, or `docker-compose.yml` into the editor
+2. Paste your Terraform HCL, plan JSON, CloudFormation YAML/JSON, `cdk synth` JSON, Terragrunt `.hcl`, or `docker-compose.yml` into the editor
 3. Click **Generate Diagram**
 4. Export as **PNG**, **SVG**, or **draw.io XML** — or click **Share** to copy a link
 
@@ -32,6 +32,7 @@ No account. No credentials. Everything runs in your browser.
 - Terraform HCL (`.tf` files — paste one or many concatenated) including `module "name" {}` blocks
 - Terraform plan JSON (`terraform plan -out=tfplan && terraform show -json tfplan`) — most accurate connection inference
 - CloudFormation YAML or JSON — supports `!Ref`, `!GetAtt`, `!Sub` and all intrinsic function shorthand
+- AWS CDK — paste `cdk synth` JSON output directly into the CDK tab
 - Terragrunt (`terragrunt.hcl`) — paste one or multiple units separated by `# --- unit: name ---` markers
 - Docker Compose YAML (`docker-compose.yml`) with full YAML spec support
 
@@ -66,7 +67,7 @@ No account. No credentials. Everything runs in your browser.
 - Shareable URL — **Share** button encodes editor state as a base64 URL hash; recipients land on the rendered diagram
 - Resource summary table — collapsible, lists every resource with name, type, and category
 - Stats bar — counts by category (VPC/Network, Compute, Database, Storage, Load Balancer)
-- Built-in examples for AWS, Azure, GCP, multi-module Terraform, Terragrunt, serverless pipeline, Docker microservices
+- Built-in examples for AWS, Azure, GCP, CloudFormation, CDK, multi-module Terraform, Terragrunt, serverless pipeline, Docker microservices
 
 ---
 
@@ -111,6 +112,22 @@ InfraSketch supports the full CloudFormation intrinsic function shorthand (`!Ref
 | Messaging | `AWS::SQS::Queue`, `AWS::SNS::Topic` |
 | Containers | `AWS::ECR::Repository` |
 | Observability | `AWS::CloudWatch::Alarm`, `AWS::Logs::LogGroup` |
+
+### AWS CDK
+
+Select the **CDK** tab, paste `cdk synth` JSON output, and click **Generate Diagram**.
+
+```bash
+cdk synth | pbcopy            # macOS — copies to clipboard
+cdk synth > template.json     # or save to file, then paste
+cdk synth MyStack | pbcopy    # specific stack
+```
+
+CDK compiles to CloudFormation JSON — InfraSketch reads the synthesized `Resources` object directly. CDK logical IDs (e.g. `VPCB9E5F0B4`, `EKSCluster9EE0221C`) appear as node labels. VPC containment, subnet placement, and connection arrows are all inferred from `Ref` and `Fn::GetAtt` references in the synthesized template.
+
+All L2 constructs that generate supported L1 types are visualized: `ec2.Vpc`, `eks.Cluster`, `ecs.FargateService`, `lambda.Function`, `rds.DatabaseInstance`, `s3.Bucket`, `sqs.Queue`, `sns.Topic`, `elbv2.ApplicationLoadBalancer`, `cloudfront.Distribution`, `kms.Key`, `iam.Role`, and more.
+
+> **CDK for Terraform (CDKTF):** Use the **Terraform** tab and paste the synthesized JSON — the plan JSON parser handles it directly.
 
 ### Terragrunt
 

@@ -791,6 +791,87 @@ resource "google_service_account" "gke_sa" {
 }
 `;
 
+const SAMPLE_CDK = `{
+  "Resources": {
+    "VPCB9E5F0B4": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": { "CidrBlock": "10.0.0.0/16", "EnableDnsHostnames": true }
+    },
+    "PublicSubnet1B4246D30": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": { "VpcId": { "Ref": "VPCB9E5F0B4" }, "CidrBlock": "10.0.0.0/18", "MapPublicIpOnLaunch": true }
+    },
+    "PrivateSubnet1BCA10E0": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": { "VpcId": { "Ref": "VPCB9E5F0B4" }, "CidrBlock": "10.0.128.0/18" }
+    },
+    "VPCIGWB7E252D3": { "Type": "AWS::EC2::InternetGateway" },
+    "NatGatewayEIP": { "Type": "AWS::EC2::EIP" },
+    "NatGateway": {
+      "Type": "AWS::EC2::NatGateway",
+      "Properties": { "SubnetId": { "Ref": "PublicSubnet1B4246D30" }, "AllocationId": { "Fn::GetAtt": ["NatGatewayEIP", "AllocationId"] } }
+    },
+    "AppLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": { "Subnets": [{ "Ref": "PublicSubnet1B4246D30" }] }
+    },
+    "AppTargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": { "VpcId": { "Ref": "VPCB9E5F0B4" } }
+    },
+    "EKSCluster9EE0221C": {
+      "Type": "AWS::EKS::Cluster",
+      "Properties": {
+        "RoleArn": { "Fn::GetAtt": ["ClusterRoleFA261979", "Arn"] },
+        "ResourcesVpcConfig": { "SubnetIds": [{ "Ref": "PrivateSubnet1BCA10E0" }] }
+      }
+    },
+    "ClusterRoleFA261979": { "Type": "AWS::IAM::Role" },
+    "DatabaseB269D8BB": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": { "DBSubnetGroupName": { "Ref": "DatabaseSubnetGroup" } }
+    },
+    "DatabaseSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": { "SubnetIds": [{ "Ref": "PrivateSubnet1BCA10E0" }] }
+    },
+    "CacheCluster": {
+      "Type": "AWS::ElastiCache::ReplicationGroup",
+      "Properties": { "SecurityGroupIds": [] }
+    },
+    "AppBucketB0BA7C80": { "Type": "AWS::S3::Bucket" },
+    "AppQueueC7D94E80": { "Type": "AWS::SQS::Queue" },
+    "AppTopicSNS": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "Subscription": [{ "Endpoint": { "Fn::GetAtt": ["ProcessorFunctionC865E5A0", "Arn"] }, "Protocol": "lambda" }]
+      }
+    },
+    "ProcessorFunctionC865E5A0": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Role": { "Fn::GetAtt": ["ProcessorRoleB9D5BCCE", "Arn"] },
+        "Environment": {
+          "Variables": {
+            "BUCKET": { "Ref": "AppBucketB0BA7C80" },
+            "QUEUE_URL": { "Ref": "AppQueueC7D94E80" }
+          }
+        }
+      }
+    },
+    "ProcessorRoleB9D5BCCE": { "Type": "AWS::IAM::Role" },
+    "EncryptionKeyA1B2C3": { "Type": "AWS::KMS::Key" },
+    "AppDistributionCF": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Origins": [{ "DomainName": { "Fn::GetAtt": ["AppLoadBalancer", "DNSName"] } }]
+        }
+      }
+    }
+  }
+}`;
+
 const SAMPLE_CLOUDFORMATION = `AWSTemplateFormatVersion: '2010-09-09'
 Description: Production AWS stack — VPC, ECS, RDS, Lambda, SQS, SNS
 
@@ -915,6 +996,9 @@ const EXTRA_SAMPLES = {
     cloudformation: {
         basic: { label: 'Production AWS stack (VPC + ECS + RDS + Lambda + SQS)', code: SAMPLE_CLOUDFORMATION },
     },
+    cdk: {
+        basic: { label: 'Production AWS stack — cdk synth output (VPC + EKS + RDS + Lambda)', code: SAMPLE_CDK },
+    },
 };
 
 const PLACEHOLDERS = {
@@ -986,6 +1070,32 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       SubnetId: !Ref PublicSubnet`,
+    cdk: `# Paste cdk synth JSON output
+# Run: cdk synth | pbcopy   (macOS)
+#  or: cdk synth > template.json
+
+{
+  "Resources": {
+    "VPCB9E5F0B4": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": { "CidrBlock": "10.0.0.0/16" }
+    },
+    "PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Ref": "VPCB9E5F0B4" },
+        "CidrBlock": "10.0.0.0/18"
+      }
+    },
+    "WebFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Role": { "Fn::GetAtt": ["LambdaRole", "Arn"] }
+      }
+    },
+    "LambdaRole": { "Type": "AWS::IAM::Role" }
+  }
+}`,
 };
 
 // ── Toast notifications ───────────────────────────────────────────────────────
@@ -1175,7 +1285,7 @@ async function parseCode(code) {
     const type = activeInputType();
     if (type === 'docker') return parseDockerCompose(code);
     if (type === 'terragrunt') return parseTerragrunt(code);
-    if (type === 'cloudformation') return parseCloudFormation(code);
+    if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
     if (code.trimStart().startsWith('{')) {
         const planResult = parseTerraformPlan(code);
         if (planResult !== null) return planResult;
@@ -1203,7 +1313,7 @@ function updateEditorForType(type, previousType = null) {
     codeInput.placeholder = PLACEHOLDERS[type];
     populateExampleSelect(type);
     if (btnLoadSample) {
-        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample' };
+        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample', cdk: 'Load CDK sample' };
         btnLoadSample.textContent = labels[type] || 'Load Terraform sample';
     }
 
@@ -1274,8 +1384,8 @@ generateButton.addEventListener('click', async () => {
         placeholder.style.display = 'block';
         const msg = error.message || '';
         const type = activeInputType();
-        if (type === 'cloudformation') {
-            showToast(msg || 'Invalid CloudFormation template — check YAML/JSON syntax.');
+        if (type === 'cloudformation' || type === 'cdk') {
+            showToast(msg || 'Invalid template — check YAML/JSON syntax.');
         } else if (msg.toLowerCase().includes('json')) {
             showToast('Invalid JSON — if pasting a plan, use: terraform show -json tfplan');
         } else if (msg.toLowerCase().includes('yaml')) {
