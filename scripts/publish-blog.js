@@ -183,7 +183,7 @@ console.log(`Canonical: ${canonical}\n`);
 
 // ── dev.to ───────────────────────────────────────────────────────────────────
 
-async function isPublishedOnDevTo() {
+async function findDevToArticle() {
   let page = 1;
   while (true) {
     const res = await fetchWithRetry(
@@ -191,18 +191,15 @@ async function isPublishedOnDevTo() {
       { headers: { 'api-key': DEVTO_API_KEY } },
       'dev.to check'
     );
-    if (!res.ok) return false;
+    if (!res.ok) return null;
     const articles = await res.json();
-    if (articles.length === 0) return false;
+    if (articles.length === 0) return null;
     const match = articles.find(a =>
       (canonical && a.canonical_url === canonical) ||
       a.title.toLowerCase() === title.toLowerCase()
     );
-    if (match) {
-      console.log(`  dev.to: already published → ${match.url}`);
-      return true;
-    }
-    if (articles.length < 100) return false;
+    if (match) return match;
+    if (articles.length < 100) return null;
     page++;
   }
 }
@@ -213,9 +210,8 @@ async function postToDevTo() {
     return;
   }
 
-  if (await isPublishedOnDevTo()) return;
-
-  const body = {
+  const existing = await findDevToArticle();
+  const articleBody = {
     article: {
       title,
       body_markdown: markdown,
@@ -227,18 +223,18 @@ async function postToDevTo() {
   };
 
   const res = await fetchWithRetry(
-    'https://dev.to/api/articles',
+    existing ? `https://dev.to/api/articles/${existing.id}` : 'https://dev.to/api/articles',
     {
-      method: 'POST',
+      method: existing ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json', 'api-key': DEVTO_API_KEY },
-      body: JSON.stringify(body),
+      body: JSON.stringify(articleBody),
     },
     'dev.to publish'
   );
 
   const data = await res.json();
   if (res.ok) {
-    console.log(`✓ dev.to: ${data.url}`);
+    console.log(`${existing ? '↺' : '✓'} dev.to (${existing ? 'updated' : 'created'}): ${data.url}`);
   } else {
     console.error(`✗ dev.to: ${res.status} — ${JSON.stringify(data)}`);
     process.exitCode = 1;
@@ -260,7 +256,7 @@ async function gql(query, variables) {
   return res.json();
 }
 
-async function isPublishedOnHashnode() {
+async function findHashnodePost() {
   const query = `
     query GetPosts($id: ObjectId!, $after: String) {
       publication(id: $id) {
@@ -276,18 +272,15 @@ async function isPublishedOnHashnode() {
   while (true) {
     const data = await gql(query, { id: HASHNODE_PUBLICATION_ID, after });
     const posts = data.data?.publication?.posts;
-    if (!posts) return false;
+    if (!posts) return null;
 
     const match = posts.edges.find(({ node }) =>
       (canonical && node.canonicalUrl === canonical) ||
       node.title.toLowerCase() === title.toLowerCase()
     );
-    if (match) {
-      console.log(`  Hashnode: already published → ${match.node.url}`);
-      return true;
-    }
+    if (match) return match.node;
 
-    if (!posts.pageInfo.hasNextPage) return false;
+    if (!posts.pageInfo.hasNextPage) return null;
     after = posts.pageInfo.endCursor;
   }
 }
@@ -298,33 +291,54 @@ async function postToHashnode() {
     return;
   }
 
-  if (await isPublishedOnHashnode()) return;
+  const existing = await findHashnodePost();
 
-  const mutation = `
-    mutation PublishPost($input: PublishPostInput!) {
-      publishPost(input: $input) {
-        post { id title url }
+  if (existing) {
+    const mutation = `
+      mutation UpdatePost($input: UpdatePostInput!) {
+        updatePost(input: $input) {
+          post { id title url }
+        }
       }
+    `;
+    const input = {
+      id: existing.id,
+      title,
+      contentMarkdown: markdown,
+      originalArticleURL: canonical || undefined,
+      subtitle: description || undefined,
+    };
+    const data = await gql(mutation, { input });
+    if (data.errors) {
+      console.error(`✗ Hashnode: ${JSON.stringify(data.errors)}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`↺ Hashnode (updated): ${data.data?.updatePost?.post?.url}`);
     }
-  `;
-
-  const input = {
-    title,
-    contentMarkdown: markdown,
-    publicationId: HASHNODE_PUBLICATION_ID,
-    tags: [],
-    originalArticleURL: canonical || undefined,
-    subtitle: description || undefined,
-    publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
-  };
-
-  const data = await gql(mutation, { input });
-  if (data.errors) {
-    console.error(`✗ Hashnode: ${JSON.stringify(data.errors)}`);
-    process.exitCode = 1;
   } else {
-    const post = data.data?.publishPost?.post;
-    console.log(`✓ Hashnode: ${post?.url}`);
+    const mutation = `
+      mutation PublishPost($input: PublishPostInput!) {
+        publishPost(input: $input) {
+          post { id title url }
+        }
+      }
+    `;
+    const input = {
+      title,
+      contentMarkdown: markdown,
+      publicationId: HASHNODE_PUBLICATION_ID,
+      tags: [],
+      originalArticleURL: canonical || undefined,
+      subtitle: description || undefined,
+      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
+    };
+    const data = await gql(mutation, { input });
+    if (data.errors) {
+      console.error(`✗ Hashnode: ${JSON.stringify(data.errors)}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`✓ Hashnode (created): ${data.data?.publishPost?.post?.url}`);
+    }
   }
 }
 
