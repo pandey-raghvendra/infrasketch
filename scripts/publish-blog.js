@@ -15,6 +15,9 @@ const DEVTO_API_KEY = process.env.DEVTO_API_KEY;
 const HASHNODE_TOKEN = process.env.HASHNODE_TOKEN;
 const HASHNODE_PUBLICATION_ID = process.env.HASHNODE_PUBLICATION_ID;
 
+const RETRY_DELAY_MS = 30_000;
+const MAX_RETRIES = 3;
+
 const html = fs.readFileSync(filePath, 'utf8');
 
 // ── metadata extraction ──────────────────────────────────────────────────────
@@ -64,45 +67,31 @@ function extractArticleHtml() {
 
 function htmlToMarkdown(raw) {
   return raw
-    // strip script/style blocks
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
-    // headings
     .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, (_, t) => `# ${strip(t)}\n\n`)
     .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, t) => `## ${strip(t)}\n\n`)
     .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, t) => `### ${strip(t)}\n\n`)
     .replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_, t) => `#### ${strip(t)}\n\n`)
-    // bold / italic
     .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, (_, t) => `**${strip(t)}**`)
     .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, (_, t) => `**${strip(t)}**`)
     .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, (_, t) => `*${strip(t)}*`)
     .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, (_, t) => `*${strip(t)}*`)
-    // kbd
     .replace(/<kbd[^>]*>([\s\S]*?)<\/kbd>/gi, (_, t) => `\`${strip(t)}\``)
-    // code blocks (pre > code first)
     .replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, (_, t) => `\`\`\`\n${decodeHtmlEntities(t)}\n\`\`\`\n\n`)
     .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, (_, t) => `\`\`\`\n${decodeHtmlEntities(t)}\n\`\`\`\n\n`)
-    // inline code
     .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, (_, t) => `\`${decodeHtmlEntities(t)}\``)
-    // links
     .replace(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, text) => `[${strip(text)}](${href})`)
-    // lists
     .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (_, inner) => convertList(inner, '-') + '\n')
     .replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (_, inner) => convertOrderedList(inner) + '\n')
-    // cta-box div → blockquote
     .replace(/<div[^>]*class=["'][^"']*cta-box[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi, (_, inner) => {
       const text = strip(inner).replace(/\n+/g, ' ').trim();
       return `> ${text}\n\n`;
     })
-    // tables
     .replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, convertTable)
-    // paragraphs
     .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (_, t) => `${strip(t)}\n\n`)
-    // line breaks
     .replace(/<br\s*\/?>/gi, '\n')
-    // strip remaining tags
     .replace(/<[^>]+>/g, '')
-    // decode entities
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -110,7 +99,6 @@ function htmlToMarkdown(raw) {
     .replace(/&#39;/g, "'")
     .replace(/&middot;/g, '·')
     .replace(/&copy;/g, '©')
-    // collapse excess blank lines
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -148,6 +136,24 @@ function convertTable(_, inner) {
   return [rows[0], sep, ...rows.slice(1)].join('\n') + '\n\n';
 }
 
+// ── retry helper ─────────────────────────────────────────────────────────────
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(url, options, label) {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status !== 429) return res;
+    const retryAfter = parseInt(res.headers.get('retry-after') || '0', 10) * 1000 || RETRY_DELAY_MS;
+    console.warn(`  ${label}: rate limited (429). Waiting ${retryAfter / 1000}s before retry ${attempt}/${MAX_RETRIES}...`);
+    await sleep(retryAfter);
+  }
+  // final attempt after last sleep
+  return fetch(url, options);
+}
+
 // ── build content ────────────────────────────────────────────────────────────
 
 const title = getTitle();
@@ -158,18 +164,43 @@ const tags = getTags();
 const articleHtml = extractArticleHtml();
 const markdown = htmlToMarkdown(articleHtml);
 
-console.log(`\nPublishing: "${title}"`);
+console.log(`\nProcessing: "${title}"`);
 console.log(`Tags: ${tags.join(', ')}`);
-console.log(`Canonical: ${canonical}`);
-console.log(`Markdown length: ${markdown.length} chars\n`);
+console.log(`Canonical: ${canonical}\n`);
 
 // ── dev.to ───────────────────────────────────────────────────────────────────
+
+async function isPublishedOnDevTo() {
+  let page = 1;
+  while (true) {
+    const res = await fetchWithRetry(
+      `https://dev.to/api/articles/me/published?per_page=100&page=${page}`,
+      { headers: { 'api-key': DEVTO_API_KEY } },
+      'dev.to check'
+    );
+    if (!res.ok) return false;
+    const articles = await res.json();
+    if (articles.length === 0) return false;
+    const match = articles.find(a =>
+      (canonical && a.canonical_url === canonical) ||
+      a.title.toLowerCase() === title.toLowerCase()
+    );
+    if (match) {
+      console.log(`  dev.to: already published → ${match.url}`);
+      return true;
+    }
+    if (articles.length < 100) return false;
+    page++;
+  }
+}
 
 async function postToDevTo() {
   if (!DEVTO_API_KEY) {
     console.warn('DEVTO_API_KEY not set — skipping dev.to');
     return;
   }
+
+  if (await isPublishedOnDevTo()) return;
 
   const body = {
     article: {
@@ -182,14 +213,15 @@ async function postToDevTo() {
     },
   };
 
-  const res = await fetch('https://dev.to/api/articles', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': DEVTO_API_KEY,
+  const res = await fetchWithRetry(
+    'https://dev.to/api/articles',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'api-key': DEVTO_API_KEY },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+    'dev.to publish'
+  );
 
   const data = await res.json();
   if (res.ok) {
@@ -202,11 +234,58 @@ async function postToDevTo() {
 
 // ── Hashnode ─────────────────────────────────────────────────────────────────
 
+async function gql(query, variables) {
+  const res = await fetchWithRetry(
+    'https://gql.hashnode.com',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: HASHNODE_TOKEN },
+      body: JSON.stringify({ query, variables }),
+    },
+    'Hashnode'
+  );
+  return res.json();
+}
+
+async function isPublishedOnHashnode() {
+  const query = `
+    query GetPosts($id: ObjectId!, $after: String) {
+      publication(id: $id) {
+        posts(first: 50, after: $after) {
+          edges { node { id title url canonicalUrl } }
+          pageInfo { hasNextPage endCursor }
+        }
+      }
+    }
+  `;
+
+  let after = null;
+  while (true) {
+    const data = await gql(query, { id: HASHNODE_PUBLICATION_ID, after });
+    const posts = data.data?.publication?.posts;
+    if (!posts) return false;
+
+    const match = posts.edges.find(({ node }) =>
+      (canonical && node.canonicalUrl === canonical) ||
+      node.title.toLowerCase() === title.toLowerCase()
+    );
+    if (match) {
+      console.log(`  Hashnode: already published → ${match.node.url}`);
+      return true;
+    }
+
+    if (!posts.pageInfo.hasNextPage) return false;
+    after = posts.pageInfo.endCursor;
+  }
+}
+
 async function postToHashnode() {
   if (!HASHNODE_TOKEN || !HASHNODE_PUBLICATION_ID) {
     console.warn('HASHNODE_TOKEN or HASHNODE_PUBLICATION_ID not set — skipping Hashnode');
     return;
   }
+
+  if (await isPublishedOnHashnode()) return;
 
   const mutation = `
     mutation PublishPost($input: PublishPostInput!) {
@@ -226,16 +305,7 @@ async function postToHashnode() {
     publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
   };
 
-  const res = await fetch('https://gql.hashnode.com', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: HASHNODE_TOKEN,
-    },
-    body: JSON.stringify({ query: mutation, variables: { input } }),
-  });
-
-  const data = await res.json();
+  const data = await gql(mutation, { input });
   if (data.errors) {
     console.error(`✗ Hashnode: ${JSON.stringify(data.errors)}`);
     process.exitCode = 1;
