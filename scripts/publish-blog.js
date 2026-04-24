@@ -111,6 +111,7 @@ function htmlToMarkdown(raw) {
     .replace(/&#39;/g, "'")
     .replace(/&middot;/g, '·')
     .replace(/&copy;/g, '©')
+    .replace(/^[ \t]+/gm, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
