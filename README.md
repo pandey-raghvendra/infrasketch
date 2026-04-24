@@ -9,7 +9,7 @@ If InfraSketch saved you time, consider starring the repo ⭐
 
 InfraSketch turns infrastructure code into clean architecture diagrams in the browser — no login, no backend, no cloud credentials required.
 
-Paste Terraform HCL, a `terraform show -json` plan, a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
+Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (YAML or JSON), a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
 
 **Live site: https://infrasketch.cloud**
 
@@ -18,7 +18,7 @@ Paste Terraform HCL, a `terraform show -json` plan, a Terragrunt stack, or a `do
 ## Quick Start
 
 1. Open https://infrasketch.cloud
-2. Paste your Terraform HCL, plan JSON, Terragrunt `.hcl`, or `docker-compose.yml` into the editor
+2. Paste your Terraform HCL, plan JSON, CloudFormation YAML/JSON, Terragrunt `.hcl`, or `docker-compose.yml` into the editor
 3. Click **Generate Diagram**
 4. Export as **PNG**, **SVG**, or **draw.io XML** — or click **Share** to copy a link
 
@@ -31,6 +31,7 @@ No account. No credentials. Everything runs in your browser.
 **Input formats**
 - Terraform HCL (`.tf` files — paste one or many concatenated) including `module "name" {}` blocks
 - Terraform plan JSON (`terraform plan -out=tfplan && terraform show -json tfplan`) — most accurate connection inference
+- CloudFormation YAML or JSON — supports `!Ref`, `!GetAtt`, `!Sub` and all intrinsic function shorthand
 - Terragrunt (`terragrunt.hcl`) — paste one or multiple units separated by `# --- unit: name ---` markers
 - Docker Compose YAML (`docker-compose.yml`) with full YAML spec support
 
@@ -85,6 +86,31 @@ terraform show -json tfplan | pbcopy   # macOS — paste into InfraSketch
 ```
 
 InfraSketch auto-detects the `{` prefix and uses the plan parser. This gives better connection accuracy because Terraform's `expressions[].references` are resolved even when attribute values show `"(known after apply)"`. Module resources (`module.vpc.aws_vpc.main` etc.) appear as individual nodes.
+
+### CloudFormation
+
+Select the **CloudFormation** tab, paste your template (YAML or JSON), and click **Generate Diagram**.
+
+InfraSketch supports the full CloudFormation intrinsic function shorthand (`!Ref`, `!GetAtt`, `!Sub`, `!If`, `!Select`, `!Join`, `!FindInMap`, etc.) and infers:
+
+- **VPC containment** from `VpcId: !Ref MyVPC`
+- **Subnet placement** from `SubnetId`/`SubnetIds`/`Subnets` properties
+- **Resource connections** from any other `Ref` or `GetAtt` reference between supported resources
+
+**Supported CloudFormation resource types (30+):**
+
+| Category | CloudFormation types |
+|---|---|
+| Networking | `AWS::EC2::VPC`, `AWS::EC2::Subnet`, `AWS::EC2::InternetGateway`, `AWS::EC2::NatGateway`, `AWS::EC2::EIP`, `AWS::EC2::RouteTable`, `AWS::EC2::TransitGateway`, `AWS::EC2::VPNGateway`, `AWS::EC2::NetworkInterface` |
+| Compute | `AWS::EC2::Instance`, `AWS::EC2::LaunchTemplate`, `AWS::AutoScaling::AutoScalingGroup`, `AWS::EKS::Cluster`, `AWS::EKS::Nodegroup`, `AWS::ECS::Cluster`, `AWS::ECS::Service`, `AWS::ECS::TaskDefinition`, `AWS::Lambda::Function` |
+| Data | `AWS::RDS::DBInstance`, `AWS::RDS::DBCluster`, `AWS::DynamoDB::Table`, `AWS::ElastiCache::CacheCluster`, `AWS::ElastiCache::ReplicationGroup` |
+| Storage | `AWS::S3::Bucket` |
+| Load balancing | `AWS::ElasticLoadBalancingV2::LoadBalancer` (ALB/NLB), `AWS::ElasticLoadBalancingV2::TargetGroup`, `AWS::ElasticLoadBalancing::LoadBalancer` |
+| Security | `AWS::EC2::SecurityGroup`, `AWS::IAM::Role`, `AWS::KMS::Key`, `AWS::WAFv2::WebACL` |
+| Edge / DNS | `AWS::CloudFront::Distribution`, `AWS::Route53::HostedZone`, `AWS::Route53::RecordSet` |
+| Messaging | `AWS::SQS::Queue`, `AWS::SNS::Topic` |
+| Containers | `AWS::ECR::Repository` |
+| Observability | `AWS::CloudWatch::Alarm`, `AWS::Logs::LogGroup` |
 
 ### Terragrunt
 

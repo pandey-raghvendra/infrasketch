@@ -384,6 +384,180 @@ export function parseTerraformPlan(jsonText) {
     return { resources, connections, vpcOf, subnetOf };
 }
 
+// ─── parseCloudFormation ──────────────────────────────────────────────────────
+
+const CFN_TYPE_TO_CATEGORY = {
+    'AWS::EC2::VPC': 'vpc',
+    'AWS::EC2::Subnet': 'subnet',
+    'AWS::EC2::Instance': 'instance',
+    'AWS::EC2::LaunchTemplate': 'instance',
+    'AWS::AutoScaling::AutoScalingGroup': 'autoscaling',
+    'AWS::AutoScaling::LaunchConfiguration': 'instance',
+    'AWS::EKS::Cluster': 'eks',
+    'AWS::EKS::Nodegroup': 'eks',
+    'AWS::ECS::Cluster': 'ecs',
+    'AWS::ECS::Service': 'ecs',
+    'AWS::ECS::TaskDefinition': 'ecs',
+    'AWS::Lambda::Function': 'lambda',
+    'AWS::RDS::DBInstance': 'rds',
+    'AWS::RDS::DBCluster': 'rds',
+    'AWS::DynamoDB::Table': 'dynamodb',
+    'AWS::ElastiCache::CacheCluster': 'elasticache',
+    'AWS::ElastiCache::ReplicationGroup': 'elasticache',
+    'AWS::S3::Bucket': 's3',
+    'AWS::ElasticLoadBalancingV2::LoadBalancer': 'alb',
+    'AWS::ElasticLoadBalancingV2::TargetGroup': 'tg',
+    'AWS::ElasticLoadBalancing::LoadBalancer': 'alb',
+    'AWS::EC2::SecurityGroup': 'sg',
+    'AWS::IAM::Role': 'iam_role',
+    'AWS::Route53::RecordSet': 'route53',
+    'AWS::Route53::RecordSetGroup': 'route53',
+    'AWS::Route53::HostedZone': 'route53',
+    'AWS::CloudFront::Distribution': 'cloudfront',
+    'AWS::SQS::Queue': 'sqs',
+    'AWS::SNS::Topic': 'sns',
+    'AWS::ECR::Repository': 'ecr',
+    'AWS::EC2::NatGateway': 'nat',
+    'AWS::EC2::InternetGateway': 'igw',
+    'AWS::EC2::EIP': 'eip',
+    'AWS::KMS::Key': 'kms',
+    'AWS::CloudWatch::Alarm': 'cloudwatch',
+    'AWS::Logs::LogGroup': 'cloudwatch',
+    'AWS::WAFv2::WebACL': 'waf',
+    'AWS::EC2::RouteTable': 'route_table',
+    'AWS::EC2::TransitGateway': 'transit_gw',
+    'AWS::EC2::VPNGateway': 'vpn_gw',
+    'AWS::EC2::NetworkInterface': 'network_iface',
+};
+
+const CFN_SKIP_CONN_PROPS = new Set([
+    'VpcId', 'SubnetId', 'SubnetIds', 'Subnets', 'SecurityGroupIds',
+    'SecurityGroups', 'VpcSecurityGroupIds', 'AvailabilityZone',
+    'AvailabilityZones', 'Tags', 'CidrBlock', 'ImageId', 'KeyName',
+    'UserData', 'DBSubnetGroupName', 'MasterUserPassword', 'MasterUsername', 'GroupId',
+]);
+
+function getCfnRef(value) {
+    if (!value || typeof value !== 'object') return null;
+    if ('Ref' in value && typeof value.Ref === 'string') return value.Ref;
+    if ('Fn::GetAtt' in value) {
+        const g = value['Fn::GetAtt'];
+        if (Array.isArray(g) && typeof g[0] === 'string') return g[0];
+        if (typeof g === 'string') return g.split('.')[0];
+    }
+    return null;
+}
+
+function collectCfnRefs(value, result = new Set()) {
+    if (!value || typeof value !== 'object') return result;
+    if (Array.isArray(value)) { for (const item of value) collectCfnRefs(item, result); return result; }
+    const ref = getCfnRef(value);
+    if (ref) { result.add(ref); return result; }
+    for (const val of Object.values(value)) collectCfnRefs(val, result);
+    return result;
+}
+
+function buildCfnYamlSchema(jsyaml) {
+    const scalar = (tag, fn) => new jsyaml.Type(tag, { kind: 'scalar', construct: fn });
+    const seq    = (tag, fn) => new jsyaml.Type(tag, { kind: 'sequence', construct: fn });
+    const map    = (tag, fn) => new jsyaml.Type(tag, { kind: 'mapping', construct: fn });
+    return jsyaml.DEFAULT_SCHEMA.extend([
+        scalar('!Ref',         d => ({ Ref: d })),
+        scalar('!GetAtt',      d => ({ 'Fn::GetAtt': d.includes('.') ? d.split('.') : [d] })),
+        scalar('!Sub',         d => ({ 'Fn::Sub': d })),
+        scalar('!Base64',      d => ({ 'Fn::Base64': d })),
+        scalar('!ImportValue', d => ({ 'Fn::ImportValue': d })),
+        scalar('!Condition',   d => ({ Condition: d })),
+        seq('!Sub',         d => ({ 'Fn::Sub': d })),
+        seq('!Select',      d => ({ 'Fn::Select': d })),
+        seq('!Join',        d => ({ 'Fn::Join': d })),
+        seq('!Split',       d => ({ 'Fn::Split': d })),
+        seq('!FindInMap',   d => ({ 'Fn::FindInMap': d })),
+        seq('!If',          d => ({ 'Fn::If': d })),
+        seq('!And',         d => ({ 'Fn::And': d })),
+        seq('!Or',          d => ({ 'Fn::Or': d })),
+        seq('!Not',         d => ({ 'Fn::Not': d })),
+        map('!GetAtt',      d => ({ 'Fn::GetAtt': d })),
+    ]);
+}
+
+export async function parseCloudFormation(code) {
+    if (!globalThis.jsyaml) await loadScript('/lib/js-yaml.min.js');
+    const yamlParser = globalThis.jsyaml;
+
+    let template;
+    try {
+        if (code.trimStart().startsWith('{')) {
+            template = JSON.parse(code);
+        } else {
+            const schema = buildCfnYamlSchema(yamlParser);
+            template = yamlParser.load(code, { schema });
+        }
+    } catch (e) {
+        throw new Error(`Invalid CloudFormation template — ${e.message}`);
+    }
+
+    if (!template || typeof template !== 'object' || !template.Resources) {
+        throw new Error('No Resources section found in CloudFormation template.');
+    }
+
+    const cfnResources = template.Resources;
+    const resources = [];
+    const supportedIds = new Set();
+
+    for (const [logicalId, resource] of Object.entries(cfnResources)) {
+        if (!resource || typeof resource !== 'object' || !resource.Type) continue;
+        const cfnType = resource.Type;
+
+        let category;
+        if (cfnType === 'AWS::ElasticLoadBalancingV2::LoadBalancer') {
+            category = resource.Properties?.Type === 'network' ? 'nlb' : 'alb';
+        } else {
+            category = CFN_TYPE_TO_CATEGORY[cfnType];
+        }
+        if (!category) continue;
+
+        const config = RESOURCE_CATEGORIES[category];
+        resources.push({ id: logicalId, type: cfnType, name: logicalId, category, label: config.label, color: config.color, icon: config.icon });
+        supportedIds.add(logicalId);
+    }
+
+    const vpcOf = {};
+    const subnetOf = {};
+    const connections = [];
+    const seen = new Set();
+
+    for (const resource of resources) {
+        const props = cfnResources[resource.id]?.Properties || {};
+
+        const vpcRef = getCfnRef(props.VpcId);
+        if (vpcRef && supportedIds.has(vpcRef)) vpcOf[resource.id] = vpcRef;
+
+        if (!subnetOf[resource.id]) {
+            const subRef = getCfnRef(props.SubnetId);
+            if (subRef && supportedIds.has(subRef)) subnetOf[resource.id] = subRef;
+        }
+        if (!subnetOf[resource.id]) {
+            const subnetsVal = props.SubnetIds || props.Subnets;
+            if (Array.isArray(subnetsVal) && subnetsVal.length > 0) {
+                const subRef = getCfnRef(subnetsVal[0]);
+                if (subRef && supportedIds.has(subRef)) subnetOf[resource.id] = subRef;
+            }
+        }
+
+        for (const [propName, propValue] of Object.entries(props)) {
+            if (CFN_SKIP_CONN_PROPS.has(propName)) continue;
+            for (const ref of collectCfnRefs(propValue)) {
+                if (!supportedIds.has(ref) || ref === resource.id) continue;
+                const key = `${ref}->${resource.id}`;
+                if (!seen.has(key)) { seen.add(key); connections.push({ from: ref, to: resource.id }); }
+            }
+        }
+    }
+
+    return { resources, connections, vpcOf, subnetOf };
+}
+
 // ─── parseTerragrunt ─────────────────────────────────────────────────────────
 
 function parseTerragruntUnit(unitCode) {

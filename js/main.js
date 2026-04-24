@@ -1,7 +1,7 @@
 import { exportPng, exportSvg, generateDrawioXml } from './exporters.js';
 import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
-import { parseDockerCompose, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
+import { parseCloudFormation, parseDockerCompose, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
 import { buildVirtualFS, expandModules } from './moduleResolver.js';
 import { renderDiagram } from './renderer.js';
 import { initEditor, destroyEditor, resetLayout } from './editor.js';
@@ -791,6 +791,112 @@ resource "google_service_account" "gke_sa" {
 }
 `;
 
+const SAMPLE_CLOUDFORMATION = `AWSTemplateFormatVersion: '2010-09-09'
+Description: Production AWS stack — VPC, ECS, RDS, Lambda, SQS, SNS
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+
+  AppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets:
+        - !Ref PublicSubnet
+      SecurityGroups:
+        - !Ref AppSecurityGroup
+
+  AppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+
+  AppService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      LoadBalancers:
+        - TargetGroupArn: !Ref AppTargetGroup
+
+  AppDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBSubnetGroupName: !Ref DBSubnetGroup
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      SubnetIds:
+        - !Ref PrivateSubnet
+
+  AppCache:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      SecurityGroupIds:
+        - !Ref AppSecurityGroup
+
+  AppBucket:
+    Type: AWS::S3::Bucket
+
+  AppQueue:
+    Type: AWS::SQS::Queue
+
+  AppTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !GetAtt ProcessorFunction.Arn
+          Protocol: lambda
+
+  ProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref AppQueue
+          BUCKET: !Ref AppBucket
+          DB_HOST: !GetAtt AppDatabase.Endpoint.Address
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+
+  EncryptionKey:
+    Type: AWS::KMS::Key
+
+  AppDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt AppLoadBalancer.DNSName
+`;
+
 const EXTRA_SAMPLES = {
     terraform: {
         basic: { label: 'Production AWS stack', code: SAMPLE_TERRAFORM },
@@ -805,6 +911,9 @@ const EXTRA_SAMPLES = {
     },
     terragrunt: {
         basic: { label: 'Multi-unit stack (VPC + RDS + EKS + app)', code: SAMPLE_TERRAGRUNT },
+    },
+    cloudformation: {
+        basic: { label: 'Production AWS stack (VPC + ECS + RDS + Lambda + SQS)', code: SAMPLE_CLOUDFORMATION },
     },
 };
 
@@ -858,6 +967,25 @@ terraform {
 dependency "vpc" {
   config_path = "../vpc"
 }`,
+    cloudformation: `# Paste CloudFormation YAML or JSON template
+
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !Ref PublicSubnet`,
 };
 
 // ── Toast notifications ───────────────────────────────────────────────────────
@@ -1047,6 +1175,7 @@ async function parseCode(code) {
     const type = activeInputType();
     if (type === 'docker') return parseDockerCompose(code);
     if (type === 'terragrunt') return parseTerragrunt(code);
+    if (type === 'cloudformation') return parseCloudFormation(code);
     if (code.trimStart().startsWith('{')) {
         const planResult = parseTerraformPlan(code);
         if (planResult !== null) return planResult;
@@ -1073,7 +1202,10 @@ function updateEditorForType(type, previousType = null) {
 
     codeInput.placeholder = PLACEHOLDERS[type];
     populateExampleSelect(type);
-    if (btnLoadSample) btnLoadSample.textContent = type === 'docker' ? 'Load Docker sample' : type === 'terragrunt' ? 'Load Terragrunt sample' : 'Load Terraform sample';
+    if (btnLoadSample) {
+        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample' };
+        btnLoadSample.textContent = labels[type] || 'Load Terraform sample';
+    }
 
     if (isShowingSample || !currentText) {
         codeInput.value = '';
@@ -1102,7 +1234,7 @@ btnLoadSample.addEventListener('click', () => {
 generateButton.addEventListener('click', async () => {
     const code = codeInput.value.trim();
     if (!code) {
-        showToast('Paste some code first — Terraform HCL, plan JSON, Terragrunt, or docker-compose.yml.', 'info');
+        showToast('Paste some code first — Terraform HCL, plan JSON, Terragrunt, CloudFormation YAML/JSON, or docker-compose.yml.', 'info');
         return;
     }
 
@@ -1141,7 +1273,10 @@ generateButton.addEventListener('click', async () => {
         loading.classList.remove('active');
         placeholder.style.display = 'block';
         const msg = error.message || '';
-        if (msg.toLowerCase().includes('json')) {
+        const type = activeInputType();
+        if (type === 'cloudformation') {
+            showToast(msg || 'Invalid CloudFormation template — check YAML/JSON syntax.');
+        } else if (msg.toLowerCase().includes('json')) {
             showToast('Invalid JSON — if pasting a plan, use: terraform show -json tfplan');
         } else if (msg.toLowerCase().includes('yaml')) {
             showToast('Invalid YAML — check your docker-compose.yml syntax.');
@@ -1174,7 +1309,7 @@ const toggleRegistry = document.getElementById('toggle-registry');
 
 function updateModuleOptionsVisibility(type) {
     if (!moduleOptionsBar) return;
-    moduleOptionsBar.style.display = (type === 'terraform') ? 'flex' : 'none';
+    moduleOptionsBar.style.display = type === 'terraform' ? 'flex' : 'none';
 }
 
 updateModuleOptionsVisibility(activeInputType());

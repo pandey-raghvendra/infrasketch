@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>CloudFormation Diagram Generator — Visualize AWS Templates Instantly | InfraSketch</title>
+    <meta name="description" content="Turn CloudFormation YAML or JSON into architecture diagrams in seconds. Supports !Ref, !GetAtt, VPC containment, subnet grouping, and 30+ AWS resource types. Free, no login.">
+    <meta name="keywords" content="cloudformation diagram, cloudformation visualizer, aws cloudformation architecture diagram, cloudformation to diagram, visualize cloudformation template, cloudformation yaml diagram, aws infrastructure diagram">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/cloudformation-diagram-generator.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/cloudformation-diagram-generator.html">
+    <meta property="og:title" content="CloudFormation Diagram Generator — Visualize AWS Templates Instantly">
+    <meta property="og:description" content="Turn CloudFormation YAML or JSON into architecture diagrams in seconds. Supports !Ref, !GetAtt, VPC containment, subnet grouping, and 30+ AWS resource types. Free, no login.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CloudFormation Diagram Generator — Visualize AWS Templates Instantly">
+    <meta name="twitter:description" content="Turn CloudFormation YAML or JSON into architecture diagrams in seconds. Supports !Ref, !GetAtt, VPC containment, subnet grouping, and 30+ AWS resource types. Free, no login.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/og-image.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "CloudFormation Diagram Generator — Visualize AWS Templates Instantly",
+      "description": "Turn CloudFormation YAML or JSON into architecture diagrams in seconds. Supports !Ref, !GetAtt, VPC containment, subnet grouping, and 30+ AWS resource types. Free, no login.",
+      "url": "https://infrasketch.cloud/blog/cloudformation-diagram-generator.html",
+      "datePublished": "2026-04-25",
+      "dateModified": "2026-04-25",
+      "author": {
+        "@type": "Person",
+        "name": "Raghvendra Pandey",
+        "url": "https://github.com/pandey-raghvendra"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"
+        }
+      },
+      "image": "https://infrasketch.cloud/assets/og-image.png"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+        .resource-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}.resource-table th{text-align:left;padding:10px 14px;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}.resource-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:#b0b8d1}.resource-table tr:last-child td{border-bottom:none}.resource-table code{font-family:var(--mono);font-size:12px;color:var(--accent);background:rgba(6,214,160,0.08);padding:2px 5px;border-radius:3px}
+        .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}@media(max-width:600px){.feature-grid{grid-template-columns:1fr}}.feature-tile{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:20px}.feature-tile h4{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}.feature-tile p{font-size:13px;color:var(--text-muted);line-height:1.6;margin:0}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+
+<div class="container">
+    <div class="article-header">
+        <span class="tag">New Feature</span>
+        <h1>CloudFormation Diagram Generator — Visualize AWS Templates Instantly</h1>
+        <div class="meta">By Raghvendra Pandey &middot; April 2026 &middot; 6 min read</div>
+    </div>
+
+    <article>
+
+        <p>InfraSketch now supports CloudFormation. Paste a CloudFormation YAML or JSON template — including all the <code>!Ref</code>, <code>!GetAtt</code>, and <code>!Sub</code> shorthand you're used to writing — and get a clean architecture diagram in seconds. No login, no backend, everything runs in your browser.</p>
+
+        <div class="cta-box">
+            <h3>Try it now</h3>
+            <p>Paste your CloudFormation template and see the diagram instantly.</p>
+            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
+        </div>
+
+        <h2>Why CloudFormation support matters</h2>
+
+        <p>CloudFormation is still the most widely deployed IaC tool in AWS-heavy organizations. It ships with every AWS account, it integrates natively with CDK, SAM, and AWS Service Catalog, and most platform teams have years of existing templates they maintain. But CloudFormation has always been terrible at communicating what it actually does. A 400-line YAML file is not an architecture — it's a specification. Turning it into a diagram has always meant manual work in draw.io or Lucidchart.</p>
+
+        <p>InfraSketch eliminates that step. Paste the template, click Generate, get a diagram you can share or export.</p>
+
+        <h2>How it works</h2>
+
+        <p>CloudFormation templates use YAML shorthand tags like <code>!Ref</code> and <code>!GetAtt</code> that are not standard YAML — most parsers choke on them. InfraSketch registers custom YAML types for all CloudFormation intrinsic functions before parsing, so your templates load cleanly without any preprocessing.</p>
+
+        <p>Once parsed, the engine walks every resource's <code>Properties</code> block and:</p>
+
+        <ul>
+            <li>Maps the <code>Type</code> field (e.g. <code>AWS::ECS::Service</code>) to a visual category with the correct AWS icon</li>
+            <li>Detects <code>VpcId: !Ref MyVPC</code> and draws the resource inside the VPC container</li>
+            <li>Detects <code>SubnetId</code> / <code>SubnetIds</code> / <code>Subnets</code> references and places the resource in the correct subnet lane</li>
+            <li>Infers directed connections from any other <code>Ref</code> or <code>GetAtt</code> between supported resources</li>
+        </ul>
+
+        <p>The result is the same zoned layout InfraSketch uses for Terraform — Internet zone at the top, ingress layer, VPC with subnets, data zone, messaging zone, security zone — all inferred automatically from your template.</p>
+
+        <h2>Quick start</h2>
+
+        <ol>
+            <li>Open <a href="https://infrasketch.cloud">infrasketch.cloud</a></li>
+            <li>Click the <strong>CloudFormation</strong> tab</li>
+            <li>Paste your template (YAML or JSON) and click <strong>Generate Diagram</strong></li>
+            <li>Export as PNG, SVG, or draw.io XML — or click <strong>Share</strong> to copy a shareable URL</li>
+        </ol>
+
+        <p>The parser auto-detects YAML vs JSON based on whether the template starts with <code>{</code>.</p>
+
+        <h2>Example: a minimal web stack</h2>
+
+        <pre>AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+
+  AppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets:
+        - !Ref PublicSubnet
+
+  AppFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref AppQueue
+
+  AppQueue:
+    Type: AWS::SQS::Queue
+
+  LambdaRole:
+    Type: AWS::IAM::Role</pre>
+
+        <p>This produces a diagram with the VPC container, PublicSubnet with the ALB inside, Lambda connecting to SQS and IAM Role, and the messaging zone for the queue — all from the references in the template.</p>
+
+        <h2>Supported resource types</h2>
+
+        <table class="resource-table">
+            <thead><tr><th>Category</th><th>CloudFormation types</th></tr></thead>
+            <tbody>
+                <tr><td>Networking</td><td><code>AWS::EC2::VPC</code>, <code>AWS::EC2::Subnet</code>, <code>AWS::EC2::InternetGateway</code>, <code>AWS::EC2::NatGateway</code>, <code>AWS::EC2::EIP</code>, <code>AWS::EC2::RouteTable</code>, <code>AWS::EC2::TransitGateway</code>, <code>AWS::EC2::VPNGateway</code>, <code>AWS::EC2::NetworkInterface</code></td></tr>
+                <tr><td>Compute</td><td><code>AWS::EC2::Instance</code>, <code>AWS::EC2::LaunchTemplate</code>, <code>AWS::AutoScaling::AutoScalingGroup</code>, <code>AWS::EKS::Cluster</code>, <code>AWS::EKS::Nodegroup</code>, <code>AWS::ECS::Cluster</code>, <code>AWS::ECS::Service</code>, <code>AWS::ECS::TaskDefinition</code>, <code>AWS::Lambda::Function</code></td></tr>
+                <tr><td>Data</td><td><code>AWS::RDS::DBInstance</code>, <code>AWS::RDS::DBCluster</code>, <code>AWS::DynamoDB::Table</code>, <code>AWS::ElastiCache::CacheCluster</code>, <code>AWS::ElastiCache::ReplicationGroup</code></td></tr>
+                <tr><td>Storage</td><td><code>AWS::S3::Bucket</code></td></tr>
+                <tr><td>Load balancing</td><td><code>AWS::ElasticLoadBalancingV2::LoadBalancer</code> (ALB/NLB auto-detected), <code>AWS::ElasticLoadBalancingV2::TargetGroup</code>, <code>AWS::ElasticLoadBalancing::LoadBalancer</code></td></tr>
+                <tr><td>Security</td><td><code>AWS::EC2::SecurityGroup</code>, <code>AWS::IAM::Role</code>, <code>AWS::KMS::Key</code>, <code>AWS::WAFv2::WebACL</code></td></tr>
+                <tr><td>Edge / DNS</td><td><code>AWS::CloudFront::Distribution</code>, <code>AWS::Route53::HostedZone</code>, <code>AWS::Route53::RecordSet</code>, <code>AWS::Route53::RecordSetGroup</code></td></tr>
+                <tr><td>Messaging</td><td><code>AWS::SQS::Queue</code>, <code>AWS::SNS::Topic</code></td></tr>
+                <tr><td>Containers</td><td><code>AWS::ECR::Repository</code></td></tr>
+                <tr><td>Observability</td><td><code>AWS::CloudWatch::Alarm</code>, <code>AWS::Logs::LogGroup</code></td></tr>
+            </tbody>
+        </table>
+
+        <h2>What gets inferred automatically</h2>
+
+        <div class="feature-grid">
+            <div class="feature-tile">
+                <h4>VPC containment</h4>
+                <p>Any resource with <code>VpcId: !Ref X</code> is drawn inside the VPC box for resource X.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Subnet placement</h4>
+                <p><code>SubnetId</code>, <code>SubnetIds</code>, and <code>Subnets</code> properties place resources in the correct subnet lane.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>ALB vs NLB</h4>
+                <p><code>Type: network</code> on a load balancer property selects the NLB icon; anything else is ALB.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Connection arrows</h4>
+                <p>Every <code>!Ref</code> and <code>!GetAtt</code> between supported resources that isn't a VPC/subnet reference becomes a directed arrow.</p>
+            </div>
+        </div>
+
+        <h2>Intrinsic functions supported</h2>
+
+        <p>The YAML parser handles all standard CloudFormation shorthand tags without requiring you to expand them to long form:</p>
+
+        <ul>
+            <li><code>!Ref</code> — logical resource reference</li>
+            <li><code>!GetAtt</code> — attribute reference (<code>!GetAtt Resource.Attribute</code> or list form)</li>
+            <li><code>!Sub</code> — string substitution (scalar and list forms)</li>
+            <li><code>!If</code>, <code>!And</code>, <code>!Or</code>, <code>!Not</code> — conditionals</li>
+            <li><code>!Select</code>, <code>!Join</code>, <code>!Split</code>, <code>!FindInMap</code></li>
+            <li><code>!Base64</code>, <code>!ImportValue</code>, <code>!Condition</code></li>
+        </ul>
+
+        <p>JSON templates are also supported — <code>{ "Ref": "MyVPC" }</code> and <code>{ "Fn::GetAtt": ["MyRole", "Arn"] }</code> both work exactly the same way.</p>
+
+        <h2>What's still Terraform-only</h2>
+
+        <p>A few features remain Terraform-specific for now: module expansion (ZIP upload and registry auto-fetch), and the plan JSON workflow. CloudFormation doesn't have an equivalent to <code>terraform show -json</code>, but the template itself is already the resolved source of truth — there's no variable evaluation step needed.</p>
+
+        <h2>Use cases</h2>
+
+        <ul>
+            <li><strong>Code reviews</strong> — paste the template diff, see what changed in the diagram</li>
+            <li><strong>Onboarding</strong> — new team member needs to understand the stack without reading 500 lines of YAML</li>
+            <li><strong>Documentation</strong> — export as PNG or SVG and embed in a wiki, Confluence page, or design doc</li>
+            <li><strong>draw.io integration</strong> — export as draw.io XML to get a fully editable diagram in diagrams.net or Confluence</li>
+            <li><strong>Audit prep</strong> — show reviewers the actual infrastructure topology without sharing credentials</li>
+        </ul>
+
+        <div class="cta-box">
+            <h3>Try CloudFormation diagrams now</h3>
+            <p>Paste your template and get a diagram in seconds. Free, no login, nothing leaves your browser.</p>
+            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
+        </div>
+
+    </article>
+</div>
+
+<footer>
+    <p><a href="https://infrasketch.cloud">infrasketch.cloud</a> &mdash; open source, forever free &mdash; <a href="https://github.com/pandey-raghvendra/infrasketch">GitHub</a></p>
+</footer>
+</body>
+</html>
