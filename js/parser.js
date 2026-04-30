@@ -627,3 +627,228 @@ export function parseTerragrunt(code) {
 
     return { resources, connections, vpcOf: {}, subnetOf: {} };
 }
+
+// ─── parsePulumi ──────────────────────────────────────────────────────────────
+// Supports Pulumi TypeScript and Python programs.
+// Strategy: regex-scan for `new provider.Module.Class("name", {...})` (TS)
+// and `varName = provider.Module.Class("name", ...)` (Python).
+// Then resolve .id references between variables to build connections.
+
+const PULUMI_TO_TF = {
+    // AWS
+    'aws.ec2.Vpc':                        'aws_vpc',
+    'aws.ec2.DefaultVpc':                 'aws_default_vpc',
+    'aws.ec2.Subnet':                     'aws_subnet',
+    'aws.ec2.DefaultSubnet':              'aws_subnet',
+    'aws.ec2.Instance':                   'aws_instance',
+    'aws.ec2.LaunchTemplate':             'aws_launch_template',
+    'aws.ec2.SecurityGroup':              'aws_security_group',
+    'aws.ec2.InternetGateway':            'aws_internet_gateway',
+    'aws.ec2.NatGateway':                 'aws_nat_gateway',
+    'aws.ec2.Eip':                        'aws_eip',
+    'aws.ec2.RouteTable':                 'aws_route_table',
+    'aws.ec2.RouteTableAssociation':      'aws_route_table_association',
+    'aws.ec2.TransitGateway':             'aws_transit_gateway',
+    'aws.ec2.VpnGateway':                 'aws_vpn_gateway',
+    'aws.ec2.NetworkInterface':           'aws_network_interface',
+    'aws.eks.Cluster':                    'aws_eks_cluster',
+    'aws.eks.NodeGroup':                  'aws_eks_node_group',
+    'aws.ecs.Cluster':                    'aws_ecs_cluster',
+    'aws.ecs.Service':                    'aws_ecs_service',
+    'aws.ecs.TaskDefinition':             'aws_ecs_task_definition',
+    'aws.lambda.Function':                'aws_lambda_function',
+    'aws.lambda_.Function':               'aws_lambda_function',
+    'aws.rds.Instance':                   'aws_db_instance',
+    'aws.rds.Cluster':                    'aws_rds_cluster',
+    'aws.dynamodb.Table':                 'aws_dynamodb_table',
+    'aws.elasticache.Cluster':            'aws_elasticache_cluster',
+    'aws.elasticache.ReplicationGroup':   'aws_elasticache_replication_group',
+    'aws.s3.Bucket':                      'aws_s3_bucket',
+    'aws.s3.BucketV2':                    'aws_s3_bucket',
+    'aws.lb.LoadBalancer':                'aws_lb',
+    'aws.alb.LoadBalancer':               'aws_alb',
+    'aws.lb.TargetGroup':                 'aws_lb_target_group',
+    'aws.alb.TargetGroup':                'aws_alb_target_group',
+    'aws.iam.Role':                       'aws_iam_role',
+    'aws.cloudwatch.MetricAlarm':         'aws_cloudwatch_metric_alarm',
+    'aws.cloudwatch.LogGroup':            'aws_cloudwatch_log_group',
+    'aws.kms.Key':                        'aws_kms_key',
+    'aws.cloudfront.Distribution':        'aws_cloudfront_distribution',
+    'aws.route53.Zone':                   'aws_route53_zone',
+    'aws.route53.Record':                 'aws_route53_record',
+    'aws.ecr.Repository':                 'aws_ecr_repository',
+    'aws.sqs.Queue':                      'aws_sqs_queue',
+    'aws.sns.Topic':                      'aws_sns_topic',
+    'aws.autoscaling.Group':              'aws_autoscaling_group',
+    'aws.wafv2.WebAcl':                   'aws_wafv2_web_acl',
+    // GCP
+    'gcp.compute.Network':                'google_compute_network',
+    'gcp.compute.Subnetwork':             'google_compute_subnetwork',
+    'gcp.compute.Firewall':               'google_compute_firewall',
+    'gcp.compute.Router':                 'google_compute_router',
+    'gcp.compute.Address':                'google_compute_address',
+    'gcp.compute.GlobalAddress':          'google_compute_global_address',
+    'gcp.compute.Instance':               'google_compute_instance',
+    'gcp.compute.InstanceTemplate':       'google_compute_instance_template',
+    'gcp.compute.InstanceGroup':          'google_compute_instance_group',
+    'gcp.compute.Autoscaler':             'google_compute_autoscaler',
+    'gcp.compute.GlobalForwardingRule':   'google_compute_global_forwarding_rule',
+    'gcp.compute.ForwardingRule':         'google_compute_forwarding_rule',
+    'gcp.compute.BackendService':         'google_compute_backend_service',
+    'gcp.compute.UrlMap':                 'google_compute_url_map',
+    'gcp.container.Cluster':              'google_container_cluster',
+    'gcp.container.NodePool':             'google_container_node_pool',
+    'gcp.cloudrun.Service':               'google_cloud_run_service',
+    'gcp.cloudrunv2.Service':             'google_cloud_run_v2_service',
+    'gcp.cloudfunctions.Function':        'google_cloudfunctions_function',
+    'gcp.cloudfunctionsv2.Function':      'google_cloudfunctions2_function',
+    'gcp.sql.DatabaseInstance':           'google_sql_database_instance',
+    'gcp.bigquery.Dataset':               'google_bigquery_dataset',
+    'gcp.bigquery.Table':                 'google_bigquery_table',
+    'gcp.spanner.Instance':               'google_spanner_instance',
+    'gcp.bigtable.Instance':              'google_bigtable_instance',
+    'gcp.firestore.Document':             'google_firestore_document',
+    'gcp.redis.Instance':                 'google_redis_instance',
+    'gcp.memcache.Instance':              'google_memcache_instance',
+    'gcp.storage.Bucket':                 'google_storage_bucket',
+    'gcp.kms.KeyRing':                    'google_kms_key_ring',
+    'gcp.kms.CryptoKey':                  'google_kms_crypto_key',
+    'gcp.secretmanager.Secret':           'google_secret_manager_secret',
+    'gcp.serviceaccount.Account':         'google_service_account',
+    'gcp.pubsub.Topic':                   'google_pubsub_topic',
+    'gcp.pubsub.Subscription':            'google_pubsub_subscription',
+    'gcp.dns.ManagedZone':                'google_dns_managed_zone',
+    'gcp.monitoring.AlertPolicy':         'google_monitoring_alert_policy',
+    // Azure
+    'azure.network.VirtualNetwork':             'azurerm_virtual_network',
+    'azure.network.Subnet':                     'azurerm_subnet',
+    'azure.network.NetworkSecurityGroup':       'azurerm_network_security_group',
+    'azure.compute.VirtualMachine':             'azurerm_linux_virtual_machine',
+    'azure.compute.LinuxVirtualMachine':        'azurerm_linux_virtual_machine',
+    'azure.compute.WindowsVirtualMachine':      'azurerm_windows_virtual_machine',
+    'azure.compute.ScaleSet':                   'azurerm_virtual_machine_scale_set',
+    'azure.containerservice.KubernetesCluster': 'azurerm_kubernetes_cluster',
+    'azure.containerservice.Group':             'azurerm_container_group',
+    'azure.appservice.Plan':                    'azurerm_app_service',
+    'azure.appservice.AppService':              'azurerm_linux_web_app',
+    'azure.web.AppService':                     'azurerm_linux_web_app',
+    'azure.appservice.FunctionApp':             'azurerm_function_app',
+    'azure.network.ApplicationGateway':         'azurerm_application_gateway',
+    'azure.network.LoadBalancer':               'azurerm_lb',
+    'azure.cdn.FrontdoorProfile':               'azurerm_cdn_frontdoor_profile',
+    'azure.sql.Server':                         'azurerm_sql_server',
+    'azure.sql.Database':                       'azurerm_sql_database',
+    'azure.cosmosdb.Account':                   'azurerm_cosmosdb_account',
+    'azure.postgresql.Server':                  'azurerm_postgresql_server',
+    'azure.redis.Cache':                        'azurerm_redis_cache',
+    'azure.storage.Account':                    'azurerm_storage_account',
+    'azure.keyvault.KeyVault':                  'azurerm_key_vault',
+    'azure.servicebus.Namespace':               'azurerm_servicebus_namespace',
+    'azure.eventhub.EventHubNamespace':         'azurerm_eventhub_namespace',
+    'azure.dns.Zone':                           'azurerm_dns_zone',
+    'azure.privatedns.Zone':                    'azurerm_private_dns_zone',
+    'azure.operationalinsights.Workspace':      'azurerm_log_analytics_workspace',
+    'azure.insights.Component':                 'azurerm_application_insights',
+};
+
+function pulumiClassToTf(classPath) {
+    return PULUMI_TO_TF[classPath.replace(/\s/g, '')] || null;
+}
+
+function extractPulumiResources(code) {
+    const entries = [];
+    const seen = new Set();
+
+    // TypeScript: const/let/var varName = new provider.Module.Class("name", ...)
+    const tsRe = /(?:const|let|var)\s+(\w+)\s*=\s*new\s+((?:aws|gcp|azure(?:native)?|awsx)\s*\.\s*\w[\w]*\s*\.\s*\w+)\s*\(\s*["']([^"']+)["']/g;
+    let m;
+    while ((m = tsRe.exec(code)) !== null) {
+        const [, varName, classPath, logicalName] = m;
+        const tfType = pulumiClassToTf(classPath);
+        if (tfType && !seen.has(varName)) { seen.add(varName); entries.push({ varName, tfType, logicalName }); }
+    }
+
+    // Python: varName = provider.Module.Class("name", ...)
+    const pyRe = /^(\w+)\s*=\s*((?:aws|gcp|azure(?:native)?)\s*\.\s*\w[\w]*\s*\.\s*\w+)\s*\(\s*["']([^"']+)["']/gm;
+    while ((m = pyRe.exec(code)) !== null) {
+        const [, varName, classPath, logicalName] = m;
+        if (seen.has(varName)) continue;
+        const tfType = pulumiClassToTf(classPath);
+        if (tfType) { seen.add(varName); entries.push({ varName, tfType, logicalName }); }
+    }
+
+    return entries;
+}
+
+export function parsePulumi(code) {
+    const entries = extractPulumiResources(code);
+    if (!entries.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+
+    const varToId = new Map();
+    for (const e of entries) varToId.set(e.varName, `${e.tfType}.${e.logicalName}`);
+
+    const resources = [];
+    const supportedIds = new Set();
+    for (const e of entries) {
+        const id = varToId.get(e.varName);
+        const category = categoryForTerraformBlock(e.tfType, '');
+        if (!category) continue;
+        const config = RESOURCE_CATEGORIES[category];
+        resources.push({ id, type: e.tfType, name: e.logicalName, category, label: config.label, color: config.color, icon: config.icon });
+        supportedIds.add(id);
+    }
+
+    if (!resources.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+
+    const varNames = [...varToId.keys()];
+    const vpcOf = {};
+    const subnetOf = {};
+    const connections = [];
+    const seen = new Set();
+
+    // VPC / subnet containment — scan each line for containment props
+    const VPC_PROP_RE  = /\b(?:vpcId|vpc_id|virtualNetworkName|virtual_network_name|network)\s*[:=]\s*(\w+)(?:\.id)?/;
+    const SUB_PROP_RE  = /\b(?:subnetId|subnet_id|subnetIds|subnet_ids|subnetwork)\s*[:=]\s*(?:\[?\s*)?(\w+)(?:\.id)?/;
+    const SKIP_CONN_RE = /\b(?:vpcId|vpc_id|virtualNetworkName|virtual_network_name|network|subnetId|subnet_id|subnetIds|subnet_ids|subnetwork|cidrBlock|cidr_block|tags|region|zone|project|location)\s*[:=]/;
+
+    // Track current resource context while scanning lines
+    let currentVar = null;
+    for (const line of code.split('\n')) {
+        // Detect resource declaration line
+        for (const vn of varNames) {
+            if (new RegExp(`(?:const|let|var\\s+)?\\b${vn}\\b\\s*=\\s*new\\b`).test(line) ||
+                new RegExp(`^\\s*${vn}\\s*=\\s*(?:aws|gcp|azure)`).test(line)) {
+                currentVar = vn; break;
+            }
+        }
+
+        if (currentVar) {
+            const vm = VPC_PROP_RE.exec(line);
+            if (vm) {
+                const refId = varToId.get(vm[1]);
+                const ownId = varToId.get(currentVar);
+                if (refId && ownId && supportedIds.has(refId) && supportedIds.has(ownId) && !vpcOf[ownId]) vpcOf[ownId] = refId;
+            }
+            const sm = SUB_PROP_RE.exec(line);
+            if (sm) {
+                const refId = varToId.get(sm[1]);
+                const ownId = varToId.get(currentVar);
+                if (refId && ownId && supportedIds.has(refId) && supportedIds.has(ownId) && !subnetOf[ownId]) subnetOf[ownId] = refId;
+            }
+        }
+
+        // General connections (non-containment)
+        if (SKIP_CONN_RE.test(line)) continue;
+        for (const fromVar of varNames) {
+            if (!new RegExp(`\\b${fromVar}\\.(?:id|arn|name|apply|output)\\b`).test(line)) continue;
+            const fromId = varToId.get(fromVar);
+            if (!fromId || !supportedIds.has(fromId)) continue;
+            const toId = currentVar && currentVar !== fromVar ? varToId.get(currentVar) : null;
+            if (!toId || !supportedIds.has(toId)) continue;
+            const key = `${fromId}->${toId}`;
+            if (!seen.has(key)) { seen.add(key); connections.push({ from: fromId, to: toId }); }
+        }
+    }
+
+    return { resources, connections, vpcOf, subnetOf };
+}

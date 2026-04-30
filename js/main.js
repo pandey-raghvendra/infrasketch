@@ -1,7 +1,7 @@
 import { exportPng, exportSvg, generateDrawioXml } from './exporters.js';
 import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
-import { parseCloudFormation, parseDockerCompose, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
+import { parseCloudFormation, parseDockerCompose, parsePulumi, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
 import { buildVirtualFS, expandModules } from './moduleResolver.js';
 import { generateMermaid } from './mermaid-export.js';
 import { renderDiagram } from './renderer.js';
@@ -1071,6 +1071,30 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       SubnetId: !Ref PublicSubnet`,
+    pulumi: `// Paste Pulumi TypeScript or Python program
+
+import * as aws from "@pulumi/aws";
+
+const vpc = new aws.ec2.Vpc("main", {
+    cidrBlock: "10.0.0.0/16",
+});
+
+const subnet = new aws.ec2.Subnet("public", {
+    vpcId: vpc.id,
+    cidrBlock: "10.0.1.0/24",
+});
+
+const web = new aws.ec2.Instance("web", {
+    ami: "ami-0c55b159cbfafe1f0",
+    instanceType: "t3.micro",
+    subnetId: subnet.id,
+});
+
+const db = new aws.rds.Instance("postgres", {
+    instanceClass: "db.t3.micro",
+    engine: "postgres",
+    dbSubnetGroupName: subnet.id,
+});`,
     cdk: `# Paste cdk synth JSON output
 # Run: cdk synth | pbcopy   (macOS)
 #  or: cdk synth > template.json
@@ -1286,6 +1310,7 @@ async function parseCode(code) {
     const type = activeInputType();
     if (type === 'docker') return parseDockerCompose(code);
     if (type === 'terragrunt') return parseTerragrunt(code);
+    if (type === 'pulumi') return parsePulumi(code);
     if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
     if (code.trimStart().startsWith('{')) {
         const planResult = parseTerraformPlan(code);
@@ -1314,7 +1339,7 @@ function updateEditorForType(type, previousType = null) {
     codeInput.placeholder = PLACEHOLDERS[type];
     populateExampleSelect(type);
     if (btnLoadSample) {
-        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample', cdk: 'Load CDK sample' };
+        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample', cdk: 'Load CDK sample', pulumi: 'Load Pulumi sample' };
         btnLoadSample.textContent = labels[type] || 'Load Terraform sample';
     }
 
@@ -1748,6 +1773,7 @@ generateButton.addEventListener('click', async (e) => {
         async function parseByType(code) {
             if (type === 'docker') return parseDockerCompose(code);
             if (type === 'terragrunt') return parseTerragrunt(code);
+            if (type === 'pulumi') return parsePulumi(code);
             if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
             if (code.trimStart().startsWith('{')) {
                 const r = parseTerraformPlan(code);
