@@ -9,6 +9,14 @@
     <priority>1.0</priority>
   </url>
 
+  <!-- Examples gallery -->
+  <url>
+    <loc>https://infrasketch.cloud/examples/</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- About -->
   <url>
     <loc>https://infrasketch.cloud/about.html</loc>

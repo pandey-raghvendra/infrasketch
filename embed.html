@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfraSketch — Embedded Diagram</title>
+    <meta name="robots" content="noindex">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0c0f1a;
+            --bg-surface: #141829;
+            --bg-editor: #0d1017;
+            --bg-canvas: #f8f9fb;
+            --text: #e4e6ef;
+            --text-muted: #7a7f99;
+            --accent: #06d6a0;
+            --accent-dim: rgba(6, 214, 160, 0.1);
+            --accent-glow: rgba(6, 214, 160, 0.3);
+            --orange: #ff6b35;
+            --blue: #118ab2;
+            --red: #ef476f;
+            --yellow: #ffd166;
+            --border: #1e2240;
+            --sans: 'DM Sans', system-ui, sans-serif;
+            --mono: 'DM Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* Full-viewport workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            height: 100vh;
+            border: none;
+            border-radius: 0;
+            overflow: hidden;
+            background: var(--bg-surface);
+        }
+
+        /* Editor panel */
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            min-height: 0;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .panel-title .dot {
+            width: 7px; height: 7px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .input-tabs {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+
+        .input-tab {
+            padding: 3px 9px;
+            font-size: 10px;
+            font-family: var(--mono);
+            font-weight: 500;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .input-tab.active {
+            background: var(--accent-dim);
+            border-color: rgba(6, 214, 160, 0.3);
+            color: var(--accent);
+        }
+
+        .input-tab:hover:not(.active) { border-color: var(--text-muted); }
+
+        .code-editor {
+            flex: 1;
+            padding: 14px;
+            background: var(--bg-editor);
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.65;
+            color: #b0b8d1;
+            border: none;
+            border-left: 3px solid transparent;
+            outline: none;
+            resize: none;
+            width: 100%;
+            tab-size: 2;
+            transition: border-color 0.2s;
+            min-height: 0;
+        }
+
+        .code-editor:focus { border-left-color: var(--accent); }
+        .code-editor::placeholder { color: #3a3f5c; }
+
+        /* Module options - hidden in embed to save space */
+        .module-options { display: none; }
+
+        .editor-actions {
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        /* example-select hidden in embed */
+        #example-select, #btn-load-sample { display: none; }
+
+        .btn-generate {
+            width: 100%;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, #00b4d8 100%);
+            color: var(--bg);
+            border: none;
+            border-radius: 7px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .btn-generate:hover {
+            box-shadow: 0 0 20px var(--accent-glow);
+            filter: brightness(1.08);
+        }
+
+        /* Diagram panel */
+        .diagram-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .diagram-panel .panel-header {
+            gap: 8px;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Hide share/embed/edit/reset/table buttons in embed */
+        #btn-share, #btn-embed, #btn-edit, #btn-reset-layout, #btn-toggle-table { display: none !important; }
+
+        .btn-export {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 11px;
+            font-family: var(--sans);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+        .export-sep { width: 1px; height: 14px; background: var(--border); }
+
+        /* Open in InfraSketch link */
+        .embed-open-link {
+            font-size: 11px;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            opacity: 0.8;
+            margin-left: auto;
+        }
+
+        .embed-open-link:hover { opacity: 1; }
+
+        .diagram-canvas {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-canvas);
+            min-height: 0;
+        }
+
+        .diagram-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            color: #9ba3c2;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .diagram-placeholder .icon { color: #2a3050; }
+        .diagram-placeholder p { font-size: 13px; line-height: 1.6; color: var(--text-muted); }
+
+        .loading-indicator {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            background: var(--bg-canvas);
+        }
+
+        .loading-indicator.active { display: flex; }
+
+        .loading-ring {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(6, 214, 160, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #diagram-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #zoom-controls {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .btn-zoom {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .btn-zoom:hover { background: var(--accent-dim); color: var(--accent); }
+
+        /* Stats bar */
+        .stats-bar {
+            padding: 6px 14px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .stat-item { display: flex; align-items: center; gap: 5px; }
+        .stat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .stat-dot.vpc     { background: #118ab2; }
+        .stat-dot.compute { background: #ff6b35; }
+        .stat-dot.db      { background: #ef476f; }
+        .stat-dot.storage { background: #ffd166; }
+        .stat-dot.lb      { background: #06d6a0; }
+
+        /* Resource table panel */
+        .resource-table-panel {
+            border-top: 1px solid var(--border);
+            max-height: 200px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .resource-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: var(--mono); }
+        .resource-table th { padding: 6px 10px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+        .resource-table td { padding: 5px 10px; border-bottom: 1px solid rgba(30,34,64,0.5); color: var(--text); }
+        .col-num { width: 32px; color: var(--text-muted); }
+        .col-type { color: var(--accent); }
+
+        /* draw.io modal (required by main.js) */
+        .drawio-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .drawio-modal-overlay[hidden] { display: none; }
+        .drawio-modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 640px; overflow: hidden; }
+        .drawio-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .drawio-modal-title { font-size: 14px; font-weight: 700; }
+        .drawio-modal-badge { font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; background: rgba(6,214,160,.1); border: 1px solid rgba(6,214,160,.25); color: var(--accent); }
+        .drawio-modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+        .drawio-modal-close:hover { color: var(--text); background: var(--accent-dim); }
+        .drawio-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; }
+        .drawio-modal-body svg, .drawio-modal-body img { width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+        .drawio-modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .drawio-modal-hint { font-size: 11px; color: var(--text-muted); }
+        .drawio-modal-actions { display: flex; gap: 8px; }
+        .btn-drawio-cancel { padding: 7px 14px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 12px; }
+        .btn-drawio-download { padding: 7px 18px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-dim); color: var(--accent); cursor: pointer; font-size: 12px; font-weight: 600; }
+        .btn-drawio-download:hover { background: var(--accent); color: var(--bg); }
+
+        /* Embed modal (required by main.js) */
+        .embed-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .embed-modal-overlay[hidden] { display: none; }
+        .embed-modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 560px; overflow: hidden; }
+        .embed-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+        .embed-modal-title { font-size: 13px; font-weight: 700; }
+        .embed-modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 2px 6px; border-radius: 4px; }
+        .embed-modal-body { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+        .embed-modal-hint { font-size: 11px; color: var(--text-muted); }
+        .embed-code-block { background: var(--bg-editor); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: var(--mono); font-size: 10px; color: var(--text); white-space: pre; overflow-x: auto; }
+        .embed-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+        .btn-embed-cancel { padding: 7px 14px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 12px; }
+        .btn-embed-copy { padding: 7px 16px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-dim); color: var(--accent); cursor: pointer; font-size: 12px; font-weight: 600; }
+
+        /* Toast */
+        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+
+        /* edit-mode cursor */
+        .diagram-canvas.edit-mode { cursor: grab; }
+        .diagram-canvas.edit-mode:active { cursor: grabbing; }
+        .btn-export.edit-active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .btn-reset-layout { border-color: var(--yellow); color: var(--yellow); }
+        .btn-import-svg { border-style: dashed; color: var(--text-muted); }
+
+        @media (max-width: 640px) {
+            .workspace { grid-template-columns: 1fr; grid-template-rows: 40vh 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="workspace" id="tool">
+    <div class="editor-panel">
+        <div class="panel-header">
+            <div class="panel-title"><span class="dot"></span> Input</div>
+            <div class="input-tabs">
+                <button class="input-tab active" data-type="terraform">Terraform</button>
+                <button class="input-tab" data-type="cloudformation">CF</button>
+                <button class="input-tab" data-type="cdk">CDK</button>
+                <button class="input-tab" data-type="docker">Docker</button>
+                <button class="input-tab" data-type="terragrunt">Terragrunt</button>
+            </div>
+        </div>
+        <textarea class="code-editor" id="code-input" placeholder="# Paste Terraform, CloudFormation, CDK, Terragrunt, or Docker Compose here..."></textarea>
+        <div id="module-options" class="module-options">
+            <label id="zip-upload-label" class="mod-zip-label" for="zip-upload-input">
+                <span id="zip-status-text">Upload modules ZIP</span>
+            </label>
+            <input type="file" id="zip-upload-input" accept=".zip" style="display:none">
+            <button id="btn-clear-zip" hidden></button>
+            <div class="mod-divider"></div>
+            <label class="mod-registry-toggle">
+                <input type="checkbox" id="toggle-registry">
+                Auto-fetch registry modules
+            </label>
+        </div>
+        <div class="editor-actions">
+            <select id="example-select" style="display:none"></select>
+            <button id="btn-load-sample" style="display:none"></button>
+            <button class="btn-generate" id="btn-generate">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Generate Diagram
+            </button>
+        </div>
+    </div>
+
+    <div class="diagram-panel">
+        <div class="panel-header">
+            <div class="panel-title"><span class="dot"></span> Architecture Diagram</div>
+            <div class="export-actions">
+                <button class="btn-share" id="btn-share" style="display:none">Share</button>
+                <button class="btn-embed" id="btn-embed" style="display:none"></button>
+                <button class="btn-export btn-edit-toggle" id="btn-edit">Edit</button>
+                <button class="btn-export btn-reset-layout" id="btn-reset-layout" style="display:none">Reset</button>
+                <span class="export-sep"></span>
+                <button class="btn-export" id="btn-export-png">PNG</button>
+                <button class="btn-export" id="btn-export-svg">SVG</button>
+                <button class="btn-export" id="btn-export-drawio">draw.io</button>
+                <button class="btn-export btn-import-svg" id="btn-svg-to-drawio" style="display:none"></button>
+                <input type="file" id="svg-import-input" accept=".svg" style="display:none">
+                <a class="embed-open-link" href="https://infrasketch.cloud" target="_blank" title="Open in InfraSketch">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    InfraSketch
+                </a>
+            </div>
+        </div>
+        <div class="diagram-canvas" id="diagram-canvas">
+            <div class="diagram-placeholder" id="placeholder">
+                <div class="icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21l-3-3 11-11z"/></svg>
+                </div>
+                <p>Paste IaC code on the left and click <strong>Generate Diagram</strong></p>
+            </div>
+            <div class="loading-indicator" id="loading">
+                <div class="loading-ring"></div>
+                <span style="font-size:12px;color:var(--text-muted)">Parsing infrastructure...</span>
+            </div>
+            <svg id="diagram-svg" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div id="zoom-controls" style="display:none">
+                <button class="btn-zoom" id="btn-zoom-in" title="Zoom in">+</button>
+                <button class="btn-zoom" id="btn-zoom-reset" title="Reset zoom">1:1</button>
+                <button class="btn-zoom" id="btn-zoom-out" title="Zoom out">&#8722;</button>
+            </div>
+        </div>
+        <div class="stats-bar" id="stats-bar" style="display:none">
+            <div class="stat-item"><span class="stat-dot vpc"></span> <span id="stat-vpc">0</span> VPC</div>
+            <div class="stat-item"><span class="stat-dot compute"></span> <span id="stat-compute">0</span> Compute</div>
+            <div class="stat-item"><span class="stat-dot db"></span> <span id="stat-db">0</span> DB</div>
+            <div class="stat-item"><span class="stat-dot storage"></span> <span id="stat-storage">0</span> Storage</div>
+            <div class="stat-item"><span class="stat-dot lb"></span> <span id="stat-lb">0</span> LB</div>
+            <button class="btn-toggle-table" id="btn-toggle-table" style="display:none">Resources &#9662;</button>
+        </div>
+        <div class="resource-table-panel" id="resource-table-panel" style="display:none">
+            <table class="resource-table">
+                <thead><tr><th class="col-num">#</th><th>Name</th><th class="col-type">Type</th><th>Category</th></tr></thead>
+                <tbody id="resource-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- draw.io modal (required by main.js) -->
+<div class="drawio-modal-overlay" id="drawio-modal" hidden>
+    <div class="drawio-modal">
+        <div class="drawio-modal-header">
+            <span class="drawio-modal-title">draw.io XML Preview</span>
+            <span class="drawio-modal-badge" id="drawio-modal-badge"></span>
+            <button class="drawio-modal-close" id="drawio-modal-close">&times;</button>
+        </div>
+        <div class="drawio-modal-body" id="drawio-modal-body"></div>
+        <div class="drawio-modal-footer">
+            <span class="drawio-modal-hint">Open in diagrams.net to edit with official AWS/Azure stencils</span>
+            <div class="drawio-modal-actions">
+                <button class="btn-drawio-cancel" id="drawio-modal-cancel">Cancel</button>
+                <button class="btn-drawio-download" id="drawio-modal-download">Download .drawio</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Embed modal (required by main.js) -->
+<div class="embed-modal-overlay" id="embed-modal-overlay" hidden>
+    <div class="embed-modal">
+        <div class="embed-modal-header">
+            <span class="embed-modal-title">&lt;/&gt; Embed diagram</span>
+            <button class="embed-modal-close" id="embed-modal-close">&times;</button>
+        </div>
+        <div class="embed-modal-body">
+            <p class="embed-modal-hint">Copy and paste into any webpage.</p>
+            <pre class="embed-code-block" id="embed-code"></pre>
+            <div class="embed-modal-actions">
+                <button class="btn-embed-cancel" id="embed-cancel-btn">Cancel</button>
+                <button class="btn-embed-copy" id="embed-copy-btn">Copy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

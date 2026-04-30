@@ -3,6 +3,7 @@ import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
 import { parseCloudFormation, parseDockerCompose, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
 import { buildVirtualFS, expandModules } from './moduleResolver.js';
+import { generateMermaid } from './mermaid-export.js';
 import { renderDiagram } from './renderer.js';
 import { initEditor, destroyEditor, resetLayout } from './editor.js';
 
@@ -1342,6 +1343,7 @@ btnLoadSample.addEventListener('click', () => {
 });
 
 generateButton.addEventListener('click', async () => {
+    if (diffMode) return; // diff mode has its own handler
     const code = codeInput.value.trim();
     if (!code) {
         showToast('Paste some code first — Terraform HCL, plan JSON, Terragrunt, CloudFormation YAML/JSON, or docker-compose.yml.', 'info');
@@ -1626,4 +1628,260 @@ btnResetLayout?.addEventListener('click', () => {
     resetLayout();
 });
 
-loadFromHash();
+// ── Dark / light theme toggle ─────────────────────────────────────────────────
+(function initTheme() {
+    const stored = localStorage.getItem('infrasketch-theme');
+    if (stored) document.documentElement.setAttribute('data-theme', stored);
+})();
+
+const themeBtn = document.getElementById('btn-theme');
+function syncThemeIcon() {
+    if (!themeBtn) return;
+    themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️';
+}
+themeBtn?.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('infrasketch-theme', next);
+    syncThemeIcon();
+});
+syncThemeIcon();
+
+// ── Diff mode ─────────────────────────────────────────────────────────────────
+let diffMode = false;
+
+const diffBtn       = document.getElementById('btn-diff');
+const diffEditors   = document.getElementById('diff-editors');
+const diffV1        = document.getElementById('diff-v1');
+const diffV2        = document.getElementById('diff-v2');
+const diffSummary   = document.getElementById('diff-summary');
+const diffAddedEl   = document.getElementById('diff-added');
+const diffRemovedEl = document.getElementById('diff-removed-count');
+const diffUnchangedEl = document.getElementById('diff-unchanged');
+const diffRemovedPanel = document.getElementById('diff-removed-panel');
+const diffRemovedList  = document.getElementById('diff-removed-list');
+
+diffBtn?.addEventListener('click', () => {
+    diffMode = !diffMode;
+    diffBtn.classList.toggle('active', diffMode);
+
+    if (diffMode) {
+        codeInput.style.display = 'none';
+        diffEditors.classList.add('visible');
+        generateButton.textContent = 'Compare';
+        // Copy current code into v2 as starting point
+        if (!diffV2.value && codeInput.value) diffV2.value = codeInput.value;
+    } else {
+        codeInput.style.display = '';
+        diffEditors.classList.remove('visible');
+        generateButton.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Generate Diagram';
+        diffSummary.classList.remove('visible');
+        diffRemovedPanel.classList.remove('visible');
+        clearDiffOverlay();
+    }
+});
+
+function clearDiffOverlay() {
+    diagramSvg.querySelectorAll('[data-node-id]').forEach(node => {
+        const rect = node.querySelector('rect');
+        if (rect) {
+            rect.removeAttribute('data-diff-orig-stroke');
+            rect.removeAttribute('data-diff-orig-width');
+        }
+        node.querySelector('.diff-overlay-rect')?.remove();
+    });
+}
+
+function applyDiffOverlay(addedIds, removedIds) {
+    clearDiffOverlay();
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    for (const id of addedIds) {
+        const node = diagramSvg.querySelector(`[data-node-id="${id}"]`);
+        if (!node) continue;
+        const rect = node.querySelector('rect');
+        if (!rect) continue;
+        // Green border
+        rect.setAttribute('stroke', '#16a34a');
+        rect.setAttribute('stroke-width', '2.5');
+        // Green tint overlay
+        const overlay = document.createElementNS(SVG_NS, 'rect');
+        overlay.setAttribute('x', rect.getAttribute('x'));
+        overlay.setAttribute('y', rect.getAttribute('y'));
+        overlay.setAttribute('width', rect.getAttribute('width'));
+        overlay.setAttribute('height', rect.getAttribute('height'));
+        overlay.setAttribute('rx', rect.getAttribute('rx') || '8');
+        overlay.setAttribute('fill', 'rgba(22,163,74,0.08)');
+        overlay.setAttribute('pointer-events', 'none');
+        overlay.classList.add('diff-overlay-rect');
+        node.appendChild(overlay);
+    }
+}
+
+function computeDiff(parsed1, parsed2) {
+    const ids1 = new Set(parsed1.resources.map(r => r.id));
+    const ids2 = new Set(parsed2.resources.map(r => r.id));
+    const added     = parsed2.resources.filter(r => !ids1.has(r.id));
+    const removed   = parsed1.resources.filter(r => !ids2.has(r.id));
+    const unchanged = parsed2.resources.filter(r => ids1.has(r.id));
+    return { added, removed, unchanged };
+}
+
+// Diff compare handler (bubble phase, guarded by diffMode flag)
+generateButton.addEventListener('click', async (e) => {
+    if (!diffMode) return;
+
+    const code1 = diffV1.value.trim();
+    const code2 = diffV2.value.trim();
+    if (!code1 || !code2) {
+        showToast('Paste code in both v1 and v2 fields.', 'info');
+        return;
+    }
+
+    placeholder.style.display = 'none';
+    hideDiagram();
+    loading.classList.add('active');
+
+    try {
+        // Parse both using current tab type
+        const type = activeInputType();
+        async function parseByType(code) {
+            if (type === 'docker') return parseDockerCompose(code);
+            if (type === 'terragrunt') return parseTerragrunt(code);
+            if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
+            if (code.trimStart().startsWith('{')) {
+                const r = parseTerraformPlan(code);
+                if (r) return r;
+            }
+            return expandModules(parseTerraform(code), code, { virtualFS: currentVirtualFS, fetchRegistry: autoFetchRegistry });
+        }
+
+        const [parsed1, parsed2] = await Promise.all([parseByType(code1), parseByType(code2)]);
+        lastParsed = parsed2;
+
+        const diff = computeDiff(parsed1, parsed2);
+
+        // Render v2
+        const layout = renderDiagram(parsed2, diagramSvg);
+        loading.classList.remove('active');
+
+        if (!layout) {
+            placeholder.style.display = 'block';
+            showToast('No recognisable resources found in v2.', 'info');
+            return;
+        }
+
+        lastParsed = parsed2;
+        lastLayout = layout;
+        resetZoom();
+        zoomControls.style.display = 'flex';
+        updateStats(parsed2.resources);
+        populateResourceTable(parsed2.resources);
+
+        // Apply diff overlay
+        applyDiffOverlay(diff.added.map(r => r.id), diff.removed.map(r => r.id));
+
+        // Show summary bar
+        diffAddedEl.textContent   = `+${diff.added.length} added`;
+        diffRemovedEl.textContent = `−${diff.removed.length} removed`;
+        diffUnchangedEl.textContent = `~${diff.unchanged.length} unchanged`;
+        diffSummary.classList.add('visible');
+
+        // Show removed panel
+        if (diff.removed.length) {
+            diffRemovedList.innerHTML = diff.removed
+                .map(r => `<span class="diff-removed-tag">${r.label}: ${r.name}</span>`)
+                .join('');
+            diffRemovedPanel.classList.add('visible');
+        } else {
+            diffRemovedPanel.classList.remove('visible');
+        }
+
+    } catch (err) {
+        loading.classList.remove('active');
+        showToast(`Error: ${err.message}`, 'error');
+    }
+});
+
+// ── Mermaid export ────────────────────────────────────────────────────────────
+const mermaidBtn     = document.getElementById('btn-export-mermaid');
+const mermaidOverlay = document.getElementById('mermaid-modal-overlay');
+const mermaidClose   = document.getElementById('mermaid-modal-close');
+const mermaidCancel  = document.getElementById('mermaid-modal-cancel');
+const mermaidCode    = document.getElementById('mermaid-code');
+const mermaidCopy    = document.getElementById('mermaid-copy-btn');
+
+mermaidBtn?.addEventListener('click', () => {
+    if (!lastParsed) {
+        showToast('Generate a diagram first.', 'info');
+        return;
+    }
+    mermaidCode.textContent = generateMermaid(lastParsed);
+    mermaidOverlay.removeAttribute('hidden');
+});
+
+mermaidClose?.addEventListener('click',  () => mermaidOverlay.setAttribute('hidden', ''));
+mermaidCancel?.addEventListener('click', () => mermaidOverlay.setAttribute('hidden', ''));
+mermaidOverlay?.addEventListener('click', e => { if (e.target === mermaidOverlay) mermaidOverlay.setAttribute('hidden', ''); });
+
+mermaidCopy?.addEventListener('click', () => {
+    navigator.clipboard.writeText(mermaidCode.textContent).then(() => {
+        mermaidCopy.textContent = 'Copied!';
+        setTimeout(() => { mermaidCopy.textContent = 'Copy'; }, 2000);
+    });
+});
+
+// ── ?load=TYPE:KEY query param support (used by examples gallery) ─────────────
+function loadFromQueryParam() {
+    const params = new URLSearchParams(location.search);
+    const load = params.get('load');
+    if (!load) return false;
+    const [type, key] = load.split(':');
+    if (!type || !key) return false;
+    const sample = EXTRA_SAMPLES[type]?.[key];
+    if (!sample) return false;
+    const tab = document.querySelector(`.input-tab[data-type="${type}"]`);
+    if (!tab) return false;
+    document.querySelectorAll('.input-tab').forEach((t) => t.classList.remove('active'));
+    tab.classList.add('active');
+    updateEditorForType(type);
+    codeInput.value = sample.code;
+    generateButton.click();
+    // Clean up query param without breaking the URL
+    history.replaceState(null, '', location.pathname + location.hash);
+    return true;
+}
+
+// ── Embed button ──────────────────────────────────────────────────────────────
+const embedButton = document.getElementById('btn-embed');
+const embedModal = document.getElementById('embed-modal-overlay');
+const embedClose = document.getElementById('embed-modal-close');
+const embedCode = document.getElementById('embed-code');
+const embedCopy = document.getElementById('embed-copy-btn');
+
+embedButton?.addEventListener('click', () => {
+    const code = codeInput.value.trim();
+    if (!code) {
+        showToast('Generate a diagram first, then embed it.', 'info');
+        return;
+    }
+    const hash = encodeState(activeInputType(), code);
+    if (!hash) return;
+    history.replaceState(null, '', `#${hash}`);
+    const snippet = `<iframe\n  src="https://infrasketch.cloud/embed.html#${hash}"\n  width="100%"\n  height="520"\n  style="border:none;border-radius:8px"\n  allowfullscreen\n  title="InfraSketch Architecture Diagram"\n></iframe>`;
+    embedCode.textContent = snippet;
+    embedModal.removeAttribute('hidden');
+});
+
+embedClose?.addEventListener('click', () => embedModal.setAttribute('hidden', ''));
+document.getElementById('embed-cancel-btn')?.addEventListener('click', () => embedModal.setAttribute('hidden', ''));
+embedModal?.addEventListener('click', (e) => { if (e.target === embedModal) embedModal.setAttribute('hidden', ''); });
+
+embedCopy?.addEventListener('click', () => {
+    navigator.clipboard.writeText(embedCode.textContent).then(() => {
+        embedCopy.textContent = 'Copied!';
+        setTimeout(() => { embedCopy.textContent = 'Copy'; }, 2000);
+    });
+});
+
+if (!loadFromHash()) loadFromQueryParam();
