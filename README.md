@@ -18,7 +18,7 @@ Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (Y
 ## Quick Start
 
 1. Open https://infrasketch.cloud
-2. Paste your Terraform HCL, plan JSON, CloudFormation YAML/JSON, `cdk synth` JSON, Pulumi TypeScript/Python, Kubernetes YAML, Terragrunt `.hcl`, or `docker-compose.yml` into the editor
+2. Paste any IaC code — InfraSketch auto-detects the format and switches to the right tab automatically
 3. Click **Generate Diagram**
 4. Export as **PNG**, **SVG**, or **draw.io XML** — or click **Share** to copy a link
 
@@ -27,6 +27,8 @@ No account. No credentials. Everything runs in your browser.
 ---
 
 ## Features
+
+**Auto-detect format** — paste any IaC code and InfraSketch detects the format automatically, switching to the correct tab and showing a confirmation toast. Supports all 7 formats below.
 
 **Input formats**
 - Terraform HCL (`.tf` files — paste one or many concatenated) including `module "name" {}` blocks
