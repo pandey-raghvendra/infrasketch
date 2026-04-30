@@ -338,6 +338,49 @@ Pulumi GCP and Azure resources mirror the Terraform GCP/Azure tables above using
 
 ---
 
+## GitHub Action
+
+Add architecture diagram links to every PR that touches infrastructure code. No secrets needed — `GITHUB_TOKEN` is automatic.
+
+```yaml
+# .github/workflows/infrasketch.yml
+name: Architecture Diagram
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '**/docker-compose*.yml'
+      - '**/__main__.py'
+      - '**/index.ts'
+      - '**/*.yaml'
+      - '**/*.yml'
+
+jobs:
+  diagram:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pandey-raghvendra/infrasketch@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+The action detects changed IaC files, auto-identifies the format (Terraform, Pulumi, Kubernetes, CloudFormation, CDK, Docker Compose), generates shareable InfraSketch URLs, and posts (or updates) a PR comment. Files over 200 KB are flagged but skipped.
+
+**Inputs**
+
+| Input | Default | Description |
+|---|---|---|
+| `github-token` | `${{ github.token }}` | Token with `pull-requests: write` |
+| `paths` | `**/*.tf,**/docker-compose*.yml,...` | Comma-separated glob patterns to watch |
+
+---
+
 ## Run Locally
 
 No build step required. Serve the folder over HTTP so browser ES module loading and icon inlining work correctly:

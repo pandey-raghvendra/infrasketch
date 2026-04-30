@@ -1,0 +1,29 @@
+name: 'InfraSketch Architecture Diagram'
+description: 'Post architecture diagram links on PRs that change infrastructure code (Terraform, Pulumi, Kubernetes, CloudFormation, CDK, Docker Compose)'
+author: 'Raghvendra Pandey'
+
+branding:
+  icon: 'git-branch'
+  color: 'green'
+
+inputs:
+  github-token:
+    description: 'GitHub token with pull-requests: write permission'
+    required: false
+    default: ${{ github.token }}
+  paths:
+    description: 'Comma-separated glob patterns for IaC files to watch. Defaults to common IaC extensions.'
+    required: false
+    default: '**/*.tf,**/docker-compose*.yml,**/docker-compose*.yaml,**/__main__.py,**/index.ts'
+
+runs:
+  using: composite
+  steps:
+    - name: Generate and post diagram links
+      shell: bash
+      run: node "${{ github.action_path }}/action/index.js"
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        INPUT_PATHS: ${{ inputs.paths }}

@@ -1,0 +1,37 @@
+# Example: copy this file into YOUR repo's .github/workflows/ directory.
+# It will post architecture diagram links on every PR that touches IaC files.
+#
+# Usage in your repo:
+#   1. Copy this file to .github/workflows/infrasketch.yml
+#   2. No secrets needed — GITHUB_TOKEN is automatic
+#   3. Open a PR that changes a .tf / Pulumi / K8s / CloudFormation file
+#   4. InfraSketch posts a comment with clickable diagram links
+
+name: Architecture Diagram
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '**/docker-compose*.yml'
+      - '**/docker-compose*.yaml'
+      - '**/compose.yml'
+      - '**/compose.yaml'
+      - '**/__main__.py'
+      - '**/index.ts'
+      - '**/*.yaml'
+      - '**/*.yml'
+
+jobs:
+  diagram:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pandey-raghvendra/infrasketch@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
