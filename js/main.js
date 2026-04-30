@@ -1626,4 +1626,57 @@ btnResetLayout?.addEventListener('click', () => {
     resetLayout();
 });
 
-loadFromHash();
+// ── ?load=TYPE:KEY query param support (used by examples gallery) ─────────────
+function loadFromQueryParam() {
+    const params = new URLSearchParams(location.search);
+    const load = params.get('load');
+    if (!load) return false;
+    const [type, key] = load.split(':');
+    if (!type || !key) return false;
+    const sample = EXTRA_SAMPLES[type]?.[key];
+    if (!sample) return false;
+    const tab = document.querySelector(`.input-tab[data-type="${type}"]`);
+    if (!tab) return false;
+    document.querySelectorAll('.input-tab').forEach((t) => t.classList.remove('active'));
+    tab.classList.add('active');
+    updateEditorForType(type);
+    codeInput.value = sample.code;
+    generateButton.click();
+    // Clean up query param without breaking the URL
+    history.replaceState(null, '', location.pathname + location.hash);
+    return true;
+}
+
+// ── Embed button ──────────────────────────────────────────────────────────────
+const embedButton = document.getElementById('btn-embed');
+const embedModal = document.getElementById('embed-modal-overlay');
+const embedClose = document.getElementById('embed-modal-close');
+const embedCode = document.getElementById('embed-code');
+const embedCopy = document.getElementById('embed-copy-btn');
+
+embedButton?.addEventListener('click', () => {
+    const code = codeInput.value.trim();
+    if (!code) {
+        showToast('Generate a diagram first, then embed it.', 'info');
+        return;
+    }
+    const hash = encodeState(activeInputType(), code);
+    if (!hash) return;
+    history.replaceState(null, '', `#${hash}`);
+    const snippet = `<iframe\n  src="https://infrasketch.cloud/embed.html#${hash}"\n  width="100%"\n  height="520"\n  style="border:none;border-radius:8px"\n  allowfullscreen\n  title="InfraSketch Architecture Diagram"\n></iframe>`;
+    embedCode.textContent = snippet;
+    embedModal.removeAttribute('hidden');
+});
+
+embedClose?.addEventListener('click', () => embedModal.setAttribute('hidden', ''));
+document.getElementById('embed-cancel-btn')?.addEventListener('click', () => embedModal.setAttribute('hidden', ''));
+embedModal?.addEventListener('click', (e) => { if (e.target === embedModal) embedModal.setAttribute('hidden', ''); });
+
+embedCopy?.addEventListener('click', () => {
+    navigator.clipboard.writeText(embedCode.textContent).then(() => {
+        embedCopy.textContent = 'Copied!';
+        setTimeout(() => { embedCopy.textContent = 'Copy'; }, 2000);
+    });
+});
+
+if (!loadFromHash()) loadFromQueryParam();

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8PRK40S17H"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-8PRK40S17H');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IaC Architecture Diagram Examples — InfraSketch</title>
+    <meta name="description" content="Browse ready-to-use infrastructure diagram examples: AWS 3-tier, EKS, serverless, Azure AKS, GCP GKE, Docker Compose, Terraform, CloudFormation, CDK. Open any in InfraSketch instantly.">
+    <meta name="keywords" content="terraform diagram examples, aws architecture diagram, cloudformation example, cdk example, kubernetes architecture diagram, docker compose diagram, azure aks diagram, gcp gke diagram">
+    <link rel="canonical" href="https://infrasketch.cloud/examples/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://infrasketch.cloud/examples/">
+    <meta property="og:title" content="IaC Architecture Diagram Examples — InfraSketch">
+    <meta property="og:description" content="Browse ready-to-use infrastructure diagram examples. Terraform, CloudFormation, CDK, Docker Compose — open any in InfraSketch instantly.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/og-image.png">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0c0f1a;
+            --bg-surface: #141829;
+            --bg-editor: #0d1017;
+            --text: #e4e6ef;
+            --text-muted: #7a7f99;
+            --accent: #06d6a0;
+            --accent-dim: rgba(6, 214, 160, 0.1);
+            --accent-glow: rgba(6, 214, 160, 0.3);
+            --orange: #ff6b35;
+            --blue: #118ab2;
+            --yellow: #ffd166;
+            --border: #1e2240;
+            --sans: 'DM Sans', system-ui, sans-serif;
+            --mono: 'DM Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(rgba(6, 214, 160, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 214, 160, 0.02) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+        nav {
+            padding: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: -0.3px;
+        }
+
+        .logo span { color: var(--accent); }
+
+        .nav-links { display: flex; gap: 24px; list-style: none; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color .15s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        /* Page header */
+        .page-header {
+            padding: 56px 0 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            color: var(--accent);
+            background: var(--accent-dim);
+            border: 1px solid rgba(6, 214, 160, 0.25);
+            border-radius: 20px;
+            padding: 4px 12px;
+            margin-bottom: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            line-height: 1.15;
+        }
+
+        .hl { color: var(--accent); }
+
+        .page-header p {
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 560px;
+            line-height: 1.7;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: var(--sans);
+            transition: all .15s;
+        }
+
+        .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .filter-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Grid */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+            padding-bottom: 80px;
+        }
+
+        /* Card */
+        .example-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: border-color .2s, transform .2s;
+        }
+
+        .example-card:hover {
+            border-color: rgba(6, 214, 160, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .card-icon.aws    { background: rgba(255, 107, 53, 0.15); }
+        .card-icon.azure  { background: rgba(17, 138, 178, 0.15); }
+        .card-icon.gcp    { background: rgba(255, 209, 102, 0.15); }
+        .card-icon.docker { background: rgba(6, 214, 160, 0.10); }
+
+        .card-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .badge-pill {
+            font-size: 10px;
+            font-weight: 600;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-pill.terraform    { background: rgba(94, 66, 227, 0.2); color: #a78bfa; border: 1px solid rgba(94,66,227,.3); }
+        .badge-pill.cloudformation { background: rgba(255, 107, 53, 0.15); color: #ff9f7a; border: 1px solid rgba(255,107,53,.3); }
+        .badge-pill.cdk          { background: rgba(255, 107, 53, 0.15); color: #ff9f7a; border: 1px solid rgba(255,107,53,.3); }
+        .badge-pill.docker       { background: rgba(6, 214, 160, 0.1); color: var(--accent); border: 1px solid rgba(6,214,160,.25); }
+        .badge-pill.terragrunt   { background: rgba(94, 66, 227, 0.2); color: #a78bfa; border: 1px solid rgba(94,66,227,.3); }
+        .badge-pill.aws          { background: rgba(255, 107, 53, 0.1); color: #ff9f7a; border: 1px solid rgba(255,107,53,.2); }
+        .badge-pill.azure        { background: rgba(17, 138, 178, 0.15); color: #67d2f8; border: 1px solid rgba(17,138,178,.3); }
+        .badge-pill.gcp          { background: rgba(255, 209, 102, 0.12); color: var(--yellow); border: 1px solid rgba(255,209,102,.25); }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.65;
+            flex: 1;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 16px;
+        }
+
+        .meta-item {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+        }
+
+        .meta-item strong {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .btn-open {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(6, 214, 160, 0.4);
+            border-radius: 8px;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background .15s, border-color .15s;
+            align-self: flex-start;
+        }
+
+        .btn-open:hover {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .btn-open svg { flex-shrink: 0; }
+
+        /* No results */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            font-size: 15px;
+            display: none;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 24px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .footer-inner a { color: var(--text-muted); text-decoration: none; }
+        .footer-inner a:hover { color: var(--accent); }
+
+        @media (max-width: 640px) {
+            .page-header h1 { font-size: 28px; }
+            .nav-links { gap: 14px; }
+            .examples-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <nav>
+        <a href="/" class="logo">Infra<span>Sketch</span></a>
+        <ul class="nav-links">
+            <li><a href="/#tool">Tool</a></li>
+            <li><a href="examples/" class="active">Examples</a></li>
+            <li><a href="/blog/">Blog</a></li>
+            <li><a href="/about.html">About</a></li>
+            <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-header">
+        <div class="badge">10 READY-TO-USE TEMPLATES</div>
+        <h1>Architecture Diagram<br><span class="hl">Examples</span></h1>
+        <p>Browse real-world infrastructure templates. Click any example to open it in InfraSketch and generate the diagram instantly — no copy-paste needed.</p>
+    </div>
+
+    <div class="filter-bar" id="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="aws">AWS</button>
+        <button class="filter-btn" data-filter="azure">Azure</button>
+        <button class="filter-btn" data-filter="gcp">GCP</button>
+        <button class="filter-btn" data-filter="docker">Docker</button>
+        <button class="filter-btn" data-filter="terraform">Terraform</button>
+        <button class="filter-btn" data-filter="cloudformation">CloudFormation</button>
+        <button class="filter-btn" data-filter="cdk">CDK</button>
+        <button class="filter-btn" data-filter="terragrunt">Terragrunt</button>
+    </div>
+
+    <div class="examples-grid" id="examples-grid">
+        <!-- Cards injected by JS -->
+        <div class="no-results" id="no-results">No examples match this filter.</div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-inner">
+            <span>&copy; 2026 InfraSketch &mdash; Free, open-source IaC diagram generator</span>
+            <span>
+                <a href="/privacy.html">Privacy</a> &middot;
+                <a href="/terms.html">Terms</a> &middot;
+                <a href="/">Back to tool</a>
+            </span>
+        </div>
+    </div>
+</footer>
+
+<script>
+const EXAMPLES = [
+    {
+        id: 'terraform:basic',
+        title: 'Production AWS Stack',
+        desc: 'Full AWS production setup: VPC, public/private/data subnets, EKS cluster, ALB, RDS PostgreSQL, ElastiCache Redis, Lambda, S3, SQS, SNS, CloudFront CDN.',
+        icon: '🟠',
+        iconClass: 'aws',
+        tags: ['aws', 'terraform'],
+        resources: '20+',
+        format: 'Terraform HCL',
+    },
+    {
+        id: 'terraform:modules',
+        title: 'Multi-module AWS (VPC + EKS + RDS)',
+        desc: 'Multi-file Terraform with networking, EKS, and RDS modules. Shows how module boundaries map to diagram zones — VPC, subnets, compute, data layer.',
+        icon: '🟠',
+        iconClass: 'aws',
+        tags: ['aws', 'terraform'],
+        resources: '18+',
+        format: 'Terraform HCL',
+    },
+    {
+        id: 'terraform:serverless',
+        title: 'AWS Serverless Pipeline',
+        desc: 'Event-driven serverless architecture: API Gateway, Lambda, DynamoDB, S3, SQS, SNS, Route 53. Multi-file layout showing a complete serverless workflow.',
+        icon: '🟠',
+        iconClass: 'aws',
+        tags: ['aws', 'terraform'],
+        resources: '12+',
+        format: 'Terraform HCL',
+    },
+    {
+        id: 'terraform:azure',
+        title: 'Production Azure Stack',
+        desc: 'Azure production infrastructure: VNet with 3 subnets, AKS cluster, App Service, Function App, Azure SQL, PostgreSQL Flexible Server, Redis Cache, Service Bus, Event Hub, Key Vault.',
+        icon: '🔵',
+        iconClass: 'azure',
+        tags: ['azure', 'terraform'],
+        resources: '18+',
+        format: 'Terraform HCL',
+    },
+    {
+        id: 'terraform:gcp',
+        title: 'Production GCP Stack',
+        desc: 'GCP production setup: VPC with subnets, GKE cluster with node pool, Cloud SQL, Cloud Storage, Pub/Sub, Cloud Run, Cloud Functions, Cloud CDN, Firewall rules.',
+        icon: '🟡',
+        iconClass: 'gcp',
+        tags: ['gcp', 'terraform'],
+        resources: '14+',
+        format: 'Terraform HCL',
+    },
+    {
+        id: 'cloudformation:basic',
+        title: 'CloudFormation VPC + ECS + RDS',
+        desc: 'AWS CloudFormation template: VPC with public and private subnets, Application Load Balancer, ECS cluster and service, RDS database, ElastiCache, Lambda, SQS, SNS, CloudFront.',
+        icon: '🟠',
+        iconClass: 'aws',
+        tags: ['aws', 'cloudformation'],
+        resources: '16+',
+        format: 'CloudFormation YAML',
+    },
+    {
+        id: 'cdk:basic',
+        title: 'CDK Production Stack',
+        desc: 'AWS CDK synth output: VPC, EKS cluster, RDS Aurora, Lambda functions, S3, SQS, API Gateway. Generated from cdk synth — paste the JSON output directly.',
+        icon: '🟠',
+        iconClass: 'aws',
+        tags: ['aws', 'cdk'],
+        resources: '14+',
+        format: 'CDK synth JSON',
+    },
+    {
+        id: 'docker:basic',
+        title: 'Docker Web App',
+        desc: 'Classic web application stack: nginx reverse proxy, Node.js API, PostgreSQL database, Redis cache. Shows service dependency graph and network topology.',
+        icon: '🟢',
+        iconClass: 'docker',
+        tags: ['docker'],
+        resources: '4 services',
+        format: 'Docker Compose',
+    },
+    {
+        id: 'docker:microservices',
+        title: 'Docker Microservices Platform',
+        desc: '9-service microservices platform: API gateway, auth service, user/order/notification services, PostgreSQL, MongoDB, Redis, Elasticsearch. Full dependency graph.',
+        icon: '🟢',
+        iconClass: 'docker',
+        tags: ['docker'],
+        resources: '9 services',
+        format: 'Docker Compose',
+    },
+    {
+        id: 'terragrunt:basic',
+        title: 'Terragrunt Multi-unit Stack',
+        desc: 'Terragrunt root config with 4 units: VPC, RDS, EKS, and app service. Shows cross-unit dependencies — vpc → rds, eks → app — as edges in the diagram.',
+        icon: '🟠',
+        iconClass: 'aws',
+        tags: ['aws', 'terragrunt'],
+        resources: '4 units',
+        format: 'Terragrunt',
+    },
+];
+
+const BASE_URL = '/';
+
+function renderCards(examples) {
+    const grid = document.getElementById('examples-grid');
+    const noResults = document.getElementById('no-results');
+    // Remove old cards (keep no-results div)
+    Array.from(grid.querySelectorAll('.example-card')).forEach(c => c.remove());
+
+    if (examples.length === 0) {
+        noResults.style.display = 'block';
+        return;
+    }
+    noResults.style.display = 'none';
+
+    examples.forEach(ex => {
+        const [type, key] = ex.id.split(':');
+        const href = `${BASE_URL}?load=${ex.id}#tool`;
+
+        const card = document.createElement('div');
+        card.className = 'example-card';
+        card.dataset.tags = ex.tags.join(' ');
+
+        const formatBadgeClass = type; // terraform, cloudformation, cdk, docker, terragrunt
+        const providerBadges = ex.tags
+            .filter(t => !['terraform','cloudformation','cdk','docker','terragrunt'].includes(t))
+            .map(t => `<span class="badge-pill ${t}">${t.toUpperCase()}</span>`)
+            .join('');
+
+        card.innerHTML = `
+            <div class="card-top">
+                <div class="card-icon ${ex.iconClass}">${ex.icon}</div>
+                <div class="card-badges">
+                    <span class="badge-pill ${formatBadgeClass}">${ex.format}</span>
+                    ${providerBadges}
+                </div>
+            </div>
+            <div class="card-title">${ex.title}</div>
+            <div class="card-desc">${ex.desc}</div>
+            <div class="card-meta">
+                <div class="meta-item"><strong>${ex.resources}</strong> resources</div>
+                <div class="meta-item"><strong>Free</strong> · no signup</div>
+            </div>
+            <a class="btn-open" href="${href}">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Open in InfraSketch
+            </a>
+        `;
+        grid.insertBefore(card, noResults);
+    });
+}
+
+// Filter logic
+const filterBtns = document.querySelectorAll('.filter-btn');
+let activeFilter = 'all';
+
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        const filtered = activeFilter === 'all'
+            ? EXAMPLES
+            : EXAMPLES.filter(ex => ex.tags.includes(activeFilter));
+        renderCards(filtered);
+    });
+});
+
+renderCards(EXAMPLES);
+</script>
+</body>
+</html>
