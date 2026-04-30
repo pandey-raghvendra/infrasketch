@@ -422,6 +422,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .panel-title .dot {
@@ -433,7 +434,12 @@
         .input-tabs {
             display: flex;
             gap: 4px;
+            flex: 1;
+            min-width: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+        .input-tabs::-webkit-scrollbar { display: none; }
 
         .input-tab {
             padding: 4px 12px;
@@ -805,6 +811,7 @@
             cursor: pointer;
             transition: all .15s;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         .btn-diff:hover { border-color: var(--accent); color: var(--accent); }
         .btn-diff.active { border-color: var(--orange); color: var(--orange); background: rgba(255,107,53,.08); }
