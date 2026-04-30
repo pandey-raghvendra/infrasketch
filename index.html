@@ -408,13 +408,12 @@
 
         .panel-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
             padding: 12px 16px;
             background: rgba(255,255,255,0.02);
             border-bottom: 1px solid var(--border);
             min-width: 0;
-            overflow: hidden;
         }
 
         .panel-title {
@@ -639,7 +638,7 @@
             gap: 6px;
             align-items: center;
             overflow-x: auto;
-            flex-shrink: 1;
+            flex: 1;
             min-width: 0;
             scrollbar-width: none;
         }
@@ -1996,7 +1995,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                             <path d="M21 15l-5-5L5 21l-3-3 11-11z"/>
                         </svg>
                     </div>
-                    <p>Paste Terraform, CloudFormation, CDK, Terragrunt, or Docker Compose on the left<br>and click <strong>Generate Diagram</strong></p>
+                    <p>Paste Terraform, Pulumi, Kubernetes, CloudFormation, CDK, Terragrunt, or Docker Compose on the left<br>and click <strong>Generate Diagram</strong></p>
                 </div>
                 <div class="loading-indicator" id="loading">
                     <div class="loading-ring"></div>
