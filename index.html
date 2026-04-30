@@ -73,6 +73,25 @@
             --mono: 'DM Mono', monospace;
         }
 
+        /* Light theme overrides */
+        :root[data-theme="light"] {
+            --bg: #f0f4f8;
+            --bg-surface: #ffffff;
+            --bg-editor: #f8fafc;
+            --bg-canvas: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent-dim: rgba(6, 214, 160, 0.12);
+            --accent-glow: rgba(6, 214, 160, 0.2);
+        }
+        :root[data-theme="light"] body::before { opacity: 0.4; }
+        :root[data-theme="light"] .code-editor { color: #1e293b; }
+        :root[data-theme="light"] .code-editor::placeholder { color: #cbd5e1; }
+        :root[data-theme="light"] nav { background: rgba(240,244,248,0.95); }
+        :root[data-theme="light"] .hero h1 { color: #0f172a; }
+        :root[data-theme="light"] .hero p { color: #475569; }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
@@ -557,6 +576,134 @@
         .btn-embed-cancel { padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; }
         .btn-embed-copy { padding: 8px 20px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-dim); color: var(--accent); cursor: pointer; font-size: 13px; font-weight: 600; }
         .btn-embed-copy:hover { background: var(--accent); color: var(--bg); }
+
+        /* Theme toggle */
+        .btn-theme {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 15px;
+            padding: 4px 8px;
+            line-height: 1;
+            transition: border-color .15s, color .15s;
+        }
+        .btn-theme:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Diff mode */
+        .btn-diff {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-family: var(--mono);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all .15s;
+            white-space: nowrap;
+        }
+        .btn-diff:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-diff.active { border-color: var(--orange); color: var(--orange); background: rgba(255,107,53,.08); }
+
+        .diff-editors {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+        .diff-editors.visible { display: flex; }
+        .diff-editor-half {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+        .diff-editor-half + .diff-editor-half { border-top: 2px solid var(--border); }
+        .diff-label {
+            padding: 3px 12px;
+            font-size: 10px;
+            font-family: var(--mono);
+            font-weight: 600;
+            letter-spacing: .5px;
+            flex-shrink: 0;
+        }
+        .diff-label.v1 { background: rgba(239,71,111,.08); color: #ef476f; }
+        .diff-label.v2 { background: rgba(6,214,160,.08); color: var(--accent); }
+        .diff-textarea {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-editor);
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.65;
+            color: #b0b8d1;
+            border: none;
+            border-left: 3px solid transparent;
+            outline: none;
+            resize: none;
+            width: 100%;
+            min-height: 0;
+            tab-size: 2;
+        }
+        .diff-textarea.v1 { border-left-color: rgba(239,71,111,.4); }
+        .diff-textarea.v2 { border-left-color: rgba(6,214,160,.4); }
+
+        /* Diff summary bar */
+        .diff-summary {
+            display: none;
+            gap: 16px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-family: var(--mono);
+            border-top: 1px solid var(--border);
+            background: rgba(255,255,255,.02);
+            align-items: center;
+        }
+        .diff-summary.visible { display: flex; }
+        .diff-count.added   { color: #16a34a; font-weight: 700; }
+        .diff-count.removed { color: #ef476f; font-weight: 700; }
+        .diff-count.unchanged { color: var(--text-muted); }
+
+        /* Removed resources panel */
+        .diff-removed-panel {
+            display: none;
+            border-top: 1px solid var(--border);
+            padding: 10px 14px;
+            flex-shrink: 0;
+        }
+        .diff-removed-panel.visible { display: block; }
+        .diff-removed-title { font-size: 11px; font-family: var(--mono); font-weight: 600; color: #ef476f; margin-bottom: 6px; }
+        .diff-removed-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .diff-removed-tag {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(239,71,111,.4);
+            background: rgba(239,71,111,.08);
+            color: #ef476f;
+        }
+
+        /* Mermaid modal */
+        .mermaid-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .mermaid-modal-overlay[hidden] { display: none; }
+        .mermaid-modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 640px; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
+        .mermaid-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .mermaid-modal-title { font-size: 14px; font-weight: 700; }
+        .mermaid-modal-badge { font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; background: rgba(6,214,160,.1); border: 1px solid rgba(6,214,160,.25); color: var(--accent); }
+        .mermaid-modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+        .mermaid-modal-close:hover { color: var(--text); background: var(--accent-dim); }
+        .mermaid-modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
+        .mermaid-hint { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+        .mermaid-hint a { color: var(--accent); text-decoration: none; }
+        .mermaid-hint a:hover { text-decoration: underline; }
+        .mermaid-code-block { background: var(--bg-editor); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 11px; color: var(--text); white-space: pre; overflow-x: auto; line-height: 1.65; flex: 1; min-height: 200px; }
+        .mermaid-modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; padding: 12px 20px; border-top: 1px solid var(--border); }
+        .btn-mermaid-cancel { padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; }
+        .btn-mermaid-copy { padding: 8px 20px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-dim); color: var(--accent); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-mermaid-copy:hover { background: var(--accent); color: var(--bg); }
         .btn-import-svg { border-style: dashed; color: var(--text-muted); }
 
         /* Zoom controls */
@@ -1220,6 +1367,7 @@
             <li><a href="about.html">About</a></li>
             <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
         </ul>
+        <button class="btn-theme" id="btn-theme" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
     </nav>
 
     <section class="hero">
@@ -1266,6 +1414,7 @@
                     <button class="input-tab" data-type="docker">Docker Compose</button>
                     <button class="input-tab" data-type="terragrunt">Terragrunt</button>
                 </div>
+                <button class="btn-diff" id="btn-diff" title="Diff mode: compare two versions of IaC code">⟷ Diff</button>
             </div>
             <textarea class="code-editor" id="code-input" placeholder="# Paste your Terraform code here...
 
@@ -1283,6 +1432,18 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
   instance_type = &quot;t3.medium&quot;
   subnet_id     = aws_subnet.public.id
 }"></textarea>
+            <!-- Diff mode: two editors (hidden by default) -->
+            <div class="diff-editors" id="diff-editors">
+                <div class="diff-editor-half">
+                    <div class="diff-label v1">▼ v1 — BEFORE</div>
+                    <textarea class="diff-textarea v1" id="diff-v1" placeholder="# Paste the OLD version of your IaC code here..."></textarea>
+                </div>
+                <div class="diff-editor-half">
+                    <div class="diff-label v2">▲ v2 — AFTER</div>
+                    <textarea class="diff-textarea v2" id="diff-v2" placeholder="# Paste the NEW version of your IaC code here..."></textarea>
+                </div>
+            </div>
+
             <div id="module-options" class="module-options">
                 <label id="zip-upload-label" class="mod-zip-label" for="zip-upload-input">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -1320,6 +1481,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <button class="btn-export" id="btn-export-png">PNG</button>
                     <button class="btn-export" id="btn-export-svg">SVG</button>
                     <button class="btn-export" id="btn-export-drawio" title="Export for draw.io / diagrams.net">draw.io XML</button>
+                    <button class="btn-export" id="btn-export-mermaid" title="Export as Mermaid diagram code — paste into GitHub, Notion, Obsidian">Mermaid</button>
                     <button class="btn-export btn-import-svg" id="btn-svg-to-drawio" title="Convert an SVG architecture diagram to draw.io format">SVG &#8594; draw.io</button>
                     <input type="file" id="svg-import-input" accept=".svg" style="display:none">
                 </div>
@@ -1354,6 +1516,17 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="stat-item"><span class="stat-dot lb"></span> <span id="stat-lb">0</span> Load Balancer</div>
                 <button class="btn-toggle-table" id="btn-toggle-table">Resources &#9662;</button>
             </div>
+            <!-- Diff summary + removed resources -->
+            <div class="diff-summary" id="diff-summary">
+                <span class="diff-count added" id="diff-added">+0 added</span>
+                <span class="diff-count removed" id="diff-removed-count">−0 removed</span>
+                <span class="diff-count unchanged" id="diff-unchanged">~0 unchanged</span>
+            </div>
+            <div class="diff-removed-panel" id="diff-removed-panel">
+                <div class="diff-removed-title">Removed resources</div>
+                <div class="diff-removed-list" id="diff-removed-list"></div>
+            </div>
+
             <div class="resource-table-panel" id="resource-table-panel" style="display:none">
                 <table class="resource-table">
                     <thead><tr><th class="col-num">#</th><th>Name</th><th class="col-type">Type</th><th>Category</th></tr></thead>
@@ -1536,6 +1709,29 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <button class="btn-drawio-cancel" id="drawio-modal-cancel">Cancel</button>
                 <button class="btn-drawio-download" id="drawio-modal-download">Download .drawio</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mermaid export modal -->
+<div class="mermaid-modal-overlay" id="mermaid-modal-overlay" hidden>
+    <div class="mermaid-modal">
+        <div class="mermaid-modal-header">
+            <span class="mermaid-modal-title">Mermaid Export</span>
+            <span class="mermaid-modal-badge">flowchart</span>
+            <button class="mermaid-modal-close" id="mermaid-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="mermaid-modal-body">
+            <p class="mermaid-hint">
+                Paste into any <a href="https://mermaid.js.org/intro/" target="_blank" rel="noopener">Mermaid-enabled</a> renderer —
+                GitHub PRs &amp; wikis, Notion, Obsidian, GitLab, VS Code preview.
+                Wrap in <code style="font-family:var(--mono);color:var(--accent)">```mermaid … ```</code> fences in Markdown.
+            </p>
+            <pre class="mermaid-code-block" id="mermaid-code"></pre>
+        </div>
+        <div class="mermaid-modal-actions">
+            <button class="btn-mermaid-cancel" id="mermaid-modal-cancel">Cancel</button>
+            <button class="btn-mermaid-copy" id="mermaid-copy-btn">Copy</button>
         </div>
     </div>
 </div>
