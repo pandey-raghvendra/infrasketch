@@ -52,24 +52,28 @@
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0c0f1a;
-            --bg-surface: #141829;
-            --bg-editor: #0d1017;
+            --bg: #030712;
+            --bg-surface: #0d1117;
+            --bg-editor: #080c12;
             --bg-canvas: #f8f9fb;
-            --text: #e4e6ef;
-            --text-muted: #7a7f99;
+            --text: #f0f4ff;
+            --text-muted: #6b7a99;
             --accent: #06d6a0;
             --accent-dim: rgba(6, 214, 160, 0.1);
-            --accent-glow: rgba(6, 214, 160, 0.3);
+            --accent-glow: rgba(6, 214, 160, 0.35);
+            --purple: #8b5cf6;
+            --purple-dim: rgba(139, 92, 246, 0.12);
             --orange: #ff6b35;
             --blue: #118ab2;
             --red: #ef476f;
             --yellow: #ffd166;
-            --border: #1e2240;
-            --sans: 'DM Sans', system-ui, sans-serif;
+            --border: #1a2035;
+            --border-subtle: rgba(255,255,255,0.06);
+            --sans: 'Inter', system-ui, sans-serif;
             --mono: 'DM Mono', monospace;
         }
 
@@ -82,17 +86,23 @@
             --text: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
+            --border-subtle: rgba(0,0,0,0.06);
             --accent-dim: rgba(6, 214, 160, 0.12);
             --accent-glow: rgba(6, 214, 160, 0.2);
         }
-        :root[data-theme="light"] body::before { opacity: 0.4; }
+        :root[data-theme="light"] body::before { opacity: 0.3; }
+        :root[data-theme="light"] body::after { display: none; }
         :root[data-theme="light"] .code-editor { color: #1e293b; }
         :root[data-theme="light"] .code-editor::placeholder { color: #cbd5e1; }
-        :root[data-theme="light"] nav { background: rgba(240,244,248,0.95); }
+        :root[data-theme="light"] .nav-wrap { background: rgba(240,244,248,0.9); border-color: rgba(0,0,0,0.08); }
         :root[data-theme="light"] .hero h1 { color: #0f172a; }
-        :root[data-theme="light"] .hero p { color: #475569; }
+        :root[data-theme="light"] .hero-sub { color: #475569 !important; }
+        :root[data-theme="light"] .hero-glow-1,
+        :root[data-theme="light"] .hero-glow-2 { opacity: 0.25; }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: var(--sans);
@@ -102,95 +112,278 @@
             overflow-x: hidden;
         }
 
-        /* Grid bg */
+        /* Dot grid */
         body::before {
             content: '';
             position: fixed;
             inset: 0;
-            background:
-                linear-gradient(rgba(6, 214, 160, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(6, 214, 160, 0.02) 1px, transparent 1px);
-            background-size: 48px 48px;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+            background-size: 32px 32px;
             pointer-events: none;
             z-index: 0;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+        /* Purple glow bottom-right */
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -200px;
+            right: -200px;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
 
-        /* NAV */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* ── NAV ─────────────────────────────────────────────────────────────── */
         nav {
-            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            padding: 0;
+        }
+
+        .nav-wrap {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            background: rgba(3,7,18,0.75);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-bottom: 1px solid var(--border-subtle);
+            max-width: 100%;
         }
+
+        .nav-left { display: flex; align-items: center; gap: 32px; }
+        .nav-right { display: flex; align-items: center; gap: 12px; }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 9px;
             font-weight: 700;
-            font-size: 20px;
-            letter-spacing: -0.5px;
+            font-size: 17px;
+            letter-spacing: -0.4px;
             text-decoration: none;
+            color: var(--text);
         }
 
-        .logo-img {
-            height: 38px;
-            width: auto;
-            display: block;
-            border-radius: 4px;
-        }
+        .logo-img { height: 32px; width: auto; border-radius: 6px; }
 
-        .nav-links { display: flex; gap: 24px; list-style: none; }
+        .logo-wordmark { color: var(--text); }
+        .logo-wordmark span { color: var(--accent); }
+
+        .nav-links { display: flex; gap: 4px; list-style: none; }
         .nav-links a {
             color: var(--text-muted);
             text-decoration: none;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 500;
-            transition: color 0.2s;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: color 0.15s, background 0.15s;
         }
-        .nav-links a:hover { color: var(--accent); }
+        .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
 
-        /* HERO */
+        .btn-nav-cta {
+            padding: 7px 18px;
+            background: var(--accent);
+            color: #030712;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: var(--sans);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.15s, box-shadow 0.15s;
+            letter-spacing: -0.2px;
+        }
+        .btn-nav-cta:hover { opacity: 0.9; box-shadow: 0 0 20px var(--accent-glow); }
+
+        /* ── HERO ────────────────────────────────────────────────────────────── */
         .hero {
             text-align: center;
-            padding: 60px 0 40px;
+            padding: 96px 0 64px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .badge {
+        /* Teal glow behind hero */
+        .hero-glow-1 {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 600px;
+            background: radial-gradient(ellipse at 50% 30%, rgba(6,214,160,0.18) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Purple glow right */
+        .hero-glow-2 {
+            position: absolute;
+            top: 40px;
+            right: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.13) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero > * { position: relative; z-index: 1; }
+
+        .hero-eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 16px;
-            background: var(--accent-dim);
-            border: 1px solid rgba(6, 214, 160, 0.2);
+            padding: 5px 14px;
+            background: rgba(6,214,160,0.08);
+            border: 1px solid rgba(6,214,160,0.2);
             border-radius: 100px;
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 600;
             color: var(--accent);
             font-family: var(--mono);
-            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+            margin-bottom: 28px;
+        }
+
+        .hero-eyebrow .dot {
+            width: 6px; height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
         }
 
         .hero h1 {
-            font-size: clamp(32px, 5vw, 48px);
-            font-weight: 700;
-            line-height: 1.15;
-            margin-bottom: 16px;
-            letter-spacing: -1px;
+            font-size: clamp(44px, 7vw, 80px);
+            font-weight: 900;
+            line-height: 1.06;
+            letter-spacing: -3px;
+            margin-bottom: 22px;
+            color: var(--text);
         }
 
-        .hero h1 .hl { color: var(--accent); }
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, #06d6a0 0%, #22d3ee 40%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-        .hero p {
-            font-size: 17px;
-            color: #a8b0d1;
-            max-width: 600px;
-            margin: 0 auto;
+        .hero-sub {
+            font-size: 18px;
+            color: #7a8ba8;
+            max-width: 560px;
+            margin: 0 auto 36px;
             line-height: 1.7;
+            font-weight: 400;
         }
+
+        .hero-ctas {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            padding: 13px 28px;
+            background: var(--accent);
+            color: #030712;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: var(--sans);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.3px;
+            transition: all 0.2s;
+            box-shadow: 0 0 0 0 var(--accent-glow);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(6,214,160,0.35), 0 0 0 4px rgba(6,214,160,0.1);
+        }
+
+        .btn-hero-secondary {
+            padding: 13px 24px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: var(--sans);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.3px;
+            transition: all 0.2s;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,0.09);
+            border-color: rgba(255,255,255,0.12);
+            transform: translateY(-1px);
+        }
+
+        /* Feature pills row */
+        .hero-pills {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: 100px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+        .hero-pill:hover { color: var(--text); border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.07); }
+
+        .hero-pill .pill-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .badge { display: none; } /* replaced by hero-eyebrow */
 
         /* MAIN WORKSPACE */
         .workspace {
@@ -452,23 +645,23 @@
         }
 
         .btn-export {
-            padding: 8px 16px;
-            background: var(--bg-surface);
-            color: var(--text);
+            padding: 4px 10px;
+            background: transparent;
+            color: var(--text-muted);
             border: 1px solid var(--border);
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             font-family: var(--sans);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
+            white-space: nowrap;
         }
 
         .btn-export:hover {
             background: var(--accent-dim);
             border-color: var(--accent);
             color: var(--accent);
-            transform: translateY(-1px);
         }
 
         /* Diagram SVG area */
@@ -545,20 +738,21 @@
 
         /* Share button */
         .btn-share {
-            padding: 8px 16px;
-            background: var(--bg-surface);
-            color: var(--text);
-            border: 1px solid var(--border);
+            padding: 4px 10px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid rgba(6,214,160,0.4);
             border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 11px;
+            font-weight: 600;
             font-family: var(--sans);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
+            white-space: nowrap;
         }
-        .btn-share:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .btn-share:hover { background: var(--accent-dim); border-color: var(--accent); }
         .btn-share.copied { border-color: #10b981; color: #10b981; }
-        .btn-embed { font-family: var(--mono); font-size: 11px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: border-color .15s, color .15s; }
+        .btn-embed { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap; }
         .btn-embed:hover { border-color: var(--accent); color: var(--accent); }
 
         /* Embed modal */
@@ -776,230 +970,319 @@
         .cat-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.05); font-size: 11px; }
         .cat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
-        /* What is InfraSketch */
-        .what-is {
-            padding: 48px 0 32px;
-            border-bottom: 1px solid var(--border);
+        /* ── TRUST BAND ─────────────────────────────────────────────────────── */
+        .trust-band {
+            padding: 24px 0;
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
         }
-        .what-is h2 {
-            font-size: clamp(22px, 3vw, 28px);
+
+        .trust-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .trust-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .trust-stat-num {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -1px;
+            font-family: var(--mono);
+        }
+
+        .trust-stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trust-divider {
+            width: 1px;
+            height: 32px;
+            background: var(--border-subtle);
+        }
+
+        /* ── What is InfraSketch ─────────────────────────────────────────── */
+        .what-is {
+            padding: 80px 0 64px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
             font-weight: 700;
-            margin-bottom: 24px;
-            letter-spacing: -0.5px;
+            font-family: var(--mono);
+            color: var(--accent);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .what-is h2 {
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
         }
         .what-is h2 .hl { color: var(--accent); }
         .what-is-grid {
             display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 40px;
+            grid-template-columns: 1fr 300px;
+            gap: 56px;
             align-items: start;
         }
         .what-is-body p {
             font-size: 15px;
-            color: #a8b0d1;
-            line-height: 1.8;
-            margin-bottom: 16px;
+            color: var(--text-muted);
+            line-height: 1.85;
+            margin-bottom: 18px;
         }
         .what-is-body p:last-child { margin-bottom: 0; }
-        .what-is-aside {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+        .what-is-aside { display: flex; flex-direction: column; gap: 12px; }
         .what-is-stat {
-            padding: 16px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            padding: 18px 20px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
             background: rgba(255,255,255,0.02);
+            transition: border-color 0.2s;
         }
+        .what-is-stat:hover { border-color: rgba(6,214,160,0.25); }
         .stat-num {
             display: block;
-            font-size: 26px;
-            font-weight: 700;
+            font-size: 28px;
+            font-weight: 800;
             color: var(--accent);
             font-family: var(--mono);
             line-height: 1.1;
+            letter-spacing: -1px;
         }
         .stat-label {
             display: block;
             font-size: 12px;
             color: var(--text-muted);
             margin-top: 4px;
+            font-weight: 500;
         }
         @media (max-width: 768px) {
-            .what-is-grid { grid-template-columns: 1fr; gap: 24px; }
+            .what-is-grid { grid-template-columns: 1fr; gap: 32px; }
             .what-is-aside { flex-direction: row; flex-wrap: wrap; }
             .what-is-stat { flex: 1; min-width: 130px; }
         }
 
-        /* How it works */
-        .how-it-works {
-            padding: 56px 0 40px;
-        }
+        /* ── How it works ────────────────────────────────────────────────── */
+        .how-it-works { padding: 80px 0 64px; }
 
         .section-header {
             text-align: center;
-            margin-bottom: 36px;
+            margin-bottom: 48px;
         }
 
         .section-header h2 {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 10px;
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 12px;
+            line-height: 1.1;
         }
 
         .section-header h2 .hl { color: var(--accent); }
 
         .section-header p {
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-muted);
-            max-width: 500px;
+            max-width: 480px;
             margin: 0 auto;
+            line-height: 1.7;
         }
 
         .steps {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 0;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
+            gap: 16px;
         }
 
         .step {
             padding: 32px 28px;
-            background: var(--bg-surface);
-            border-right: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
             position: relative;
+            transition: border-color 0.2s, background 0.2s;
         }
 
-        .step:last-child { border-right: none; }
-
-        .step-number {
-            font-size: 11px;
-            font-family: var(--mono);
-            font-weight: 600;
-            color: var(--accent);
-            letter-spacing: 1px;
-            margin-bottom: 14px;
+        .step:hover {
+            border-color: rgba(6,214,160,0.2);
+            background: rgba(6,214,160,0.03);
         }
 
-        .step h3 {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .step p {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.7;
-        }
-
-        .step-arrow {
-            position: absolute;
-            right: -12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 50%;
+        .step-num-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(6,214,160,0.1);
+            border: 1px solid rgba(6,214,160,0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            font-family: var(--mono);
             color: var(--accent);
-            z-index: 2;
+            margin-bottom: 20px;
         }
 
-        .step:last-child .step-arrow { display: none; }
+        .step-number { display: none; }
 
-        /* Features section */
+        .step h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .step p {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.75;
+        }
+
+        .step-arrow { display: none; }
+
+        /* ── Features section ────────────────────────────────────────────── */
         .features {
-            padding: 40px 0 60px;
+            padding: 0 0 80px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            gap: 16px;
         }
 
         .features-header {
             grid-column: 1 / -1;
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 16px;
+            padding-top: 0;
         }
 
         .features-header h2 {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 12px;
+            line-height: 1.1;
         }
 
         .features-header p {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .feature-card {
-            padding: 28px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            transition: all 0.25s;
-        }
-
-        .feature-card:hover {
-            border-color: rgba(6, 214, 160, 0.35);
-            background: rgba(6, 214, 160, 0.04);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(6, 214, 160, 0.1);
-        }
-
-        .feature-card h3 {
             font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .feature-card p {
-            font-size: 13px;
             color: var(--text-muted);
             line-height: 1.7;
         }
 
+        .feature-card {
+            padding: 28px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(6,214,160,0.04) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-card:hover {
+            border-color: rgba(6,214,160,0.25);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(6,214,160,0.08);
+        }
+
+        .feature-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .feature-card p {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.75;
+        }
+
         .feature-icon {
-            margin-bottom: 12px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, rgba(6,214,160,0.15) 0%, rgba(6,214,160,0.05) 100%);
+            border: 1px solid rgba(6,214,160,0.15);
             color: var(--accent);
         }
 
-        .feature-icon svg {
-            display: block;
+        .feature-icon svg { display: block; }
+
+        /* Alternate icon color for variety */
+        .feature-card:nth-child(3n) .feature-icon {
+            background: linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0.05) 100%);
+            border-color: rgba(139,92,246,0.15);
+            color: #a78bfa;
+        }
+        .feature-card:nth-child(3n+2) .feature-icon {
+            background: linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(34,211,238,0.05) 100%);
+            border-color: rgba(34,211,238,0.15);
+            color: #67e8f9;
         }
 
-        /* Resources / links section */
+        /* ── Resources / blog section ─────────────────────────────────── */
         .resources {
-            padding: 48px 0;
-            border-top: 1px solid var(--border);
+            padding: 64px 0;
+            border-top: 1px solid var(--border-subtle);
         }
 
         .resources-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 32px;
+            gap: 32px;
+            margin-top: 40px;
         }
 
         .resource-group h4 {
-            font-size: 11px;
+            font-size: 10.5px;
             font-family: var(--mono);
             font-weight: 700;
             color: var(--accent);
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .resource-group ul {
@@ -1010,7 +1293,7 @@
         }
 
         .resource-group a {
-            font-size: 13px;
+            font-size: 13.5px;
             color: var(--text-muted);
             text-decoration: none;
             display: flex;
@@ -1028,26 +1311,75 @@
             opacity: 0.6;
         }
 
-        /* Footer */
+        /* ── Footer ──────────────────────────────────────────────────────── */
         footer {
-            padding: 24px 0;
-            border-top: 1px solid var(--border);
-            margin-top: 20px;
+            padding: 48px 0 32px;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 0;
         }
 
-        .footer-inner {
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand .logo {
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .footer-brand p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.65;
+            margin-bottom: 16px;
+        }
+
+        .footer-col-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            font-family: var(--mono);
+            color: var(--text-muted);
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .footer-col-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .footer-col-links a {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .footer-col-links a:hover { color: var(--text); }
+
+        .footer-bottom {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-subtle);
             flex-wrap: wrap;
             gap: 12px;
         }
 
-        footer p {
-            font-size: 12px;
-            font-family: var(--mono);
+        .footer-bottom p {
+            font-size: 12.5px;
             color: var(--text-muted);
         }
+
+        .footer-bottom a { color: var(--accent); text-decoration: none; }
+        .footer-bottom a:hover { text-decoration: underline; }
 
         .footer-links {
             display: flex;
@@ -1057,10 +1389,9 @@
 
         .footer-links a {
             font-size: 12px;
-            font-family: var(--mono);
             color: var(--text-muted);
             text-decoration: none;
-            transition: color 0.2s;
+            transition: color 0.15s;
         }
 
         .footer-links a:hover { color: var(--accent); }
@@ -1087,28 +1418,97 @@
             #zoom-controls { bottom: 8px; right: 8px; }
             .features { grid-template-columns: 1fr; }
             .steps { grid-template-columns: 1fr; }
-            .step { border-right: none; border-bottom: 1px solid var(--border); }
-            .step:last-child { border-bottom: none; }
-            .step-arrow { display: none !important; }
+            .features { grid-template-columns: 1fr 1fr; }
             .resources-grid { grid-template-columns: 1fr; }
             .nav-links { display: none; }
-            .footer-inner { flex-direction: column; text-align: center; }
-            .hero { padding: 40px 0 24px; }
-            .hero h1 { font-size: 28px; }
-            .hero p { font-size: 15px; padding: 0 8px; }
-            .section-header h2 { font-size: 22px; }
-            .step { padding: 24px 20px; }
-            .feature-card { padding: 20px; }
+            .btn-nav-cta { display: none; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+            .hero { padding: 56px 0 40px; }
+            .hero h1 { letter-spacing: -2px; }
+            .hero-sub { font-size: 16px; }
+            .trust-inner { gap: 24px; }
+            .trust-divider { display: none; }
         }
 
         @media (max-width: 480px) {
-            .container { padding: 0 12px; }
-            .hero h1 { font-size: 24px; }
-            .badge { font-size: 11px; padding: 5px 12px; }
-            .btn-generate, .btn-export, .btn-sample, .btn-share { font-size: 11px; padding: 8px 10px; }
-            .example-select { font-size: 11px; padding: 7px 8px; }
+            .container { padding: 0 16px; }
+            .features { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .hero h1 { letter-spacing: -1.5px; }
+            .btn-generate, .btn-sample { font-size: 11px; padding: 8px 10px; }
+            .btn-export, .btn-share { font-size: 10px; padding: 4px 8px; }
             .stats-bar { flex-wrap: wrap; gap: 8px; }
             .panel-title { font-size: 12px; }
+            .hero-ctas { flex-direction: column; }
+            .btn-hero-primary, .btn-hero-secondary { width: 100%; justify-content: center; }
+        }
+
+        /* ── Tool section wrapper ─────────────────────────────────────── */
+        .tool-section {
+            padding: 64px 0;
+            position: relative;
+        }
+
+        .tool-section-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .tool-section-header h2 {
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 10px;
+        }
+
+        .tool-section-header p {
+            font-size: 15px;
+            color: var(--text-muted);
+        }
+
+        .workspace-frame {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+        }
+
+        .workspace-chrome {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .chrome-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .chrome-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .chrome-dot.red    { background: #ff5f57; }
+        .chrome-dot.yellow { background: #febc2e; }
+        .chrome-dot.green  { background: #28c840; }
+
+        .chrome-url {
+            flex: 1;
+            max-width: 280px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+            text-align: center;
         }
 
         /* Loading animation */
@@ -1352,58 +1752,148 @@
 </head>
 <body>
 
+<!-- Full-width nav (outside container) -->
+<nav>
+    <div class="nav-wrap">
+        <div class="nav-left">
+            <a href="/" class="logo" aria-label="InfraSketch home">
+                <img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch logo">
+                <span class="logo-wordmark">Infra<span>Sketch</span></span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#tool">Tool</a></li>
+                <li><a href="#how-it-works">How it works</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="examples/">Examples</a></li>
+                <li><a href="blog/index.html">Blog</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </div>
+        <div class="nav-right">
+            <button class="btn-theme" id="btn-theme" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
+            <a href="#tool" class="btn-nav-cta">
+                Open Tool
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </div>
+</nav>
+
 <div class="container">
 
-    <nav>
-        <a href="/" class="logo" aria-label="InfraSketch home">
-            <img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch logo">
-        </a>
-        <ul class="nav-links">
-            <li><a href="#tool">Tool</a></li>
-            <li><a href="#how-it-works">How it works</a></li>
-            <li><a href="#features">Features</a></li>
-            <li><a href="examples/">Examples</a></li>
-            <li><a href="blog/index.html">Blog</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
-        </ul>
-        <button class="btn-theme" id="btn-theme" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
-    </nav>
-
+    <!-- HERO -->
     <section class="hero">
-        <div class="badge">FREE &middot; NO SIGNUP &middot; NO CREDENTIALS</div>
-        <h1>Paste Terraform.<br><span class="hl">Get architecture diagrams.</span></h1>
-        <p>Instantly visualize your infrastructure. Paste Terraform HCL, CloudFormation YAML/JSON, CDK synth output, Terragrunt units, or a docker-compose file — get a clean, exportable architecture diagram in seconds.</p>
-        <a href="https://github.com/pandey-raghvendra/infrasketch" target="_blank" class="star-badge" id="star-badge">
-            <svg viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
-            </svg>
-            <span class="star-label">Star on GitHub</span>
-            <span class="star-count" id="star-count"></span>
-        </a>
+        <div class="hero-glow-1"></div>
+        <div class="hero-glow-2"></div>
+
+        <div class="hero-eyebrow">
+            <span class="dot"></span>
+            FREE &nbsp;·&nbsp; NO SIGNUP &nbsp;·&nbsp; 100% BROWSER
+        </div>
+
+        <h1>
+            Infrastructure diagrams<br>
+            from <span class="gradient-text">your IaC code.</span>
+        </h1>
+
+        <p class="hero-sub">
+            Paste Terraform, CloudFormation, CDK, or Docker Compose.<br>
+            Get a clean, exportable architecture diagram in seconds.
+        </p>
+
+        <div class="hero-ctas">
+            <a href="#tool" class="btn-hero-primary">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Try it free
+            </a>
+            <a href="examples/" class="btn-hero-secondary">
+                View examples
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="https://github.com/pandey-raghvendra/infrasketch" target="_blank" class="btn-hero-secondary" id="star-badge">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+                Star on GitHub
+                <span class="star-count" id="star-count"></span>
+            </a>
+        </div>
+
+        <div class="hero-pills">
+            <span class="hero-pill"><span class="pill-dot" style="background:#ff6b35"></span>AWS</span>
+            <span class="hero-pill"><span class="pill-dot" style="background:#0078D4"></span>Azure</span>
+            <span class="hero-pill"><span class="pill-dot" style="background:#ffd166"></span>GCP</span>
+            <span class="hero-pill"><span class="pill-dot" style="background:#06d6a0"></span>Terraform</span>
+            <span class="hero-pill"><span class="pill-dot" style="background:#ff9f7a"></span>CloudFormation</span>
+            <span class="hero-pill"><span class="pill-dot" style="background:#a78bfa"></span>CDK</span>
+            <span class="hero-pill"><span class="pill-dot" style="background:#67e8f9"></span>Docker Compose</span>
+            <span class="hero-pill"><span class="pill-dot" style="background:#818cf8"></span>Terragrunt</span>
+        </div>
     </section>
 
+    <!-- TRUST BAND -->
+    <div class="trust-band">
+        <div class="trust-inner">
+            <div class="trust-stat">
+                <span class="trust-stat-num">75+</span>
+                <span class="trust-stat-label">Resource types</span>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-stat">
+                <span class="trust-stat-num">5</span>
+                <span class="trust-stat-label">IaC formats</span>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-stat">
+                <span class="trust-stat-num">0</span>
+                <span class="trust-stat-label">Data uploaded</span>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-stat">
+                <span class="trust-stat-num">4</span>
+                <span class="trust-stat-label">Export formats</span>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-stat">
+                <span class="trust-stat-num">Free</span>
+                <span class="trust-stat-label">Always & forever</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHAT IS -->
     <section class="what-is" id="what-is">
-        <div class="container">
-            <h2>What is <span class="hl">InfraSketch</span>?</h2>
-            <div class="what-is-grid">
-                <div class="what-is-body">
-                    <p>InfraSketch is a free, browser-based infrastructure diagram generator. Paste Terraform HCL, a plan JSON, Terragrunt units, or Docker Compose YAML and get a clean, exportable architecture diagram in seconds — no account, no cloud credentials, no data ever leaving your browser.</p>
-                    <p>Most teams document infrastructure manually in Lucidchart or draw.io, redrawing the same boxes every time a resource changes. InfraSketch reads your actual code and renders the diagram automatically, so your documentation stays in sync with what is deployed.</p>
-                    <p>The tool supports 75+ resource types across AWS, Azure, and GCP — VPCs, subnets, compute clusters, databases, storage, load balancers, serverless functions, messaging queues, and more. Detected relationships are drawn as edges and resources are grouped into logical zones so the diagram is readable without extra layout work. Use the interactive editor to drag nodes into any arrangement you prefer.</p>
-                    <p>Diagrams export as PNG for documentation, SVG for vector editing, or draw.io XML for further customization in diagrams.net. You can also go the other way — upload any SVG architecture diagram and convert it to native draw.io XML with editable shapes and official AWS/Azure stencils. A shareable URL encodes your code in the fragment so you can send a link directly to a colleague without any server-side storage.</p>
-                </div>
-                <div class="what-is-aside">
-                    <div class="what-is-stat"><span class="stat-num">75+</span><span class="stat-label">AWS, Azure &amp; GCP resource types</span></div>
-                    <div class="what-is-stat"><span class="stat-num">0</span><span class="stat-label">Data sent to any server</span></div>
-                    <div class="what-is-stat"><span class="stat-num">4</span><span class="stat-label">Export formats + SVG→draw.io import</span></div>
-                    <div class="what-is-stat"><span class="stat-num">Free</span><span class="stat-label">No signup, no limits, open source</span></div>
-                </div>
+        <div class="section-label">// about</div>
+        <h2>Your IaC code,<br><span class="hl">visualized instantly.</span></h2>
+        <div class="what-is-grid">
+            <div class="what-is-body">
+                <p>InfraSketch is a free, browser-based infrastructure diagram generator. Paste Terraform HCL, CloudFormation YAML/JSON, CDK synth output, Terragrunt units, or Docker Compose YAML — get a clean, exportable architecture diagram in seconds. No account. No cloud credentials. Nothing leaves your browser.</p>
+                <p>Most teams document infrastructure manually in Lucidchart or draw.io, redrawing the same boxes every time something changes. InfraSketch reads your actual code and renders the diagram automatically, keeping documentation in sync with what is deployed.</p>
+                <p>Supports 75+ resource types across AWS, Azure, and GCP. VPCs, subnets, compute clusters, databases, storage, load balancers, serverless, queues, and more — automatically grouped into logical zones with clean connection routing.</p>
+            </div>
+            <div class="what-is-aside">
+                <div class="what-is-stat"><span class="stat-num">75+</span><span class="stat-label">AWS, Azure &amp; GCP resource types</span></div>
+                <div class="what-is-stat"><span class="stat-num">0</span><span class="stat-label">Bytes sent to any server</span></div>
+                <div class="what-is-stat"><span class="stat-num">4</span><span class="stat-label">Export formats incl. draw.io</span></div>
+                <div class="what-is-stat"><span class="stat-num">Free</span><span class="stat-label">No signup, no limits, open source</span></div>
             </div>
         </div>
     </section>
 
-    <div class="workspace" id="tool">
+    <!-- TOOL -->
+    <section class="tool-section" id="tool">
+        <div class="tool-section-header">
+            <h2>Generate your diagram</h2>
+            <p>Paste any IaC code on the left — diagram appears on the right.</p>
+        </div>
+        <div class="workspace-frame">
+            <div class="workspace-chrome">
+                <div class="chrome-dots">
+                    <span class="chrome-dot red"></span>
+                    <span class="chrome-dot yellow"></span>
+                    <span class="chrome-dot green"></span>
+                </div>
+                <div class="chrome-url">infrasketch.cloud</div>
+            </div>
+    <div class="workspace">
         <div class="editor-panel">
             <div class="panel-header">
                 <div class="panel-title"><span class="dot"></span> Input</div>
@@ -1535,6 +2025,8 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             </div>
         </div>
     </div>
+        </div><!-- /workspace-frame -->
+    </section><!-- /tool-section -->
 
     <section class="how-it-works" id="how-it-works">
         <div class="section-header">
@@ -1543,21 +2035,19 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         </div>
         <div class="steps">
             <div class="step">
-                <div class="step-number">STEP 01</div>
+                <div class="step-num-badge">01</div>
                 <h3>Paste your IaC code</h3>
                 <p>Copy Terraform HCL, CloudFormation YAML/JSON, CDK synth output, Terragrunt units, or docker-compose.yml into the editor. No reformatting needed — InfraSketch parses it as-is, including partial files and module blocks.</p>
-                <div class="step-arrow">&#8250;</div>
             </div>
             <div class="step">
-                <div class="step-number">STEP 02</div>
+                <div class="step-num-badge">02</div>
                 <h3>Auto-detect architecture</h3>
-                <p>The parser reads VPC boundaries, subnet membership (<code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code>, <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_ids</code>), and resource references to build a containment graph — separating structural wiring from actual traffic flow.</p>
-                <div class="step-arrow">&#8250;</div>
+                <p>The parser reads VPC boundaries, subnet membership (<code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_id</code>, <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">subnet_ids</code>), and resource references to build a containment graph automatically.</p>
             </div>
             <div class="step">
-                <div class="step-number">STEP 03</div>
+                <div class="step-num-badge">03</div>
                 <h3>Export and share</h3>
-                <p>Download as <strong>PNG</strong> for presentations, <strong>SVG</strong> for docs and READMEs, or <strong>draw.io XML</strong> to keep editing in diagrams.net. Or upload any SVG diagram and convert it to draw.io — all client-side, nothing uploaded.</p>
+                <p>Download as <strong>PNG</strong>, <strong>SVG</strong>, <strong>draw.io XML</strong>, or <strong>Mermaid</strong> code. Share a URL that encodes your diagram state — no server, no storage, no account required.</p>
             </div>
         </div>
     </section>
@@ -1565,7 +2055,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
     <section class="features" id="features">
         <div class="features-header">
             <h2>Everything you need</h2>
-            <p>Built for engineers who want diagrams without the overhead of visual tools.</p>
+            <p>Built for engineers who want accurate diagrams without the overhead of visual tools.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">
@@ -1678,15 +2168,53 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
 
 <footer>
     <div class="container">
-        <div class="footer-inner">
-            <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra" style="color:var(--accent);text-decoration:none">Raghvendra Pandey</a></p>
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a href="/" class="logo" style="margin-bottom:14px;display:inline-flex">
+                    <img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch logo">
+                    <span class="logo-wordmark">Infra<span>Sketch</span></span>
+                </a>
+                <p>Free, browser-based IaC diagram generator. No signup. No credentials. Open source.</p>
+                <a href="https://github.com/pandey-raghvendra/infrasketch" target="_blank" style="font-size:12px;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                    pandey-raghvendra/infrasketch
+                </a>
+            </div>
+            <div>
+                <div class="footer-col-title">Product</div>
+                <ul class="footer-col-links">
+                    <li><a href="#tool">Diagram Generator</a></li>
+                    <li><a href="examples/">Example Gallery</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How it works</a></li>
+                </ul>
+            </div>
+            <div>
+                <div class="footer-col-title">Resources</div>
+                <ul class="footer-col-links">
+                    <li><a href="blog/index.html">Blog</a></li>
+                    <li><a href="blog/how-to-create-aws-architecture-diagrams.html">AWS Diagram Guide</a></li>
+                    <li><a href="blog/terraform-visualization-best-practices.html">Terraform Visualization</a></li>
+                    <li><a href="blog/docker-compose-diagram-tutorial.html">Docker Compose Tutorial</a></li>
+                </ul>
+            </div>
+            <div>
+                <div class="footer-col-title">Company</div>
+                <ul class="footer-col-links">
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Use</a></li>
+                    <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra">Raghvendra Pandey</a></p>
             <ul class="footer-links">
-                <li><a href="blog/index.html">Read the Blog</a></li>
-                <li><a href="about.html">About InfraSketch</a></li>
-                <li><a href="contact.html">Contact</a></li>
                 <li><a href="privacy.html">Privacy</a></li>
                 <li><a href="terms.html">Terms</a></li>
-                <li><a href="https://github.com/pandey-raghvendra" target="_blank">GitHub</a></li>
+                <li><a href="https://github.com/pandey-raghvendra/infrasketch" target="_blank">GitHub</a></li>
             </ul>
         </div>
     </div>
