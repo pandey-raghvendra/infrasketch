@@ -1,7 +1,7 @@
 import { exportPng, exportSvg, generateDrawioXml } from './exporters.js';
 import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
-import { parseCloudFormation, parseDockerCompose, parsePulumi, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
+import { parseCloudFormation, parseDockerCompose, parseKubernetes, parsePulumi, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
 import { buildVirtualFS, expandModules } from './moduleResolver.js';
 import { generateMermaid } from './mermaid-export.js';
 import { renderDiagram } from './renderer.js';
@@ -1190,7 +1190,206 @@ const alert = new gcp.monitoring.AlertPolicy("errors", {
     combiner: "OR",
 });`;
 
+const SAMPLE_K8S_BASIC = `# Kubernetes — web application stack
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-sa
+  namespace: production
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  DATABASE_URL: postgres://db:5432/app
+  REDIS_URL: redis://cache:6379
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: production
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      serviceAccountName: app-sa
+      containers:
+        - name: api
+          image: myapp/api:latest
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: myapp/worker:latest
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: production
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: production
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-svc
+  namespace: production
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-svc
+  namespace: production
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: main-ingress
+  namespace: production
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-svc
+                port:
+                  number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2
+  maxReplicas: 10
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup
+  namespace: production
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleanup
+              image: myapp/cleanup:latest
+              envFrom:
+                - configMapRef:
+                    name: app-config
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-netpol
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: api`;
+
 const EXTRA_SAMPLES = {
+    kubernetes: {
+        basic: { label: 'Web app stack — Deployment + StatefulSet + Ingress + HPA + CronJob', code: SAMPLE_K8S_BASIC },
+    },
     pulumi: {
         aws_ts: { label: 'AWS production stack (TypeScript) — ECS + RDS + ElastiCache + SQS', code: SAMPLE_PULUMI_AWS_TS },
         aws_py: { label: 'AWS serverless stack (Python) — Lambda + DynamoDB + SQS + CloudFront', code: SAMPLE_PULUMI_AWS_PY },
@@ -1287,6 +1486,36 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       SubnetId: !Ref PublicSubnet`,
+    kubernetes: `# Paste Kubernetes YAML manifests (single or multi-doc with ---)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: production
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: myapp/api:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-svc
+  namespace: production
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 80`,
     pulumi: `// Paste Pulumi TypeScript or Python program
 
 import * as aws from "@pulumi/aws";
@@ -1527,6 +1756,7 @@ async function parseCode(code) {
     if (type === 'docker') return parseDockerCompose(code);
     if (type === 'terragrunt') return parseTerragrunt(code);
     if (type === 'pulumi') return parsePulumi(code);
+    if (type === 'kubernetes') return parseKubernetes(code);
     if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
     if (code.trimStart().startsWith('{')) {
         const planResult = parseTerraformPlan(code);
@@ -1555,7 +1785,7 @@ function updateEditorForType(type, previousType = null) {
     codeInput.placeholder = PLACEHOLDERS[type];
     populateExampleSelect(type);
     if (btnLoadSample) {
-        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample', cdk: 'Load CDK sample', pulumi: 'Load Pulumi sample' };
+        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample', cdk: 'Load CDK sample', pulumi: 'Load Pulumi sample', kubernetes: 'Load K8s sample' };
         btnLoadSample.textContent = labels[type] || 'Load Terraform sample';
     }
 
@@ -1990,6 +2220,7 @@ generateButton.addEventListener('click', async (e) => {
             if (type === 'docker') return parseDockerCompose(code);
             if (type === 'terragrunt') return parseTerragrunt(code);
             if (type === 'pulumi') return parsePulumi(code);
+            if (type === 'kubernetes') return parseKubernetes(code);
             if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
             if (code.trimStart().startsWith('{')) {
                 const r = parseTerraformPlan(code);

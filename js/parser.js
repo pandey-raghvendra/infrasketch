@@ -852,3 +852,144 @@ export function parsePulumi(code) {
 
     return { resources, connections, vpcOf, subnetOf };
 }
+
+// ─── parseKubernetes ──────────────────────────────────────────────────────────
+// Parses Kubernetes YAML manifests (single or multi-document with ---).
+// Groups resources by namespace (rendered like VPC).
+// Builds connections: Ingress→Service, Service→Deployment (selector match),
+// Deployment→ConfigMap/Secret/PVC (volume/envFrom refs), HPA→target.
+
+const K8S_KIND_MAP = {
+    Deployment:              'k8s_deployment',
+    StatefulSet:             'k8s_statefulset',
+    DaemonSet:               'k8s_daemonset',
+    Job:                     'k8s_job',
+    CronJob:                 'k8s_cronjob',
+    Pod:                     'k8s_deployment',
+    ReplicaSet:              'k8s_deployment',
+    Service:                 'k8s_service',
+    Ingress:                 'k8s_ingress',
+    ConfigMap:               'k8s_configmap',
+    Secret:                  'k8s_secret',
+    PersistentVolumeClaim:   'k8s_pvc',
+    PersistentVolume:        'k8s_pv',
+    ServiceAccount:          'k8s_sa',
+    HorizontalPodAutoscaler: 'k8s_hpa',
+    NetworkPolicy:           'k8s_netpol',
+};
+
+function k8sId(kind, ns, name) { return `k8s.${kind}.${ns || 'default'}.${name}`; }
+function k8sNsId(ns) { return `k8s.ns.${ns}`; }
+
+export async function parseKubernetes(code) {
+    if (!globalThis.jsyaml) await loadScript('/lib/js-yaml.min.js');
+    const yaml = globalThis.jsyaml;
+    if (!yaml) throw new Error('YAML parser could not be loaded.');
+
+    const docs = [];
+    try { yaml.loadAll(code, (doc) => { if (doc && doc.kind) docs.push(doc); }); }
+    catch { return { resources: [], connections: [], vpcOf: {}, subnetOf: {} }; }
+
+    if (!docs.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+
+    const rawResources = [];
+    const supportedIds = new Set();
+    const vpcOf = {};
+    const nsSet = new Set();
+
+    for (const doc of docs) {
+        const tfType = K8S_KIND_MAP[doc.kind];
+        if (!tfType) continue;
+        const name = doc.metadata?.name;
+        if (!name) continue;
+        const ns = doc.metadata?.namespace || 'default';
+        nsSet.add(ns);
+        const id = k8sId(doc.kind, ns, name);
+        if (supportedIds.has(id)) continue;
+        const config = RESOURCE_CATEGORIES[tfType];
+        if (!config) continue;
+        rawResources.push({ id, type: tfType, name, category: tfType, label: config.label, color: config.color, icon: config.icon, _doc: doc, _ns: ns, _kind: doc.kind });
+        supportedIds.add(id);
+    }
+
+    // Implicit namespace resources (like VPC containers)
+    const nsResources = [];
+    const nsCfg = RESOURCE_CATEGORIES['k8s_ns'];
+    for (const ns of nsSet) {
+        const nsId = k8sNsId(ns);
+        nsResources.push({ id: nsId, type: 'k8s_ns', name: ns, category: 'k8s_ns', label: nsCfg.label, color: nsCfg.color, icon: nsCfg.icon });
+        supportedIds.add(nsId);
+    }
+    for (const r of rawResources) vpcOf[r.id] = k8sNsId(r._ns);
+
+    // Name lookup: `${ns}/${name}` → id
+    const byNameNs = new Map();
+    for (const r of rawResources) byNameNs.set(`${r._ns}/${r.name}`, { id: r.id, doc: r._doc, kind: r._kind });
+
+    const connections = [];
+    const seen = new Set();
+    function addConn(from, to) {
+        if (!from || !to || from === to || !supportedIds.has(from) || !supportedIds.has(to)) return;
+        const key = `${from}->${to}`;
+        if (!seen.has(key)) { seen.add(key); connections.push({ from, to }); }
+    }
+
+    for (const r of rawResources) {
+        const spec = r._doc.spec || {};
+        const ns = r._ns;
+
+        // Ingress → Service
+        if (r._kind === 'Ingress') {
+            for (const rule of (spec.rules || [])) {
+                for (const path of (rule.http?.paths || [])) {
+                    const sn = path.backend?.service?.name || path.backend?.serviceName;
+                    if (sn) addConn(r.id, byNameNs.get(`${ns}/${sn}`)?.id);
+                }
+            }
+            const dn = spec.defaultBackend?.service?.name || spec.defaultBackend?.serviceName;
+            if (dn) addConn(r.id, byNameNs.get(`${ns}/${dn}`)?.id);
+        }
+
+        // Service → workloads via selector
+        if (r._kind === 'Service') {
+            const sel = Object.entries(spec.selector || {});
+            if (sel.length) {
+                for (const w of rawResources) {
+                    if (w._ns !== ns || !['Deployment','StatefulSet','DaemonSet','ReplicaSet','Pod'].includes(w._kind)) continue;
+                    const podLabels = w._doc.spec?.template?.metadata?.labels || w._doc.metadata?.labels || {};
+                    if (sel.every(([k, v]) => podLabels[k] === v)) addConn(r.id, w.id);
+                }
+            }
+        }
+
+        // Workload → ConfigMap / Secret / PVC
+        const podSpec = spec.template?.spec || (r._kind === 'Pod' ? spec : null)
+            || spec.jobTemplate?.spec?.template?.spec;
+        if (podSpec) {
+            for (const vol of (podSpec.volumes || [])) {
+                if (vol.configMap?.name) addConn(r.id, byNameNs.get(`${ns}/${vol.configMap.name}`)?.id);
+                if (vol.secret?.secretName) addConn(r.id, byNameNs.get(`${ns}/${vol.secret.secretName}`)?.id);
+                if (vol.persistentVolumeClaim?.claimName) addConn(r.id, byNameNs.get(`${ns}/${vol.persistentVolumeClaim.claimName}`)?.id);
+            }
+            for (const c of [...(podSpec.containers || []), ...(podSpec.initContainers || [])]) {
+                for (const ef of (c.envFrom || [])) {
+                    if (ef.configMapRef?.name) addConn(r.id, byNameNs.get(`${ns}/${ef.configMapRef.name}`)?.id);
+                    if (ef.secretRef?.name) addConn(r.id, byNameNs.get(`${ns}/${ef.secretRef.name}`)?.id);
+                }
+                for (const env of (c.env || [])) {
+                    if (env.valueFrom?.configMapKeyRef?.name) addConn(r.id, byNameNs.get(`${ns}/${env.valueFrom.configMapKeyRef.name}`)?.id);
+                    if (env.valueFrom?.secretKeyRef?.name) addConn(r.id, byNameNs.get(`${ns}/${env.valueFrom.secretKeyRef.name}`)?.id);
+                }
+            }
+            if (podSpec.serviceAccountName) addConn(r.id, byNameNs.get(`${ns}/${podSpec.serviceAccountName}`)?.id);
+        }
+
+        // HPA → scaleTargetRef
+        if (r._kind === 'HorizontalPodAutoscaler' && spec.scaleTargetRef?.name) {
+            addConn(r.id, byNameNs.get(`${ns}/${spec.scaleTargetRef.name}`)?.id);
+        }
+    }
+
+    const cleanResources = [...nsResources, ...rawResources.map(({ _doc, _ns, _kind, ...r }) => r)];
+    return { resources: cleanResources, connections, vpcOf, subnetOf: {} };
+}

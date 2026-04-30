@@ -167,24 +167,40 @@ export const RESOURCE_CATEGORIES = {
     // ── Terraform Modules & Terragrunt ────────────────────────────────────────
     tf_module: { match: ['tf_module'], color: '#7B42BC', label: 'Module', icon: 'TFModule' },
     tg_unit:   { match: ['tg_unit'],   color: '#00BEF3', label: 'TG Unit', icon: 'TFModule' },
+    // ── Kubernetes ────────────────────────────────────────────────────────────
+    k8s_ns:         { match: ['k8s_ns'],         color: '#326CE5', label: 'Namespace',    icon: 'VPC'    },
+    k8s_deployment: { match: ['k8s_deployment'], color: '#326CE5', label: 'Deployment',   icon: 'EKS'    },
+    k8s_statefulset:{ match: ['k8s_statefulset'],color: '#5C6BC0', label: 'StatefulSet',  icon: 'EKS'    },
+    k8s_daemonset:  { match: ['k8s_daemonset'],  color: '#5C6BC0', label: 'DaemonSet',    icon: 'EKS'    },
+    k8s_job:        { match: ['k8s_job'],        color: '#5C6BC0', label: 'Job',          icon: 'Lambda' },
+    k8s_cronjob:    { match: ['k8s_cronjob'],    color: '#5C6BC0', label: 'CronJob',      icon: 'Lambda' },
+    k8s_service:    { match: ['k8s_service'],    color: '#0097A7', label: 'Service',      icon: 'ALB'    },
+    k8s_ingress:    { match: ['k8s_ingress'],    color: '#00838F', label: 'Ingress',      icon: 'IGW'    },
+    k8s_configmap:  { match: ['k8s_configmap'],  color: '#7B42BC', label: 'ConfigMap',    icon: 'TFModule'},
+    k8s_secret:     { match: ['k8s_secret'],     color: '#7B42BC', label: 'Secret',       icon: 'KMS'    },
+    k8s_pvc:        { match: ['k8s_pvc'],        color: '#e07a5f', label: 'PVC',          icon: 'S3'     },
+    k8s_pv:         { match: ['k8s_pv'],         color: '#e07a5f', label: 'PersistVolume',icon: 'S3'     },
+    k8s_sa:         { match: ['k8s_sa'],         color: '#8338ec', label: 'ServiceAccount',icon:'IAM'    },
+    k8s_hpa:        { match: ['k8s_hpa'],        color: '#326CE5', label: 'HPA',          icon: 'ASG'    },
+    k8s_netpol:     { match: ['k8s_netpol'],     color: '#8338ec', label: 'NetworkPolicy', icon: 'SG'    },
 };
 
 export const CATEGORY_GROUPS = {
-    INTERNET:  new Set(['igw', 'cloudfront', 'route53', 'waf', 'transit_gw', 'vpn_gw', 'az_frontdoor', 'az_dns', 'az_trafficmgr', 'gcp_dns', 'gcp_ip']),
-    INGRESS:   new Set(['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'gcp_lb']),
-    DATA:      new Set(['rds', 'dynamodb', 'elasticache', 's3', 'az_sql', 'az_cosmos', 'az_postgres', 'az_redis', 'az_storage', 'gcp_sql', 'gcp_bq', 'gcp_spanner', 'gcp_bigtable', 'gcp_firestore', 'gcp_memstore', 'gcp_gcs']),
+    INTERNET:  new Set(['igw', 'cloudfront', 'route53', 'waf', 'transit_gw', 'vpn_gw', 'az_frontdoor', 'az_dns', 'az_trafficmgr', 'gcp_dns', 'gcp_ip', 'k8s_ingress']),
+    INGRESS:   new Set(['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'gcp_lb', 'k8s_service']),
+    DATA:      new Set(['rds', 'dynamodb', 'elasticache', 's3', 'az_sql', 'az_cosmos', 'az_postgres', 'az_redis', 'az_storage', 'gcp_sql', 'gcp_bq', 'gcp_spanner', 'gcp_bigtable', 'gcp_firestore', 'gcp_memstore', 'gcp_gcs', 'k8s_pvc', 'k8s_pv']),
     MESSAGING: new Set(['sqs', 'sns', 'az_servicebus', 'az_eventhub', 'gcp_pubsub']),
-    SECURITY:  new Set(['sg', 'iam_role', 'kms', 'cloudwatch', 'az_nsg', 'az_keyvault', 'az_monitor', 'az_appinsights', 'gcp_fw', 'gcp_kms', 'gcp_secret', 'gcp_sa', 'gcp_mon']),
-    VPC:       new Set(['vpc', 'gcp_vpc']),
+    SECURITY:  new Set(['sg', 'iam_role', 'kms', 'cloudwatch', 'az_nsg', 'az_keyvault', 'az_monitor', 'az_appinsights', 'gcp_fw', 'gcp_kms', 'gcp_secret', 'gcp_sa', 'gcp_mon', 'k8s_secret', 'k8s_netpol', 'k8s_sa', 'k8s_configmap']),
+    VPC:       new Set(['vpc', 'gcp_vpc', 'k8s_ns']),
     SUBNET:    new Set(['subnet', 'gcp_subnet']),
 };
 
 export const STAT_CATEGORY_MAP = {
-    vpc:     ['vpc', 'subnet', 'nat', 'igw', 'eip', 'route_table', 'transit_gw', 'vpn_gw', 'network_iface', 'gcp_vpc', 'gcp_subnet', 'gcp_router'],
-    compute: ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling', 'az_vm', 'az_vmss', 'az_aks', 'az_aci', 'az_function', 'az_appservice', 'gcp_gce', 'gcp_gke', 'gcp_run', 'gcp_fn'],
+    vpc:     ['vpc', 'subnet', 'nat', 'igw', 'eip', 'route_table', 'transit_gw', 'vpn_gw', 'network_iface', 'gcp_vpc', 'gcp_subnet', 'gcp_router', 'k8s_ns'],
+    compute: ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling', 'az_vm', 'az_vmss', 'az_aks', 'az_aci', 'az_function', 'az_appservice', 'gcp_gce', 'gcp_gke', 'gcp_run', 'gcp_fn', 'k8s_deployment', 'k8s_statefulset', 'k8s_daemonset', 'k8s_job', 'k8s_cronjob', 'k8s_hpa'],
     db:      ['rds', 'dynamodb', 'elasticache', 'az_sql', 'az_cosmos', 'az_postgres', 'az_redis', 'gcp_sql', 'gcp_bq', 'gcp_spanner', 'gcp_bigtable', 'gcp_firestore', 'gcp_memstore'],
-    storage: ['s3', 'az_storage', 'gcp_gcs'],
-    lb:      ['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'az_frontdoor', 'az_trafficmgr', 'gcp_lb'],
+    storage: ['s3', 'az_storage', 'gcp_gcs', 'k8s_pvc', 'k8s_pv'],
+    lb:      ['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'az_frontdoor', 'az_trafficmgr', 'gcp_lb', 'k8s_service', 'k8s_ingress'],
 };
 
 export const SVG_LAYOUT = {
