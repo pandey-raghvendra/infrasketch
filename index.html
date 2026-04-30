@@ -403,6 +403,7 @@
             display: flex;
             flex-direction: column;
             border-right: 1px solid var(--border);
+            min-width: 0;
         }
 
         .panel-header {
@@ -412,6 +413,9 @@
             padding: 12px 16px;
             background: rgba(255,255,255,0.02);
             border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
         }
 
         .panel-title {
@@ -593,6 +597,7 @@
             flex-direction: column;
             background: var(--bg-surface);
             border-top: 2px solid rgba(6, 214, 160, 0.25);
+            min-width: 0;
         }
 
         .diagram-panel .panel-header {
@@ -634,6 +639,7 @@
             display: flex;
             gap: 6px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .export-sep {
