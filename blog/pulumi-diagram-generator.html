@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Pulumi Diagram Generator — Visualize Pulumi Infrastructure Instantly | InfraSketch</title>
+    <meta name="description" content="Turn Pulumi TypeScript or Python code into architecture diagrams in seconds. Paste your Pulumi stack and get a visual diagram with VPC containment, subnet grouping, and official AWS, GCP, and Azure icons. Free, no login.">
+    <meta name="keywords" content="pulumi diagram, pulumi visualizer, pulumi architecture diagram, pulumi aws diagram, pulumi gcp diagram, infrastructure as code diagram, pulumi typescript diagram">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/pulumi-diagram-generator.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/pulumi-diagram-generator.html">
+    <meta property="og:title" content="Pulumi Diagram Generator — Visualize Pulumi Infrastructure Instantly">
+    <meta property="og:description" content="Turn Pulumi TypeScript or Python code into architecture diagrams in seconds. Paste your Pulumi stack and get a visual diagram with official AWS, GCP, and Azure icons. Free, no login.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pulumi Diagram Generator — Visualize Pulumi Infrastructure Instantly">
+    <meta name="twitter:description" content="Turn Pulumi TypeScript or Python code into architecture diagrams in seconds. Free, no login.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/og-image.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Pulumi Diagram Generator — Visualize Pulumi Infrastructure Instantly",
+      "description": "Turn Pulumi TypeScript or Python code into architecture diagrams in seconds. Paste your Pulumi stack and get a visual diagram with official AWS, GCP, and Azure icons. Free, no login.",
+      "url": "https://infrasketch.cloud/blog/pulumi-diagram-generator.html",
+      "datePublished": "2026-05-01",
+      "dateModified": "2026-05-01",
+      "author": {
+        "@type": "Person",
+        "name": "Raghvendra Pandey",
+        "url": "https://github.com/pandey-raghvendra"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"
+        }
+      },
+      "image": "https://infrasketch.cloud/assets/og-image.png"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+        .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}@media(max-width:600px){.feature-grid{grid-template-columns:1fr}}.feature-tile{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:20px}.feature-tile h4{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}.feature-tile p{font-size:13px;color:var(--text-muted);line-height:1.6;margin:0}
+        .callout{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.callout p{margin:0;font-size:14px;color:var(--text-muted)}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+
+<div class="container">
+    <div class="article-header">
+        <span class="tag">New Feature</span>
+        <h1>Pulumi Diagram Generator — Visualize Pulumi Infrastructure Instantly</h1>
+        <div class="meta">By Raghvendra Pandey &middot; May 2026 &middot; 6 min read</div>
+    </div>
+
+    <article>
+
+        <p>InfraSketch now supports Pulumi. Paste your Pulumi TypeScript or Python code into the Pulumi tab and get a full architecture diagram in seconds — VPC containment, subnet grouping, resource connections, official AWS, GCP, and Azure icons. No login, no credentials, everything runs in your browser.</p>
+
+        <div class="cta-box">
+            <h3>Try it now</h3>
+            <p>Paste your Pulumi TypeScript or Python code and see the diagram instantly.</p>
+            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
+        </div>
+
+        <h2>Why Pulumi needs a diagram tool</h2>
+
+        <p>Pulumi lets you write infrastructure in real programming languages — TypeScript, Python, Go, C#. That's great for developer productivity, but it creates the same visibility problem every IaC tool has: your infrastructure lives in code, not in a picture. When a new engineer joins the team, or when you're reviewing a PR that adds a VPC and six new resources, reading TypeScript is not the fastest way to understand what gets built.</p>
+
+        <p>Unlike Terraform's HCL, Pulumi code doesn't have a declarative format that's easy to inspect at a glance. A function might conditionally create resources. Loops might generate dozens of similar components. The Pulumi console shows state, not topology. There's no built-in way to go from code to architecture diagram.</p>
+
+        <p>InfraSketch parses Pulumi TypeScript and Python directly — no compile step, no export, just paste and generate.</p>
+
+        <h2>How to use it</h2>
+
+        <p>Open <a href="https://infrasketch.cloud">infrasketch.cloud</a>, click the <strong>Pulumi</strong> tab, paste your <code>index.ts</code> or <code>__main__.py</code> file, and click <strong>Generate Diagram</strong>. You can paste a partial file — InfraSketch handles incomplete code gracefully.</p>
+
+        <pre>// Example: paste this into the Pulumi tab
+import * as aws from "@pulumi/aws";
+
+const vpc = new aws.ec2.Vpc("main", { cidrBlock: "10.0.0.0/16" });
+const subnet = new aws.ec2.Subnet("public", {
+    vpcId: vpc.id,
+    cidrBlock: "10.0.1.0/24",
+});
+const igw = new aws.ec2.InternetGateway("igw", { vpcId: vpc.id });
+const lb = new aws.lb.LoadBalancer("alb", { subnets: [subnet.id] });</pre>
+
+        <div class="callout">
+            <p><strong>Tip:</strong> Pulumi Python uses the same resource types with underscores — <code>aws.ec2.Vpc</code> in TypeScript is <code>aws.ec2.Vpc</code> in Python too. Both work with InfraSketch.</p>
+        </div>
+
+        <h2>What gets visualized</h2>
+
+        <div class="feature-grid">
+            <div class="feature-tile">
+                <h4>VPC containment</h4>
+                <p>Resources referencing a VPC via <code>vpcId: vpc.id</code> are drawn inside the VPC boundary automatically.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Subnet placement</h4>
+                <p>Resources with <code>subnetId</code> or <code>subnets</code> arguments are placed in public or private subnet lanes.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Connection arrows</h4>
+                <p>Variable references between resources — <code>vpc.id</code>, <code>cluster.endpoint</code> — become directed arrows on the diagram.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Multi-cloud</h4>
+                <p>AWS, GCP, and Azure resources in the same stack all render on one diagram with their respective provider icons.</p>
+            </div>
+        </div>
+
+        <h2>Supported Pulumi resource types</h2>
+
+        <p>InfraSketch supports 95+ Pulumi resource types across AWS, GCP, and Azure. Key AWS resources include:</p>
+
+        <ul>
+            <li><strong>Networking:</strong> <code>aws.ec2.Vpc</code>, <code>aws.ec2.Subnet</code>, <code>aws.ec2.InternetGateway</code>, <code>aws.ec2.NatGateway</code>, <code>aws.ec2.SecurityGroup</code>, <code>aws.ec2.TransitGateway</code></li>
+            <li><strong>Compute:</strong> <code>aws.ec2.Instance</code>, <code>aws.ec2.LaunchTemplate</code>, <code>aws.autoscaling.Group</code>, <code>aws.ecs.Cluster</code>, <code>aws.ecs.Service</code>, <code>aws.lambda_.Function</code></li>
+            <li><strong>Containers:</strong> <code>aws.eks.Cluster</code>, <code>aws.eks.NodeGroup</code>, <code>aws.ecr.Repository</code></li>
+            <li><strong>Load balancing:</strong> <code>aws.lb.LoadBalancer</code>, <code>aws.lb.TargetGroup</code>, <code>aws.alb.LoadBalancer</code></li>
+            <li><strong>Data:</strong> <code>aws.rds.Instance</code>, <code>aws.rds.Cluster</code>, <code>aws.dynamodb.Table</code>, <code>aws.elasticache.Cluster</code>, <code>aws.s3.Bucket</code></li>
+            <li><strong>Messaging:</strong> <code>aws.sqs.Queue</code>, <code>aws.sns.Topic</code></li>
+            <li><strong>DNS &amp; CDN:</strong> <code>aws.route53.Zone</code>, <code>aws.cloudfront.Distribution</code></li>
+            <li><strong>Security:</strong> <code>aws.iam.Role</code>, <code>aws.kms.Key</code>, <code>aws.wafv2.WebAcl</code></li>
+        </ul>
+
+        <p>GCP resources cover Compute Engine, GKE, Cloud Run, Cloud Functions, Cloud SQL, BigQuery, Spanner, Bigtable, Pub/Sub, Cloud Storage, Secret Manager, and more. Azure covers Virtual Networks, AKS, App Service, Functions, SQL, Cosmos DB, and Key Vault.</p>
+
+        <h2>TypeScript vs Python</h2>
+
+        <p>InfraSketch detects the language automatically. TypeScript uses camelCase arguments (<code>cidrBlock</code>, <code>vpcId</code>). Python uses snake_case (<code>cidr_block</code>, <code>vpc_id</code>). Both parse correctly — no pre-processing needed.</p>
+
+        <pre># Python example — works the same way
+import pulumi_aws as aws
+
+vpc = aws.ec2.Vpc("main", cidr_block="10.0.0.0/16")
+subnet = aws.ec2.Subnet("public",
+    vpc_id=vpc.id,
+    cidr_block="10.0.1.0/24"
+)
+cluster = aws.eks.Cluster("eks", vpc_config=aws.eks.ClusterVpcConfigArgs(
+    subnet_ids=[subnet.id]
+))</pre>
+
+        <h2>Use cases</h2>
+
+        <ul>
+            <li><strong>Code reviews</strong> — paste a PR's Pulumi code and see the topology change visually before approving</li>
+            <li><strong>Onboarding</strong> — share a diagram link instead of asking new engineers to read TypeScript they've never seen</li>
+            <li><strong>Documentation</strong> — export as PNG or SVG and embed in Confluence, Notion, or your wiki</li>
+            <li><strong>Architecture reviews</strong> — export as draw.io XML for a fully editable diagram in your design doc</li>
+            <li><strong>Multi-stack visibility</strong> — paste each stack separately and compare their architectures side by side</li>
+        </ul>
+
+        <h2>Pulumi vs Terraform diagrams</h2>
+
+        <p>If you're migrating from Terraform to Pulumi (or evaluating it), InfraSketch lets you diagram both. Paste your Terraform HCL in the Terraform tab and your equivalent Pulumi code in the Pulumi tab — the diagrams should look identical if the migration is complete. Differences become immediately visible.</p>
+
+        <div class="cta-box">
+            <h3>Generate your Pulumi diagram now</h3>
+            <p>Paste your <code>index.ts</code> or <code>__main__.py</code> into the Pulumi tab. Free, no login, nothing leaves your browser.</p>
+            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
+        </div>
+
+    </article>
+</div>
+
+<footer>
+    <p><a href="https://infrasketch.cloud">infrasketch.cloud</a> &mdash; open source, forever free &mdash; <a href="https://github.com/pandey-raghvendra/infrasketch">GitHub</a></p>
+</footer>
+</body>
+</html>

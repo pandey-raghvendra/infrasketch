@@ -191,7 +191,7 @@ export function renderDiagram(parsed, svg) {
     svg.setAttribute('xmlns', SVG_NS);
     svg.setAttribute('viewBox', `0 0 ${metrics.svgW} ${metrics.svgH}`);
     svg.setAttribute('width', '100%');
-    svg.setAttribute('height', metrics.svgH);
+    svg.setAttribute('height', 'auto');
     svg.style.display = 'block';
 
     appendDefs(svg);

@@ -9,7 +9,7 @@ If InfraSketch saved you time, consider starring the repo ⭐
 
 InfraSketch turns infrastructure code into clean architecture diagrams in the browser — no login, no backend, no cloud credentials required.
 
-Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (YAML or JSON), `cdk synth` output, a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
+Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (YAML or JSON), `cdk synth` output, Pulumi TypeScript/Python, Kubernetes YAML, a Terragrunt stack, or a `docker-compose.yml` and get a visual diagram you can export as PNG, SVG, or draw.io XML in seconds.
 
 **Live site: https://infrasketch.cloud**
 
@@ -18,7 +18,7 @@ Paste Terraform HCL, a `terraform show -json` plan, a CloudFormation template (Y
 ## Quick Start
 
 1. Open https://infrasketch.cloud
-2. Paste your Terraform HCL, plan JSON, CloudFormation YAML/JSON, `cdk synth` JSON, Terragrunt `.hcl`, or `docker-compose.yml` into the editor
+2. Paste your Terraform HCL, plan JSON, CloudFormation YAML/JSON, `cdk synth` JSON, Pulumi TypeScript/Python, Kubernetes YAML, Terragrunt `.hcl`, or `docker-compose.yml` into the editor
 3. Click **Generate Diagram**
 4. Export as **PNG**, **SVG**, or **draw.io XML** — or click **Share** to copy a link
 
@@ -33,6 +33,8 @@ No account. No credentials. Everything runs in your browser.
 - Terraform plan JSON (`terraform plan -out=tfplan && terraform show -json tfplan`) — most accurate connection inference
 - CloudFormation YAML or JSON — supports `!Ref`, `!GetAtt`, `!Sub` and all intrinsic function shorthand
 - AWS CDK — paste `cdk synth` JSON output directly into the CDK tab
+- Pulumi TypeScript (`index.ts`) and Python (`__main__.py`) — 95+ resource types across AWS, GCP, Azure
+- Kubernetes YAML — multi-document manifests, 16 resource kinds, namespace grouping, selector-based connections
 - Terragrunt (`terragrunt.hcl`) — paste one or multiple units separated by `# --- unit: name ---` markers
 - Docker Compose YAML (`docker-compose.yml`) with full YAML spec support
 
@@ -67,7 +69,7 @@ No account. No credentials. Everything runs in your browser.
 - Shareable URL — **Share** button encodes editor state as a base64 URL hash; recipients land on the rendered diagram
 - Resource summary table — collapsible, lists every resource with name, type, and category
 - Stats bar — counts by category (VPC/Network, Compute, Database, Storage, Load Balancer)
-- Built-in examples for AWS, Azure, GCP, CloudFormation, CDK, multi-module Terraform, Terragrunt, serverless pipeline, Docker microservices
+- Built-in examples for AWS, Azure, GCP, CloudFormation, CDK, Pulumi (AWS TS, AWS Python, GCP TS), Kubernetes, multi-module Terraform, Terragrunt, serverless pipeline, Docker microservices
 
 ---
 
@@ -128,6 +130,52 @@ CDK compiles to CloudFormation JSON — InfraSketch reads the synthesized `Resou
 All L2 constructs that generate supported L1 types are visualized: `ec2.Vpc`, `eks.Cluster`, `ecs.FargateService`, `lambda.Function`, `rds.DatabaseInstance`, `s3.Bucket`, `sqs.Queue`, `sns.Topic`, `elbv2.ApplicationLoadBalancer`, `cloudfront.Distribution`, `kms.Key`, `iam.Role`, and more.
 
 > **CDK for Terraform (CDKTF):** Use the **Terraform** tab and paste the synthesized JSON — the plan JSON parser handles it directly.
+
+### Pulumi
+
+Select the **Pulumi** tab, paste your `index.ts` (TypeScript) or `__main__.py` (Python), and click **Generate Diagram**.
+
+```typescript
+// TypeScript example
+import * as aws from "@pulumi/aws";
+
+const vpc = new aws.ec2.Vpc("main", { cidrBlock: "10.0.0.0/16" });
+const subnet = new aws.ec2.Subnet("public", { vpcId: vpc.id, cidrBlock: "10.0.1.0/24" });
+const lb = new aws.lb.LoadBalancer("alb", { subnets: [subnet.id] });
+```
+
+```python
+# Python example
+import pulumi_aws as aws
+
+vpc = aws.ec2.Vpc("main", cidr_block="10.0.0.0/16")
+subnet = aws.ec2.Subnet("public", vpc_id=vpc.id, cidr_block="10.0.1.0/24")
+```
+
+InfraSketch auto-detects TypeScript vs Python from syntax. VPC containment is inferred from `vpcId: vpc.id` / `vpc_id=vpc.id` references. Connection arrows are drawn from any variable reference between resources (`vpc.id`, `cluster.endpoint`, etc.).
+
+**Supported Pulumi providers:** `@pulumi/aws`, `@pulumi/gcp`, `@pulumi/azure-native`, `pulumi_aws`, `pulumi_gcp`, `pulumi_azure`.
+
+### Kubernetes
+
+Select the **Kubernetes** tab, paste your manifests (multiple documents separated by `---`), and click **Generate Diagram**.
+
+```bash
+kubectl get all -n my-namespace -o yaml | pbcopy   # macOS
+helm template my-release ./my-chart | pbcopy        # Helm output
+kustomize build overlays/production | pbcopy         # Kustomize output
+```
+
+InfraSketch infers topology without cluster access:
+
+- **Ingress → Service** — from `spec.rules[].http.paths[].backend.service.name`
+- **Service → Deployment** — Service `spec.selector` matched to workload `spec.selector.matchLabels`
+- **Deployment → ConfigMap/Secret** — from volume mounts and `envFrom` references
+- **HPA → target** — from `spec.scaleTargetRef`
+
+Resources are grouped into namespace boundaries from `metadata.namespace`. Paste manifests from multiple namespaces at once — each gets its own labelled group.
+
+**Supported kinds:** `Deployment`, `StatefulSet`, `DaemonSet`, `Job`, `CronJob`, `Pod`, `ReplicaSet`, `Service`, `Ingress`, `NetworkPolicy`, `ConfigMap`, `Secret`, `PersistentVolumeClaim`, `PersistentVolume`, `ServiceAccount`, `HorizontalPodAutoscaler`.
 
 ### Terragrunt
 
@@ -207,6 +255,32 @@ Click **Share** to encode the active tab and editor content as a base64 URL hash
 ---
 
 ## Supported Resources
+
+### Pulumi (AWS)
+
+| Category | Pulumi types |
+|---|---|
+| Networking | `aws.ec2.Vpc`, `aws.ec2.DefaultVpc`, `aws.ec2.Subnet`, `aws.ec2.InternetGateway`, `aws.ec2.NatGateway`, `aws.ec2.Eip`, `aws.ec2.RouteTable`, `aws.ec2.TransitGateway`, `aws.ec2.VpnGateway`, `aws.ec2.SecurityGroup`, `aws.ec2.NetworkInterface` |
+| Compute | `aws.ec2.Instance`, `aws.ec2.LaunchTemplate`, `aws.autoscaling.Group`, `aws.ecs.Cluster`, `aws.ecs.Service`, `aws.ecs.TaskDefinition`, `aws.eks.Cluster`, `aws.eks.NodeGroup`, `aws.lambda_.Function`, `aws.ecr.Repository` |
+| Data | `aws.rds.Instance`, `aws.rds.Cluster`, `aws.dynamodb.Table`, `aws.elasticache.Cluster`, `aws.elasticache.ReplicationGroup`, `aws.s3.Bucket`, `aws.s3.BucketV2` |
+| Load balancing | `aws.lb.LoadBalancer`, `aws.alb.LoadBalancer`, `aws.lb.TargetGroup`, `aws.alb.TargetGroup` |
+| Messaging | `aws.sqs.Queue`, `aws.sns.Topic` |
+| Security | `aws.iam.Role`, `aws.kms.Key`, `aws.wafv2.WebAcl` |
+| Edge / DNS | `aws.cloudfront.Distribution`, `aws.route53.Zone`, `aws.route53.Record` |
+| Observability | `aws.cloudwatch.MetricAlarm`, `aws.cloudwatch.LogGroup` |
+
+Pulumi GCP and Azure resources mirror the Terraform GCP/Azure tables above using `gcp.*` and `azure.*` prefixes.
+
+### Kubernetes
+
+| Kind | Category |
+|---|---|
+| `Deployment`, `StatefulSet`, `DaemonSet`, `Job`, `CronJob`, `Pod`, `ReplicaSet` | Workloads |
+| `Service`, `Ingress`, `NetworkPolicy` | Networking |
+| `ConfigMap`, `Secret` | Config |
+| `PersistentVolumeClaim`, `PersistentVolume` | Storage |
+| `ServiceAccount` | Security |
+| `HorizontalPodAutoscaler` | Autoscaling |
 
 ### AWS
 
@@ -302,7 +376,7 @@ The suite covers:
 .
 ├── index.html              # Main app
 ├── js/
-│   ├── parser.js           # Terraform HCL, plan JSON, Terragrunt, Docker Compose parsers
+│   ├── parser.js           # Terraform HCL, plan JSON, CloudFormation, CDK, Pulumi, Kubernetes, Terragrunt, Docker Compose parsers
 │   ├── layout.js           # Zone layout and metrics
 │   ├── renderer.js         # SVG diagram renderer
 │   ├── editor.js           # Interactive node drag editor
