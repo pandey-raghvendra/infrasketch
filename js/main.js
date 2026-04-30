@@ -979,7 +979,223 @@ Resources:
           - DomainName: !GetAtt AppLoadBalancer.DNSName
 `;
 
+const SAMPLE_PULUMI_AWS_TS = `// Pulumi TypeScript — AWS production stack
+import * as aws from "@pulumi/aws";
+
+// Networking
+const vpc = new aws.ec2.Vpc("main", {
+    cidrBlock: "10.0.0.0/16",
+});
+
+const publicSubnet = new aws.ec2.Subnet("public", {
+    vpcId: vpc.id,
+    cidrBlock: "10.0.1.0/24",
+    availabilityZone: "us-east-1a",
+});
+
+const privateSubnet = new aws.ec2.Subnet("private", {
+    vpcId: vpc.id,
+    cidrBlock: "10.0.2.0/24",
+    availabilityZone: "us-east-1b",
+});
+
+const igw = new aws.ec2.InternetGateway("igw", {
+    vpcId: vpc.id,
+});
+
+const nat = new aws.ec2.NatGateway("nat", {
+    subnetId: publicSubnet.id,
+});
+
+const sg = new aws.ec2.SecurityGroup("web-sg", {
+    vpcId: vpc.id,
+});
+
+// Compute
+const alb = new aws.lb.LoadBalancer("alb", {
+    internal: false,
+    subnets: [publicSubnet.id],
+    securityGroups: [sg.id],
+});
+
+const cluster = new aws.ecs.Cluster("app-cluster", {});
+
+const taskDef = new aws.ecs.TaskDefinition("app-task", {
+    family: "app",
+    cpu: "256",
+    memory: "512",
+});
+
+const service = new aws.ecs.Service("app-service", {
+    cluster: cluster.id,
+    taskDefinition: taskDef.arn,
+    desiredCount: 2,
+});
+
+// Data
+const db = new aws.rds.Instance("postgres", {
+    instanceClass: "db.t3.micro",
+    engine: "postgres",
+    dbSubnetGroupName: privateSubnet.id,
+});
+
+const cache = new aws.elasticache.Cluster("redis", {
+    engine: "redis",
+    nodeType: "cache.t3.micro",
+});
+
+const bucket = new aws.s3.Bucket("assets", {});
+
+// Security
+const role = new aws.iam.Role("app-role", {
+    assumeRolePolicy: "{}",
+});
+
+const kms = new aws.kms.Key("secrets-key", {});
+
+// Messaging
+const queue = new aws.sqs.Queue("jobs", {});
+const topic = new aws.sns.Topic("events", {});`;
+
+const SAMPLE_PULUMI_AWS_PY = `# Pulumi Python — AWS serverless stack
+import pulumi
+import pulumi_aws as aws
+
+# Networking
+vpc = aws.ec2.Vpc("main",
+    cidr_block="10.0.0.0/16")
+
+public_subnet = aws.ec2.Subnet("public",
+    vpc_id=vpc.id,
+    cidr_block="10.0.1.0/24")
+
+private_subnet = aws.ec2.Subnet("private",
+    vpc_id=vpc.id,
+    cidr_block="10.0.2.0/24")
+
+igw = aws.ec2.InternetGateway("igw",
+    vpc_id=vpc.id)
+
+sg = aws.ec2.SecurityGroup("api-sg",
+    vpc_id=vpc.id)
+
+# Serverless
+api_fn = aws.lambda_.Function("api",
+    runtime="python3.11",
+    handler="index.handler",
+    role=role.arn)
+
+worker_fn = aws.lambda_.Function("worker",
+    runtime="python3.11",
+    handler="worker.handler",
+    role=role.arn)
+
+# Data
+table = aws.dynamodb.Table("users",
+    hash_key="id",
+    billing_mode="PAY_PER_REQUEST")
+
+bucket = aws.s3.Bucket("uploads")
+
+# Messaging
+queue = aws.sqs.Queue("tasks")
+topic = aws.sns.Topic("events")
+
+# Security
+role = aws.iam.Role("lambda-role",
+    assume_role_policy="{}")
+
+kms_key = aws.kms.Key("data-key")
+
+# CDN + DNS
+cdn = aws.cloudfront.Distribution("cdn",
+    origins=[{"domainName": bucket.bucket_regional_domain_name, "originId": "s3"}],
+    enabled=True)
+
+zone = aws.route53.Zone("domain")`;
+
+const SAMPLE_PULUMI_GCP_TS = `// Pulumi TypeScript — GCP production stack
+import * as gcp from "@pulumi/gcp";
+
+// Networking
+const network = new gcp.compute.Network("main", {
+    autoCreateSubnetworks: false,
+});
+
+const subnet = new gcp.compute.Subnetwork("app-subnet", {
+    network: network.id,
+    ipCidrRange: "10.0.1.0/24",
+    region: "us-central1",
+});
+
+const firewall = new gcp.compute.Firewall("allow-internal", {
+    network: network.id,
+    allows: [{ protocol: "tcp", ports: ["80", "443"] }],
+});
+
+// Containers
+const cluster = new gcp.container.Cluster("gke", {
+    network: network.id,
+    subnetwork: subnet.id,
+    initialNodeCount: 3,
+});
+
+const nodePool = new gcp.container.NodePool("default-pool", {
+    cluster: cluster.id,
+});
+
+// Serverless
+const cloudrunSvc = new gcp.cloudrun.Service("api", {
+    location: "us-central1",
+});
+
+const fn = new gcp.cloudfunctions.Function("processor", {
+    runtime: "nodejs20",
+    triggerHttp: true,
+});
+
+// Data
+const db = new gcp.sql.DatabaseInstance("postgres", {
+    databaseVersion: "POSTGRES_15",
+    region: "us-central1",
+});
+
+const bucket = new gcp.storage.Bucket("assets", {
+    location: "US",
+});
+
+const bqDataset = new gcp.bigquery.Dataset("analytics", {
+    location: "US",
+});
+
+// Messaging
+const topic = new gcp.pubsub.Topic("events", {});
+
+const sub = new gcp.pubsub.Subscription("worker-sub", {
+    topic: topic.name,
+});
+
+// Security
+const sa = new gcp.serviceaccount.Account("app-sa", {
+    accountId: "app-service-account",
+});
+
+const kmsRing = new gcp.kms.KeyRing("main", {
+    location: "us-central1",
+});
+
+// Monitoring
+const alert = new gcp.monitoring.AlertPolicy("errors", {
+    displayName: "Error rate",
+    combiner: "OR",
+});`;
+
 const EXTRA_SAMPLES = {
+    pulumi: {
+        aws_ts: { label: 'AWS production stack (TypeScript) — ECS + RDS + ElastiCache + SQS', code: SAMPLE_PULUMI_AWS_TS },
+        aws_py: { label: 'AWS serverless stack (Python) — Lambda + DynamoDB + SQS + CloudFront', code: SAMPLE_PULUMI_AWS_PY },
+        gcp_ts: { label: 'GCP production stack (TypeScript) — GKE + Cloud Run + Cloud SQL + Pub/Sub', code: SAMPLE_PULUMI_GCP_TS },
+    },
     terraform: {
         basic: { label: 'Production AWS stack', code: SAMPLE_TERRAFORM },
         azure: { label: 'Production Azure stack (VNet + AKS + SQL + messaging)', code: SAMPLE_TERRAFORM_AZURE },
