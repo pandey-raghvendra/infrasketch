@@ -1881,6 +1881,52 @@ document.querySelectorAll('.input-tab').forEach((tab) => {
 
 updateEditorForType(activeInputType());
 
+// ── Auto-detect format on paste ───────────────────────────────────────────────
+
+const FORMAT_LABELS = {
+    terraform: 'Terraform', pulumi: 'Pulumi', kubernetes: 'Kubernetes',
+    cloudformation: 'CloudFormation', cdk: 'CDK', docker: 'Docker Compose', terragrunt: 'Terragrunt',
+};
+
+function detectFormat(code) {
+    const t = code.trimStart();
+    if (t.startsWith('{') && /"planned_values"|"resource_changes"|"configuration"/.test(code)) return 'terraform';
+    if (code.includes('AWSTemplateFormatVersion')) {
+        if (t.startsWith('{') && /"Resources"\s*:/.test(code)) return 'cdk';
+        return 'cloudformation';
+    }
+    if (t.startsWith('{') && /"Resources"\s*:/.test(code) && /"Type"\s*:\s*"AWS::/.test(code)) return 'cdk';
+    if (/^apiVersion\s*:/m.test(code) && /^kind\s*:/m.test(code)) return 'kubernetes';
+    if (code.includes('@pulumi/')) return 'pulumi';
+    if (/\bimport pulumi\b|pulumi_aws|pulumi_gcp|pulumi_azure/.test(code)) return 'pulumi';
+    if (/^services\s*:/m.test(code) && /image\s*:/.test(code)) return 'docker';
+    if (/^dependency\s+"/m.test(code) && /terraform\s*\{/.test(code)) return 'terragrunt';
+    if (/resource\s+"[a-z_]+"/.test(code) || /^terraform\s*\{/m.test(code) || /^provider\s+"/m.test(code)) return 'terraform';
+    return null;
+}
+
+function switchToDetectedTab(type) {
+    const tab = document.querySelector(`.input-tab[data-type="${type}"]`);
+    if (!tab || tab.classList.contains('active')) return false;
+    const prev = activeInputType();
+    document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    updateEditorForType(type, prev);
+    updateModuleOptionsVisibility(type);
+    return true;
+}
+
+codeInput.addEventListener('paste', (e) => {
+    const text = e.clipboardData?.getData('text') || '';
+    if (text.trim().length < 10) return;
+    setTimeout(() => {
+        const detected = detectFormat(text);
+        if (!detected) return;
+        const switched = switchToDetectedTab(detected);
+        if (switched) showToast(`Auto-detected ${FORMAT_LABELS[detected]}`, 'info', 2500);
+    }, 0);
+});
+
 // ── Module expansion UI ───────────────────────────────────────────────────────
 
 const moduleOptionsBar = document.getElementById('module-options');
