@@ -2,6 +2,309 @@ import { RESOURCE_CATEGORIES } from './constants.js';
 
 const DOCKER_COLOR = '#ff6b35';
 
+// ─── ARM / Bicep ──────────────────────────────────────────────────────────────
+
+const ARM_TYPE_TO_CATEGORY = {
+    'microsoft.network/virtualnetworks':           'vpc',
+    'microsoft.network/virtualnetworks/subnets':   'subnet',
+    'microsoft.compute/virtualmachines':           'az_vm',
+    'microsoft.compute/virtualmachinescalesets':   'az_vmss',
+    'microsoft.containerservice/managedclusters':  'az_aks',
+    'microsoft.containerinstance/containergroups': 'az_aci',
+    'microsoft.web/serverfarms':                   'az_appservice',
+    'microsoft.network/applicationgateways':       'az_appgw',
+    'microsoft.network/loadbalancers':             'az_lb',
+    'microsoft.cdn/profiles':                      'az_frontdoor',
+    'microsoft.network/frontdoors':                'az_frontdoor',
+    'microsoft.network/trafficmanagerprofiles':    'az_trafficmgr',
+    'microsoft.sql/servers':                       'az_sql',
+    'microsoft.sql/servers/databases':             'az_sql',
+    'microsoft.sql/managedinstances':              'az_sql',
+    'microsoft.documentdb/databaseaccounts':       'az_cosmos',
+    'microsoft.dbforpostgresql/servers':           'az_postgres',
+    'microsoft.dbforpostgresql/flexibleservers':   'az_postgres',
+    'microsoft.dbformysql/servers':                'az_postgres',
+    'microsoft.cache/redis':                       'az_redis',
+    'microsoft.storage/storageaccounts':           'az_storage',
+    'microsoft.network/networksecuritygroups':     'az_nsg',
+    'microsoft.keyvault/vaults':                   'az_keyvault',
+    'microsoft.servicebus/namespaces':             'az_servicebus',
+    'microsoft.eventhub/namespaces':               'az_eventhub',
+    'microsoft.network/dnszones':                  'az_dns',
+    'microsoft.network/privatednszones':           'az_dns',
+    'microsoft.operationalinsights/workspaces':    'az_monitor',
+    'microsoft.insights/components':               'az_appinsights',
+    'microsoft.compute/disks':                     'az_storage',
+};
+
+function armCategoryForType(armType, kind = '') {
+    const key = armType.toLowerCase();
+    if (key === 'microsoft.web/sites') {
+        return (kind || '').toLowerCase().includes('function') ? 'az_function' : 'az_appservice';
+    }
+    return ARM_TYPE_TO_CATEGORY[key] || null;
+}
+
+function extractArmResourceName(expr) {
+    if (!expr || typeof expr !== 'string') return null;
+    const m = /resourceId\s*\([^)]*,\s*'([^']+)'\s*\)/i.exec(expr);
+    return m ? m[1] : null;
+}
+
+export function parseArm(code) {
+    let template;
+    try { template = JSON.parse(code); } catch { return null; }
+    if (!template || typeof template !== 'object') return null;
+
+    const schema = template['$schema'] || '';
+    const hasArmSchema = schema.includes('deploymentTemplate') || schema.includes('subscriptionDeploymentTemplate');
+    const hasResources = Array.isArray(template.resources);
+    if (!hasArmSchema && !hasResources) return null;
+    if (!hasResources) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+
+    const resources = [];
+    const supportedIds = new Set();
+    const nameToId = new Map();
+
+    function processRes(res, parentType = '', parentName = '') {
+        if (!res || !res.type || res.name == null) return;
+        const fullType = parentType ? `${parentType}/${res.type}` : res.type;
+        const rawName = String(res.name);
+        const fullName = parentName ? `${parentName}/${rawName}` : rawName;
+        const kind = res.kind || '';
+        const category = armCategoryForType(fullType, kind);
+
+        if (category) {
+            const config = RESOURCE_CATEGORIES[category];
+            const id = `arm.${fullType.toLowerCase()}.${fullName.toLowerCase()}`;
+            const displayName = fullName.includes('/') ? fullName.split('/').pop() : fullName;
+            if (!supportedIds.has(id)) {
+                resources.push({ id, type: fullType, name: displayName, category, label: config.label, color: config.color, icon: config.icon });
+                supportedIds.add(id);
+                nameToId.set(rawName.toLowerCase(), id);
+                nameToId.set(fullName.toLowerCase(), id);
+                if (displayName.toLowerCase() !== rawName.toLowerCase()) nameToId.set(displayName.toLowerCase(), id);
+            }
+        }
+
+        if (Array.isArray(res.resources)) {
+            for (const child of res.resources) processRes(child, fullType, fullName);
+        }
+    }
+
+    for (const res of template.resources) processRes(res);
+
+    if (!resources.length) return { resources, connections: [], vpcOf: {}, subnetOf: {} };
+
+    const vpcOf = {};
+    const subnetOf = {};
+    const connections = [];
+    const seen = new Set();
+
+    function addConn(from, to) {
+        if (!from || !to || from === to) return;
+        const key = `${from}->${to}`;
+        if (!seen.has(key)) { seen.add(key); connections.push({ from, to }); }
+    }
+
+    for (const res of template.resources) {
+        if (!res || !res.type || res.name == null) continue;
+        const rawName = String(res.name);
+        const fullType = res.type.toLowerCase();
+        const myId = nameToId.get(rawName.toLowerCase());
+        if (!myId || !supportedIds.has(myId)) continue;
+
+        // Subnet → VNet containment (child type)
+        if (fullType === 'microsoft.network/virtualnetworks/subnets' && rawName.includes('/')) {
+            const vnetName = rawName.split('/')[0];
+            const vnetId = nameToId.get(vnetName.toLowerCase());
+            if (vnetId) vpcOf[myId] = vnetId;
+        }
+
+        // dependsOn connections
+        for (const dep of (res.dependsOn || [])) {
+            if (typeof dep !== 'string') continue;
+            const refName = extractArmResourceName(dep);
+            const refId = refName ? nameToId.get(refName.toLowerCase()) : null;
+            if (refId && refId !== myId) addConn(refId, myId);
+        }
+
+        // Property-level resourceId refs for containment
+        const props = res.properties || {};
+        const subnetExpr = props.subnet?.id || props.virtualNetworkSubnetId || '';
+        if (subnetExpr) {
+            const refName = extractArmResourceName(String(subnetExpr));
+            const refId = refName ? nameToId.get(refName.toLowerCase()) : null;
+            if (refId) subnetOf[myId] = refId;
+        }
+        const vnetExpr = props.virtualNetwork?.id || '';
+        if (vnetExpr) {
+            const refName = extractArmResourceName(String(vnetExpr));
+            const refId = refName ? nameToId.get(refName.toLowerCase()) : null;
+            if (refId) vpcOf[myId] = refId;
+        }
+
+        // WorkspaceResourceId for App Insights → Log Analytics
+        const wsExpr = props.WorkspaceResourceId || props.workspaceResourceId || '';
+        if (wsExpr) {
+            const refName = extractArmResourceName(String(wsExpr));
+            const refId = refName ? nameToId.get(refName.toLowerCase()) : null;
+            if (refId && refId !== myId) addConn(refId, myId);
+        }
+    }
+
+    // Inline subnets in VNet properties
+    for (const res of template.resources) {
+        if (!res || res.type?.toLowerCase() !== 'microsoft.network/virtualnetworks') continue;
+        const vnetName = String(res.name);
+        const vnetId = nameToId.get(vnetName.toLowerCase());
+        if (!vnetId) continue;
+        for (const sub of (res.properties?.subnets || [])) {
+            if (!sub.name) continue;
+            const subId = `arm.microsoft.network/virtualnetworks/subnets.${vnetName.toLowerCase()}/${sub.name.toLowerCase()}`;
+            if (!supportedIds.has(subId)) {
+                const config = RESOURCE_CATEGORIES['subnet'];
+                resources.push({ id: subId, type: 'Microsoft.Network/virtualNetworks/subnets', name: sub.name, category: 'subnet', label: config.label, color: config.color, icon: config.icon });
+                supportedIds.add(subId);
+                nameToId.set(sub.name.toLowerCase(), subId);
+            }
+            vpcOf[subId] = vnetId;
+        }
+    }
+
+    return { resources, connections, vpcOf, subnetOf };
+}
+
+function findMatchingBraceMixed(source, openIndex) {
+    let depth = 0;
+    let inSingle = false;
+    let inDouble = false;
+
+    for (let i = openIndex; i < source.length; i++) {
+        const c = source[i];
+        if (inDouble) {
+            if (c === '\\') { i++; continue; }
+            if (c === '"') inDouble = false;
+            continue;
+        }
+        if (inSingle) {
+            // Bicep escapes single quotes as ''
+            if (c === "'" && source[i + 1] === "'") { i++; continue; }
+            if (c === "'") inSingle = false;
+            continue;
+        }
+        if (c === '"') { inDouble = true; continue; }
+        if (c === "'") { inSingle = true; continue; }
+        if (c === '{') depth++;
+        else if (c === '}') { depth--; if (depth === 0) return i; }
+    }
+    return source.length;
+}
+
+export function parseBicep(code) {
+    // resource varName 'Type@version' = [if (...)] {
+    const resourceRe = /\bresource\s+(\w+)\s+'([^@']+)@[^']+'\s*=\s*(?:if\s*\([^)]*\)\s*)?\{/g;
+    const entries = [];
+    const seenVars = new Set();
+    let m;
+
+    while ((m = resourceRe.exec(code)) !== null) {
+        const varName = m[1];
+        if (seenVars.has(varName)) continue;
+        seenVars.add(varName);
+        const armType = m[2];
+        const openIndex = resourceRe.lastIndex - 1;
+        const closeIndex = findMatchingBraceMixed(code, openIndex);
+        const body = code.slice(resourceRe.lastIndex, closeIndex);
+
+        const nameMatch = /^\s*name\s*:\s*'([^']+)'/m.exec(body);
+        const logicalName = nameMatch?.[1] || varName;
+        const kindMatch = /^\s*kind\s*:\s*'([^']+)'/m.exec(body);
+        const kind = kindMatch?.[1] || '';
+        const parentMatch = /^\s*parent\s*:\s*(\w+)/m.exec(body);
+        const parentVar = parentMatch?.[1] || null;
+
+        entries.push({ varName, armType, logicalName, kind, body, parentVar });
+        resourceRe.lastIndex = closeIndex + 1;
+    }
+
+    if (!entries.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+
+    const varToId = new Map();
+    const resources = [];
+    const supportedIds = new Set();
+
+    for (const e of entries) {
+        const category = armCategoryForType(e.armType, e.kind);
+        if (!category) continue;
+        const config = RESOURCE_CATEGORIES[category];
+        const id = `bicep.${e.varName}`;
+        varToId.set(e.varName, id);
+        resources.push({ id, type: e.armType, name: e.logicalName, category, label: config.label, color: config.color, icon: config.icon });
+        supportedIds.add(id);
+    }
+
+    if (!resources.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+
+    const vpcOf = {};
+    const subnetOf = {};
+    const connections = [];
+    const connSeen = new Set();
+
+    function addConn(from, to) {
+        if (!from || !to || from === to) return;
+        const key = `${from}->${to}`;
+        if (!connSeen.has(key)) { connSeen.add(key); connections.push({ from, to }); }
+    }
+
+    const VPC_PROP_RE   = /\b(?:virtualNetworkId|vnetId|virtualNetwork)\s*:\s*(\w+)\.id/;
+    const SUB_PROP_RE   = /\b(?:subnetId|vnetSubnetID|subnet)\s*:\s*(\w+)\.id/;
+    const SKIP_LINE_RE  = /^\s*(?:name|location|parent|tags|addressPrefix|addressSpace|sku|tier|kind)\s*:/;
+
+    for (const e of entries) {
+        const myId = varToId.get(e.varName);
+        if (!myId) continue;
+
+        // parent → containment
+        if (e.parentVar) {
+            const parentId = varToId.get(e.parentVar);
+            if (parentId) {
+                const parentEntry = entries.find((x) => x.varName === e.parentVar);
+                const parentCat = parentEntry ? armCategoryForType(parentEntry.armType, parentEntry.kind) : null;
+                if (parentCat === 'vpc') vpcOf[myId] = parentId;
+                else if (parentCat === 'subnet') subnetOf[myId] = parentId;
+                else addConn(parentId, myId);
+            }
+        }
+
+        for (const line of e.body.split('\n')) {
+            if (SKIP_LINE_RE.test(line)) continue;
+
+            const vm = VPC_PROP_RE.exec(line);
+            if (vm) {
+                const refId = varToId.get(vm[1]);
+                if (refId && supportedIds.has(refId)) { vpcOf[myId] = refId; continue; }
+            }
+            const sm = SUB_PROP_RE.exec(line);
+            if (sm) {
+                const refId = varToId.get(sm[1]);
+                if (refId && supportedIds.has(refId)) { subnetOf[myId] = refId; continue; }
+            }
+
+            for (const other of entries) {
+                if (other.varName === e.varName) continue;
+                const otherId = varToId.get(other.varName);
+                if (!otherId || !supportedIds.has(otherId)) continue;
+                if (new RegExp(`\\b${other.varName}\\.(id|name|properties|resourceId)\\b`).test(line)) {
+                    addConn(otherId, myId);
+                }
+            }
+        }
+    }
+
+    return { resources, connections, vpcOf, subnetOf };
+}
+
 function loadScript(src) {
     return new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }

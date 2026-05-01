@@ -1,7 +1,7 @@
 import { exportPng, exportSvg, generateDrawioXml } from './exporters.js';
 import { svgToDrawio } from './svg-to-drawio.js';
 import { computeStats } from './layout.js';
-import { parseCloudFormation, parseDockerCompose, parseKubernetes, parsePulumi, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
+import { parseArm, parseBicep, parseCloudFormation, parseDockerCompose, parseKubernetes, parsePulumi, parseTerraform, parseTerraformPlan, parseTerragrunt } from './parser.js';
 import { buildVirtualFS, expandModules } from './moduleResolver.js';
 import { generateMermaid } from './mermaid-export.js';
 import { renderDiagram } from './renderer.js';
@@ -1386,6 +1386,286 @@ spec:
     matchLabels:
       app: api`;
 
+const SAMPLE_BICEP = `// Bicep — Production Azure stack
+param location string = 'eastus'
+
+resource vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+  name: 'prod-vnet'
+  location: location
+  properties: {
+    addressSpace: { addressPrefixes: ['10.0.0.0/16'] }
+  }
+}
+
+resource webSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-04-01' = {
+  parent: vnet
+  name: 'web'
+  properties: { addressPrefix: '10.0.1.0/24' }
+}
+
+resource appSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-04-01' = {
+  parent: vnet
+  name: 'app'
+  properties: { addressPrefix: '10.0.2.0/24' }
+}
+
+resource dataSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-04-01' = {
+  parent: vnet
+  name: 'data'
+  properties: { addressPrefix: '10.0.3.0/24' }
+}
+
+resource nsg 'Microsoft.Network/networkSecurityGroups@2023-04-01' = {
+  name: 'prod-nsg'
+  location: location
+  properties: {}
+}
+
+resource appGw 'Microsoft.Network/applicationGateways@2023-04-01' = {
+  name: 'prod-appgw'
+  location: location
+  properties: {
+    frontendIPConfigurations: [{ name: 'appgw-ip' }]
+  }
+}
+
+resource aks 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
+  name: 'prod-aks'
+  location: location
+  identity: { type: 'SystemAssigned' }
+  properties: {
+    agentPoolProfiles: [
+      {
+        name: 'nodepool1'
+        count: 3
+        vnetSubnetID: appSubnet.id
+      }
+    ]
+  }
+}
+
+resource funcApp 'Microsoft.Web/sites@2022-03-01' = {
+  name: 'prod-functions'
+  location: location
+  kind: 'functionapp'
+  properties: {}
+}
+
+resource api 'Microsoft.Web/sites@2022-03-01' = {
+  name: 'prod-api'
+  location: location
+  kind: 'app'
+  properties: {}
+}
+
+resource sql 'Microsoft.Sql/servers@2023-02-01-preview' = {
+  name: 'prod-sql'
+  location: location
+  properties: { administratorLogin: 'sqladmin' }
+}
+
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
+  name: 'prod-cosmos'
+  location: location
+  kind: 'GlobalDocumentDB'
+  properties: { databaseAccountOfferType: 'Standard' }
+}
+
+resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
+  name: 'prod-postgres'
+  location: location
+  properties: { administratorLogin: 'pgadmin' }
+}
+
+resource redis 'Microsoft.Cache/Redis@2023-04-01' = {
+  name: 'prod-redis'
+  location: location
+  properties: { sku: { name: 'Standard', family: 'C', capacity: 1 } }
+}
+
+resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: 'prodstorage'
+  location: location
+  kind: 'StorageV2'
+  sku: { name: 'Standard_LRS' }
+  properties: {}
+}
+
+resource kv 'Microsoft.KeyVault/vaults@2023-02-01' = {
+  name: 'prod-kv'
+  location: location
+  properties: {
+    sku: { family: 'A', name: 'standard' }
+    tenantId: tenant().tenantId
+  }
+}
+
+resource sb 'Microsoft.ServiceBus/namespaces@2022-10-01-preview' = {
+  name: 'prod-servicebus'
+  location: location
+  sku: { name: 'Standard' }
+}
+
+resource eh 'Microsoft.EventHub/namespaces@2023-01-01-preview' = {
+  name: 'prod-eventhub'
+  location: location
+  sku: { name: 'Standard' }
+}
+
+resource logws 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: 'prod-logs'
+  location: location
+  properties: {}
+}
+
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: 'prod-insights'
+  location: location
+  kind: 'web'
+  properties: {
+    WorkspaceResourceId: logws.id
+  }
+}
+`;
+
+const SAMPLE_ARM = `{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-04-01",
+      "name": "prod-vnet",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
+        "subnets": [
+          { "name": "web",  "properties": { "addressPrefix": "10.0.1.0/24" } },
+          { "name": "app",  "properties": { "addressPrefix": "10.0.2.0/24" } },
+          { "name": "data", "properties": { "addressPrefix": "10.0.3.0/24" } }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-04-01",
+      "name": "prod-nsg",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2023-04-01",
+      "name": "prod-appgw",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'prod-vnet')]"
+      ],
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "apiVersion": "2024-01-01",
+      "name": "prod-aks",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'prod-vnet')]"
+      ],
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "prod-api",
+      "location": "[resourceGroup().location]",
+      "kind": "app",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "prod-functions",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2023-02-01-preview",
+      "name": "prod-sql",
+      "location": "[resourceGroup().location]",
+      "properties": { "administratorLogin": "sqladmin" }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2023-04-15",
+      "name": "prod-cosmos",
+      "location": "[resourceGroup().location]",
+      "kind": "GlobalDocumentDB",
+      "properties": { "databaseAccountOfferType": "Standard" }
+    },
+    {
+      "type": "Microsoft.Cache/Redis",
+      "apiVersion": "2023-04-01",
+      "name": "prod-redis",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "prodstorage",
+      "location": "[resourceGroup().location]",
+      "kind": "StorageV2",
+      "sku": { "name": "Standard_LRS" },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-02-01",
+      "name": "prod-kv",
+      "location": "[resourceGroup().location]",
+      "properties": { "sku": { "family": "A", "name": "standard" } }
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces",
+      "apiVersion": "2022-10-01-preview",
+      "name": "prod-servicebus",
+      "location": "[resourceGroup().location]",
+      "sku": { "name": "Standard" },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2023-01-01-preview",
+      "name": "prod-eventhub",
+      "location": "[resourceGroup().location]",
+      "sku": { "name": "Standard" },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "prod-logs",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "prod-insights",
+      "location": "[resourceGroup().location]",
+      "kind": "web",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', 'prod-logs')]"
+      ],
+      "properties": {
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', 'prod-logs')]"
+      }
+    }
+  ]
+}`;
+
 const EXTRA_SAMPLES = {
     kubernetes: {
         basic: { label: 'Web app stack — Deployment + StatefulSet + Ingress + HPA + CronJob', code: SAMPLE_K8S_BASIC },
@@ -1414,6 +1694,10 @@ const EXTRA_SAMPLES = {
     },
     cdk: {
         basic: { label: 'Production AWS stack — cdk synth output (VPC + EKS + RDS + Lambda)', code: SAMPLE_CDK },
+    },
+    bicep: {
+        bicep: { label: 'Production Azure stack — Bicep (VNet + AKS + SQL + messaging)', code: SAMPLE_BICEP },
+        arm: { label: 'Production Azure stack — ARM JSON (VNet + AKS + App Service + data)', code: SAMPLE_ARM },
     },
 };
 
@@ -1564,6 +1848,32 @@ const db = new aws.rds.Instance("postgres", {
       }
     },
     "LambdaRole": { "Type": "AWS::IAM::Role" }
+  }
+}`,
+    bicep: `// Paste Bicep code or ARM JSON template
+// Auto-detects which format you paste
+
+param location string = 'eastus'
+
+resource vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+  name: 'prod-vnet'
+  location: location
+  properties: {
+    addressSpace: { addressPrefixes: ['10.0.0.0/16'] }
+  }
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-04-01' = {
+  parent: vnet
+  name: 'app-subnet'
+  properties: { addressPrefix: '10.0.1.0/24' }
+}
+
+resource aks 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
+  name: 'prod-aks'
+  location: location
+  properties: {
+    agentPoolProfiles: [{ vnetSubnetID: subnet.id }]
   }
 }`,
 };
@@ -1758,6 +2068,12 @@ async function parseCode(code) {
     if (type === 'pulumi') return parsePulumi(code);
     if (type === 'kubernetes') return parseKubernetes(code);
     if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
+    if (type === 'bicep') {
+        if (/\bresource\s+\w+\s+'Microsoft\.[^@']+@/.test(code)) return parseBicep(code);
+        const armResult = parseArm(code);
+        if (armResult) return armResult;
+        return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+    }
     if (code.trimStart().startsWith('{')) {
         const planResult = parseTerraformPlan(code);
         if (planResult !== null) return planResult;
@@ -1785,7 +2101,7 @@ function updateEditorForType(type, previousType = null) {
     codeInput.placeholder = PLACEHOLDERS[type];
     populateExampleSelect(type);
     if (btnLoadSample) {
-        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample', cdk: 'Load CDK sample', pulumi: 'Load Pulumi sample', kubernetes: 'Load K8s sample' };
+        const labels = { docker: 'Load Docker sample', terragrunt: 'Load Terragrunt sample', cloudformation: 'Load CloudFormation sample', cdk: 'Load CDK sample', pulumi: 'Load Pulumi sample', kubernetes: 'Load K8s sample', bicep: 'Load Bicep sample' };
         btnLoadSample.textContent = labels[type] || 'Load Terraform sample';
     }
 
@@ -1886,6 +2202,7 @@ updateEditorForType(activeInputType());
 const FORMAT_LABELS = {
     terraform: 'Terraform', pulumi: 'Pulumi', kubernetes: 'Kubernetes',
     cloudformation: 'CloudFormation', cdk: 'CDK', docker: 'Docker Compose', terragrunt: 'Terragrunt',
+    bicep: 'Bicep / ARM',
 };
 
 function detectFormat(code) {
@@ -1896,6 +2213,8 @@ function detectFormat(code) {
         return 'cloudformation';
     }
     if (t.startsWith('{') && /"Resources"\s*:/.test(code) && /"Type"\s*:\s*"AWS::/.test(code)) return 'cdk';
+    if (t.startsWith('{') && /"resources"\s*:/.test(code) && /"type"\s*:\s*"Microsoft\./.test(code)) return 'bicep';
+    if (/\bresource\s+\w+\s+'Microsoft\.[^@']+@/.test(code)) return 'bicep';
     if (/^apiVersion\s*:/m.test(code) && /^kind\s*:/m.test(code)) return 'kubernetes';
     if (code.includes('@pulumi/')) return 'pulumi';
     if (/\bimport pulumi\b|pulumi_aws|pulumi_gcp|pulumi_azure/.test(code)) return 'pulumi';
@@ -2268,6 +2587,12 @@ generateButton.addEventListener('click', async (e) => {
             if (type === 'pulumi') return parsePulumi(code);
             if (type === 'kubernetes') return parseKubernetes(code);
             if (type === 'cloudformation' || type === 'cdk') return parseCloudFormation(code);
+            if (type === 'bicep') {
+                if (/\bresource\s+\w+\s+'Microsoft\.[^@']+@/.test(code)) return parseBicep(code);
+                const armResult = parseArm(code);
+                if (armResult) return armResult;
+                return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+            }
             if (code.trimStart().startsWith('{')) {
                 const r = parseTerraformPlan(code);
                 if (r) return r;
