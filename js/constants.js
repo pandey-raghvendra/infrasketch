@@ -79,6 +79,17 @@ export const ICON_PATHS = {
     AzDNS: 'icons/az-dns.svg',
     AzMonitor: 'icons/az-monitor.svg',
     AzInsights: 'icons/az-appinsights.svg',
+    // Azure — extended (reuse closest existing SVG)
+    AzACR:        'icons/az-aci.svg',
+    AzAPIM:       'icons/az-appservice.svg',
+    AzStaticWeb:  'icons/az-appservice.svg',
+    AzFirewall:   'icons/az-nsg.svg',
+    AzBastion:    'icons/az-nsg.svg',
+    AzVPNGW:      'icons/az-lb.svg',
+    AzCognitive:  'icons/az-appinsights.svg',
+    AzDataFactory:'icons/az-monitor.svg',
+    AzSignalR:    'icons/az-eventhub.svg',
+    AzSearch:     'icons/az-appinsights.svg',
 };
 
 // Keep legacy alias so any external code using the old name still works
@@ -140,6 +151,17 @@ export const RESOURCE_CATEGORIES = {
     az_dns:      { match: ['azurerm_dns_zone', 'azurerm_private_dns_zone'], color: '#6B4C9A', label: 'DNS Zone', icon: 'AzDNS' },
     az_monitor:  { match: ['azurerm_log_analytics_workspace', 'azurerm_monitor_action_group'], color: '#e07a5f', label: 'Monitor', icon: 'AzMonitor' },
     az_appinsights: { match: ['azurerm_application_insights'], color: '#e07a5f', label: 'App Insights', icon: 'AzInsights' },
+    // Azure — extended
+    az_acr:        { match: ['azurerm_container_registry'], color: '#0078D4', label: 'Container Registry', icon: 'AzACR' },
+    az_apim:       { match: ['azurerm_api_management'], color: '#0072C6', label: 'API Management', icon: 'AzAPIM' },
+    az_staticweb:  { match: ['azurerm_static_site'], color: '#0078D4', label: 'Static Web App', icon: 'AzStaticWeb' },
+    az_firewall:   { match: ['azurerm_firewall'], color: '#6B4C9A', label: 'Firewall', icon: 'AzFirewall' },
+    az_bastion:    { match: ['azurerm_bastion_host'], color: '#6B4C9A', label: 'Bastion', icon: 'AzBastion' },
+    az_vpngw:      { match: ['azurerm_virtual_network_gateway'], color: '#0072C6', label: 'VPN Gateway', icon: 'AzVPNGW' },
+    az_cognitive:  { match: ['azurerm_cognitive_account'], color: '#e07a5f', label: 'AI Services', icon: 'AzCognitive' },
+    az_datafactory:{ match: ['azurerm_data_factory'], color: '#e07a5f', label: 'Data Factory', icon: 'AzDataFactory' },
+    az_signalr:    { match: ['azurerm_signalr_service'], color: '#e07a5f', label: 'SignalR', icon: 'AzSignalR' },
+    az_search:     { match: ['azurerm_search_service'], color: '#e07a5f', label: 'AI Search', icon: 'AzSearch' },
     // ── GCP ──────────────────────────────────────────────────────────────────
     gcp_vpc:       { match: ['google_compute_network'], color: '#1A73E8', label: 'VPC Network', icon: 'GcpVPC' },
     gcp_subnet:    { match: ['google_compute_subnetwork'], color: '#4285F4', label: 'Subnet', icon: 'GcpSubnet' },
@@ -186,21 +208,21 @@ export const RESOURCE_CATEGORIES = {
 };
 
 export const CATEGORY_GROUPS = {
-    INTERNET:  new Set(['igw', 'cloudfront', 'route53', 'waf', 'transit_gw', 'vpn_gw', 'az_frontdoor', 'az_dns', 'az_trafficmgr', 'gcp_dns', 'gcp_ip', 'k8s_ingress']),
-    INGRESS:   new Set(['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'gcp_lb', 'k8s_service']),
+    INTERNET:  new Set(['igw', 'cloudfront', 'route53', 'waf', 'transit_gw', 'vpn_gw', 'az_frontdoor', 'az_dns', 'az_trafficmgr', 'az_staticweb', 'az_vpngw', 'gcp_dns', 'gcp_ip', 'k8s_ingress']),
+    INGRESS:   new Set(['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'az_apim', 'gcp_lb', 'k8s_service']),
     DATA:      new Set(['rds', 'dynamodb', 'elasticache', 's3', 'az_sql', 'az_cosmos', 'az_postgres', 'az_redis', 'az_storage', 'gcp_sql', 'gcp_bq', 'gcp_spanner', 'gcp_bigtable', 'gcp_firestore', 'gcp_memstore', 'gcp_gcs', 'k8s_pvc', 'k8s_pv']),
-    MESSAGING: new Set(['sqs', 'sns', 'az_servicebus', 'az_eventhub', 'gcp_pubsub']),
-    SECURITY:  new Set(['sg', 'iam_role', 'kms', 'cloudwatch', 'az_nsg', 'az_keyvault', 'az_monitor', 'az_appinsights', 'gcp_fw', 'gcp_kms', 'gcp_secret', 'gcp_sa', 'gcp_mon', 'k8s_secret', 'k8s_netpol', 'k8s_sa', 'k8s_configmap']),
+    MESSAGING: new Set(['sqs', 'sns', 'az_servicebus', 'az_eventhub', 'az_signalr', 'gcp_pubsub']),
+    SECURITY:  new Set(['sg', 'iam_role', 'kms', 'cloudwatch', 'az_nsg', 'az_keyvault', 'az_monitor', 'az_appinsights', 'az_firewall', 'az_bastion', 'gcp_fw', 'gcp_kms', 'gcp_secret', 'gcp_sa', 'gcp_mon', 'k8s_secret', 'k8s_netpol', 'k8s_sa', 'k8s_configmap']),
     VPC:       new Set(['vpc', 'gcp_vpc', 'k8s_ns']),
     SUBNET:    new Set(['subnet', 'gcp_subnet']),
 };
 
 export const STAT_CATEGORY_MAP = {
     vpc:     ['vpc', 'subnet', 'nat', 'igw', 'eip', 'route_table', 'transit_gw', 'vpn_gw', 'network_iface', 'gcp_vpc', 'gcp_subnet', 'gcp_router', 'k8s_ns'],
-    compute: ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling', 'az_vm', 'az_vmss', 'az_aks', 'az_aci', 'az_function', 'az_appservice', 'gcp_gce', 'gcp_gke', 'gcp_run', 'gcp_fn', 'k8s_deployment', 'k8s_statefulset', 'k8s_daemonset', 'k8s_job', 'k8s_cronjob', 'k8s_hpa'],
+    compute: ['instance', 'eks', 'ecs', 'lambda', 'ecr', 'autoscaling', 'az_vm', 'az_vmss', 'az_aks', 'az_aci', 'az_function', 'az_appservice', 'az_acr', 'az_staticweb', 'az_cognitive', 'az_datafactory', 'az_search', 'gcp_gce', 'gcp_gke', 'gcp_run', 'gcp_fn', 'k8s_deployment', 'k8s_statefulset', 'k8s_daemonset', 'k8s_job', 'k8s_cronjob', 'k8s_hpa'],
     db:      ['rds', 'dynamodb', 'elasticache', 'az_sql', 'az_cosmos', 'az_postgres', 'az_redis', 'gcp_sql', 'gcp_bq', 'gcp_spanner', 'gcp_bigtable', 'gcp_firestore', 'gcp_memstore'],
     storage: ['s3', 'az_storage', 'gcp_gcs', 'k8s_pvc', 'k8s_pv'],
-    lb:      ['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'az_frontdoor', 'az_trafficmgr', 'gcp_lb', 'k8s_service', 'k8s_ingress'],
+    lb:      ['alb', 'nlb', 'tg', 'az_appgw', 'az_lb', 'az_apim', 'az_frontdoor', 'az_trafficmgr', 'az_vpngw', 'gcp_lb', 'k8s_service', 'k8s_ingress'],
 };
 
 export const SVG_LAYOUT = {

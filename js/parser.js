@@ -35,6 +35,21 @@ const ARM_TYPE_TO_CATEGORY = {
     'microsoft.operationalinsights/workspaces':    'az_monitor',
     'microsoft.insights/components':               'az_appinsights',
     'microsoft.compute/disks':                     'az_storage',
+    // Extended Azure resource types
+    'microsoft.containerregistry/registries':      'az_acr',
+    'microsoft.apimanagement/service':             'az_apim',
+    'microsoft.web/staticsites':                   'az_staticweb',
+    'microsoft.network/firewalls':                 'az_firewall',
+    'microsoft.network/azurefirewalls':            'az_firewall',
+    'microsoft.network/bastionhosts':              'az_bastion',
+    'microsoft.network/virtualnetworkgateways':    'az_vpngw',
+    'microsoft.network/expressroutecircuits':      'az_vpngw',
+    'microsoft.cognitiveservices/accounts':        'az_cognitive',
+    'microsoft.machinelearningservices/workspaces':'az_cognitive',
+    'microsoft.datafactory/factories':             'az_datafactory',
+    'microsoft.signalrservice/signalr':            'az_signalr',
+    'microsoft.signalrservice/webpubsub':          'az_signalr',
+    'microsoft.search/searchservices':             'az_search',
 };
 
 function armCategoryForType(armType, kind = '') {

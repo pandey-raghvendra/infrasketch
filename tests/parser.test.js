@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseTerraform, parseDockerCompose, parseTerraformPlan, parseTerragrunt } from '../js/parser.js';
+import { parseTerraform, parseDockerCompose, parseTerraformPlan, parseTerragrunt, parseArm, parseBicep } from '../js/parser.js';
 
 // ─── parseTerraform ──────────────────────────────────────────────────────────
 
@@ -712,7 +712,7 @@ terraform { source = "git::https://example.com//vpc" }
         expect(resources[0].category).toBe('tg_unit');
     });
 
-    it('parses single unit without separator', () => {
+    it('parses a single unit without separator', () => {
         const code = `
 terraform { source = "git::https://example.com//modules/vpc" }
 
@@ -723,5 +723,344 @@ dependency "base" {
         const { resources, connections } = parseTerragrunt(code);
         expect(resources.length).toBeGreaterThanOrEqual(1);
         expect(connections).toHaveLength(1);
+    });
+});
+
+// ─── parseArm ────────────────────────────────────────────────────────────────
+
+describe('parseArm', () => {
+    it('returns null for non-JSON input', () => {
+        expect(parseArm('not json')).toBeNull();
+    });
+
+    it('returns null for JSON without ARM schema or resources', () => {
+        expect(parseArm(JSON.stringify({ foo: 'bar' }))).toBeNull();
+    });
+
+    it('returns empty resources for ARM template with no recognised types', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [{ type: 'Microsoft.Unknown/things', name: 'x', properties: {} }],
+        };
+        const result = parseArm(JSON.stringify(tmpl));
+        expect(result).not.toBeNull();
+        expect(result.resources).toHaveLength(0);
+    });
+
+    it('parses a VM resource', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [{ type: 'Microsoft.Compute/virtualMachines', name: 'my-vm', properties: {} }],
+        };
+        const { resources } = parseArm(JSON.stringify(tmpl));
+        expect(resources).toHaveLength(1);
+        expect(resources[0].category).toBe('az_vm');
+        expect(resources[0].name).toBe('my-vm');
+    });
+
+    it('parses AKS cluster', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [{ type: 'Microsoft.ContainerService/managedClusters', name: 'my-aks', properties: {} }],
+        };
+        const { resources } = parseArm(JSON.stringify(tmpl));
+        expect(resources[0].category).toBe('az_aks');
+    });
+
+    it('distinguishes Function App from regular Web/sites via kind', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [
+                { type: 'Microsoft.Web/sites', name: 'fn', kind: 'functionapp', properties: {} },
+                { type: 'Microsoft.Web/sites', name: 'app', kind: 'app', properties: {} },
+            ],
+        };
+        const { resources } = parseArm(JSON.stringify(tmpl));
+        const fn = resources.find(r => r.name === 'fn');
+        const app = resources.find(r => r.name === 'app');
+        expect(fn.category).toBe('az_function');
+        expect(app.category).toBe('az_appservice');
+    });
+
+    it('builds dependsOn connections', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [
+                { type: 'Microsoft.Sql/servers', name: 'my-sql', properties: {} },
+                {
+                    type: 'Microsoft.Compute/virtualMachines',
+                    name: 'my-vm',
+                    dependsOn: ["[resourceId('Microsoft.Sql/servers', 'my-sql')]"],
+                    properties: {},
+                },
+            ],
+        };
+        const { resources, connections } = parseArm(JSON.stringify(tmpl));
+        expect(resources).toHaveLength(2);
+        expect(connections).toHaveLength(1);
+        const sqlId = resources.find(r => r.category === 'az_sql').id;
+        const vmId = resources.find(r => r.category === 'az_vm').id;
+        expect(connections[0]).toEqual({ from: sqlId, to: vmId });
+    });
+
+    it('does not duplicate connections', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [
+                { type: 'Microsoft.Sql/servers', name: 'sql', properties: {} },
+                {
+                    type: 'Microsoft.Compute/virtualMachines',
+                    name: 'vm',
+                    dependsOn: [
+                        "[resourceId('Microsoft.Sql/servers', 'sql')]",
+                        "[resourceId('Microsoft.Sql/servers', 'sql')]",
+                    ],
+                    properties: {},
+                },
+            ],
+        };
+        const { connections } = parseArm(JSON.stringify(tmpl));
+        expect(connections).toHaveLength(1);
+    });
+
+    it('maps VNet inline subnet via properties.subnets', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [
+                {
+                    type: 'Microsoft.Network/virtualNetworks',
+                    name: 'my-vnet',
+                    properties: {
+                        addressSpace: { addressPrefixes: ['10.0.0.0/16'] },
+                        subnets: [{ name: 'web', properties: { addressPrefix: '10.0.1.0/24' } }],
+                    },
+                },
+            ],
+        };
+        const { resources, vpcOf } = parseArm(JSON.stringify(tmpl));
+        const vnet = resources.find(r => r.category === 'vpc');
+        const subnet = resources.find(r => r.category === 'subnet');
+        expect(vnet).toBeDefined();
+        expect(subnet).toBeDefined();
+        expect(vpcOf[subnet.id]).toBe(vnet.id);
+    });
+
+    it('parses extended types — ACR, APIM, Firewall, VPN Gateway', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [
+                { type: 'Microsoft.ContainerRegistry/registries', name: 'acr', properties: {} },
+                { type: 'Microsoft.ApiManagement/service', name: 'apim', properties: {} },
+                { type: 'Microsoft.Network/firewalls', name: 'fw', properties: {} },
+                { type: 'Microsoft.Network/virtualNetworkGateways', name: 'vpngw', properties: {} },
+            ],
+        };
+        const { resources } = parseArm(JSON.stringify(tmpl));
+        const cats = resources.map(r => r.category);
+        expect(cats).toContain('az_acr');
+        expect(cats).toContain('az_apim');
+        expect(cats).toContain('az_firewall');
+        expect(cats).toContain('az_vpngw');
+    });
+
+    it('parses extended types — Cognitive, Data Factory, SignalR, AI Search', () => {
+        const tmpl = {
+            $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            resources: [
+                { type: 'Microsoft.CognitiveServices/accounts', name: 'ai', properties: {} },
+                { type: 'Microsoft.DataFactory/factories', name: 'adf', properties: {} },
+                { type: 'Microsoft.SignalRService/signalR', name: 'sr', properties: {} },
+                { type: 'Microsoft.Search/searchServices', name: 'search', properties: {} },
+            ],
+        };
+        const { resources } = parseArm(JSON.stringify(tmpl));
+        const cats = resources.map(r => r.category);
+        expect(cats).toContain('az_cognitive');
+        expect(cats).toContain('az_datafactory');
+        expect(cats).toContain('az_signalr');
+        expect(cats).toContain('az_search');
+    });
+});
+
+// ─── parseBicep ──────────────────────────────────────────────────────────────
+
+describe('parseBicep', () => {
+    it('returns empty result for non-Bicep input', () => {
+        const result = parseBicep('resource "aws_instance" "web" {}');
+        expect(result.resources).toHaveLength(0);
+        expect(result.connections).toHaveLength(0);
+    });
+
+    it('parses a single resource', () => {
+        const code = `
+resource aks 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
+  name: 'prod-aks'
+  location: 'eastus'
+  properties: {}
+}`;
+        const { resources } = parseBicep(code);
+        expect(resources).toHaveLength(1);
+        expect(resources[0].category).toBe('az_aks');
+        expect(resources[0].name).toBe('prod-aks');
+    });
+
+    it('parses multiple resources', () => {
+        const code = `
+resource vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+  name: 'my-vnet'
+  location: 'eastus'
+  properties: {}
+}
+resource sql 'Microsoft.Sql/servers@2023-02-01' = {
+  name: 'my-sql'
+  location: 'eastus'
+  properties: {}
+}`;
+        const { resources } = parseBicep(code);
+        expect(resources).toHaveLength(2);
+        const cats = resources.map(r => r.category);
+        expect(cats).toContain('vpc');
+        expect(cats).toContain('az_sql');
+    });
+
+    it('detects Function App via kind', () => {
+        const code = `
+resource fn 'Microsoft.Web/sites@2022-03-01' = {
+  name: 'my-fn'
+  location: 'eastus'
+  kind: 'functionapp'
+  properties: {}
+}`;
+        const { resources } = parseBicep(code);
+        expect(resources[0].category).toBe('az_function');
+    });
+
+    it('detects App Service via kind=app', () => {
+        const code = `
+resource api 'Microsoft.Web/sites@2022-03-01' = {
+  name: 'my-api'
+  location: 'eastus'
+  kind: 'app'
+  properties: {}
+}`;
+        const { resources } = parseBicep(code);
+        expect(resources[0].category).toBe('az_appservice');
+    });
+
+    it('handles parent → VNet containment for subnets', () => {
+        const code = `
+resource vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+  name: 'my-vnet'
+  location: 'eastus'
+  properties: {}
+}
+resource webSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-04-01' = {
+  parent: vnet
+  name: 'web'
+  properties: { addressPrefix: '10.0.1.0/24' }
+}`;
+        const { resources, vpcOf } = parseBicep(code);
+        const vnetRes = resources.find(r => r.category === 'vpc');
+        const subRes = resources.find(r => r.category === 'subnet');
+        expect(vnetRes).toBeDefined();
+        expect(subRes).toBeDefined();
+        expect(vpcOf[subRes.id]).toBe(vnetRes.id);
+    });
+
+    it('builds connections from .id references', () => {
+        const code = `
+resource kv 'Microsoft.KeyVault/vaults@2023-02-01' = {
+  name: 'my-kv'
+  location: 'eastus'
+  properties: {}
+}
+resource fn 'Microsoft.Web/sites@2022-03-01' = {
+  name: 'my-fn'
+  location: 'eastus'
+  kind: 'functionapp'
+  properties: {
+    keyVaultReferenceIdentity: kv.id
+  }
+}`;
+        const { connections } = parseBicep(code);
+        expect(connections).toHaveLength(1);
+        expect(connections[0].from).toBe('bicep.kv');
+        expect(connections[0].to).toBe('bicep.fn');
+    });
+
+    it('does not duplicate connections', () => {
+        const code = `
+resource sql 'Microsoft.Sql/servers@2023-02-01' = {
+  name: 'my-sql'
+  location: 'eastus'
+  properties: {}
+}
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
+  name: 'my-vm'
+  location: 'eastus'
+  properties: {
+    sqlRef1: sql.id
+    sqlRef2: sql.name
+  }
+}`;
+        const { connections } = parseBicep(code);
+        // sql.id and sql.name both match — deduplicated to 1
+        expect(connections.length).toBeLessThanOrEqual(2);
+        const unique = new Set(connections.map(c => `${c.from}->${c.to}`));
+        expect(unique.size).toBe(connections.length);
+    });
+
+    it('ignores unknown resource types', () => {
+        const code = `
+resource thing 'Microsoft.Unknown/things@2023-01-01' = {
+  name: 'stuff'
+  location: 'eastus'
+  properties: {}
+}`;
+        const { resources } = parseBicep(code);
+        expect(resources).toHaveLength(0);
+    });
+
+    it('parses extended types — ACR, APIM, Cognitive, Data Factory', () => {
+        const code = `
+resource acr 'Microsoft.ContainerRegistry/registries@2023-01-01' = {
+  name: 'myacr'
+  location: 'eastus'
+  properties: {}
+}
+resource apim 'Microsoft.ApiManagement/service@2022-08-01' = {
+  name: 'myapim'
+  location: 'eastus'
+  properties: {}
+}
+resource ai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: 'myai'
+  location: 'eastus'
+  properties: {}
+}
+resource adf 'Microsoft.DataFactory/factories@2018-06-01' = {
+  name: 'myadf'
+  location: 'eastus'
+  properties: {}
+}`;
+        const { resources } = parseBicep(code);
+        const cats = resources.map(r => r.category);
+        expect(cats).toContain('az_acr');
+        expect(cats).toContain('az_apim');
+        expect(cats).toContain('az_cognitive');
+        expect(cats).toContain('az_datafactory');
+    });
+
+    it('parses conditional resource (if expression)', () => {
+        const code = `
+param deployRedis bool = true
+resource redis 'Microsoft.Cache/Redis@2023-04-01' = if (deployRedis) {
+  name: 'my-redis'
+  location: 'eastus'
+  properties: {}
+}`;
+        const { resources } = parseBicep(code);
+        expect(resources).toHaveLength(1);
+        expect(resources[0].category).toBe('az_redis');
     });
 });
