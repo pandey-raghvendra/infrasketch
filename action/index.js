@@ -8,10 +8,12 @@ const MAX_FILE_BYTES = 200_000; // ~200 KB — larger files produce unwieldy URL
 
 const FORMAT_LABELS = {
   terraform:      'Terraform',
+  terragrunt:     'Terragrunt',
   pulumi:         'Pulumi',
   kubernetes:     'Kubernetes',
   cloudformation: 'CloudFormation',
   cdk:            'CDK',
+  bicep:          'Bicep / ARM',
   docker:         'Docker Compose',
 };
 
@@ -24,9 +26,13 @@ function detectFormat(filename, content) {
   const base = filename.split('/').pop().toLowerCase();
 
   if (filename.endsWith('.tf') || filename.endsWith('.tfvars')) return 'terraform';
+  if (filename.endsWith('.bicep')) return 'bicep';
+  if (base === 'terragrunt.hcl') return 'terragrunt';
   if (base.startsWith('docker-compose') || base === 'compose.yml' || base === 'compose.yaml') return 'docker';
 
   if (!content) return null;
+
+  if (content.includes('schema.management.azure.com') || content.includes('deploymentTemplate.json')) return 'bicep';
 
   if (content.includes('AWSTemplateFormatVersion') || content.includes('"AWSTemplateFormatVersion"')) {
     // CDK synth JSON has Resources but no template-level description
@@ -105,26 +111,34 @@ async function run() {
   // Build comment markdown
   const count = diagrams.length;
   const lines = [
-    `## 🗺️ Architecture Diagrams`,
-    ``,
-    count > 0
-      ? `InfraSketch found **${count} infrastructure file${count !== 1 ? 's' : ''}** in this PR:`
-      : `InfraSketch detected infrastructure files but could not generate links:`,
+    `## 🗺️ InfraSketch — Architecture Diagrams`,
     ``,
   ];
 
-  for (const d of diagrams) {
-    const icon = d.status === 'added' ? '🆕' : d.status === 'removed' ? '🗑️' : '✏️';
-    const label = FORMAT_LABELS[d.type] || d.type;
-    lines.push(`${icon} \`${d.filename}\` · ${label} · [**View diagram →**](${d.url})`);
+  if (count > 0) {
+    lines.push(`Found **${count} infrastructure file${count !== 1 ? 's' : ''}** in this PR. Click a link to see the architecture diagram instantly — no login required.`);
+    lines.push(``);
+    lines.push(`| File | Format | Status | Diagram |`);
+    lines.push(`|------|--------|--------|---------|`);
+    for (const d of diagrams) {
+      const statusIcon = d.status === 'added' ? '🆕 added' : d.status === 'modified' ? '✏️ modified' : '🔄 renamed';
+      const label = FORMAT_LABELS[d.type] || d.type;
+      lines.push(`| \`${d.filename}\` | ${label} | ${statusIcon} | [**View diagram →**](${d.url}) |`);
+    }
+  } else {
+    lines.push(`Infrastructure files detected but no diagrams could be generated.`);
   }
 
-  for (const s of skipped) {
-    lines.push(`⚠️ \`${s.filename}\` · skipped: ${s.reason}`);
+  if (skipped.length > 0) {
+    lines.push(``);
+    for (const s of skipped) {
+      lines.push(`> ⚠️ \`${s.filename}\` skipped: ${s.reason}`);
+    }
   }
 
   lines.push(``);
-  lines.push(`> [InfraSketch](${INFRASKETCH}) — paste Terraform, Pulumi, Kubernetes, CloudFormation, CDK, or Docker Compose · get instant architecture diagrams · free, no login.`);
+  lines.push(`---`);
+  lines.push(`<sub>🔍 [InfraSketch](${INFRASKETCH}) — free browser-based architecture diagrams from Terraform, Bicep, Pulumi, Kubernetes, CloudFormation, CDK & Docker Compose. Nothing leaves your browser.</sub>`);
   lines.push(`<!-- infrasketch-action -->`);
 
   const body = lines.join('\n');

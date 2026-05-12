@@ -354,6 +354,8 @@ on:
     paths:
       - '**/*.tf'
       - '**/*.tfvars'
+      - '**/*.bicep'
+      - '**/terragrunt.hcl'
       - '**/docker-compose*.yml'
       - '**/__main__.py'
       - '**/index.ts'
@@ -372,7 +374,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-The action detects changed IaC files, auto-identifies the format (Terraform, Pulumi, Kubernetes, CloudFormation, CDK, Docker Compose), generates shareable InfraSketch URLs, and posts (or updates) a PR comment. Files over 200 KB are flagged but skipped.
+The action detects changed IaC files, auto-identifies the format (Terraform, Terragrunt, Bicep/ARM, Pulumi, Kubernetes, CloudFormation, CDK, Docker Compose), generates shareable InfraSketch URLs, and posts (or updates) a PR comment. Files over 200 KB are flagged but skipped.
 
 **Inputs**
 
