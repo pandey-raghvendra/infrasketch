@@ -211,6 +211,11 @@ async function postToDevTo() {
   }
 
   const existing = await findDevToArticle();
+  if (existing) {
+    console.log(`⏭ dev.to: already published — ${existing.url}`);
+    return;
+  }
+
   const articleBody = {
     article: {
       title,
@@ -223,9 +228,9 @@ async function postToDevTo() {
   };
 
   const res = await fetchWithRetry(
-    existing ? `https://dev.to/api/articles/${existing.id}` : 'https://dev.to/api/articles',
+    'https://dev.to/api/articles',
     {
-      method: existing ? 'PUT' : 'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', 'api-key': DEVTO_API_KEY },
       body: JSON.stringify(articleBody),
     },
@@ -234,7 +239,7 @@ async function postToDevTo() {
 
   const data = await res.json();
   if (res.ok) {
-    console.log(`${existing ? '↺' : '✓'} dev.to (${existing ? 'updated' : 'created'}): ${data.url}`);
+    console.log(`✓ dev.to (created): ${data.url}`);
   } else {
     console.error(`✗ dev.to: ${res.status} — ${JSON.stringify(data)}`);
     process.exitCode = 1;
@@ -292,30 +297,12 @@ async function postToHashnode() {
   }
 
   const existing = await findHashnodePost();
-
   if (existing) {
-    const mutation = `
-      mutation UpdatePost($input: UpdatePostInput!) {
-        updatePost(input: $input) {
-          post { id title url }
-        }
-      }
-    `;
-    const input = {
-      id: existing.id,
-      title,
-      contentMarkdown: markdown,
-      originalArticleURL: canonical || undefined,
-      subtitle: description || undefined,
-    };
-    const data = await gql(mutation, { input });
-    if (data.errors) {
-      console.error(`✗ Hashnode: ${JSON.stringify(data.errors)}`);
-      process.exitCode = 1;
-    } else {
-      console.log(`↺ Hashnode (updated): ${data.data?.updatePost?.post?.url}`);
-    }
-  } else {
+    console.log(`⏭ Hashnode: already published — ${existing.url}`);
+    return;
+  }
+
+  {
     const mutation = `
       mutation PublishPost($input: PublishPostInput!) {
         publishPost(input: $input) {
