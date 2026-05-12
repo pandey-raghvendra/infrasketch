@@ -69,6 +69,14 @@ No account. No credentials. Everything runs in your browser.
 - Upload any SVG architecture diagram; shapes become fully editable draw.io cells
 - Known AWS/Azure icon filenames mapped to official `mxgraph.aws4` / `mxgraph.azure2` stencils
 
+**Cost overlay (Infracost)**
+- Click **💰 Cost** in the export bar after generating a diagram
+- Paste the output of `infracost breakdown --path . --format json` into the modal
+- Each resource gets a colour-coded monthly cost pill badge: grey (free) → green (<$10) → amber ($10–$100) → orange ($100–$500) → red (>$500)
+- Results panel lists all resources sorted by cost with a total estimate
+- Hover tooltip shows per-component cost breakdown
+- Badge and button clear automatically when a new diagram is generated
+
 **Security overlay (Checkov)**
 - Click **🛡 Security** in the export bar after generating a diagram
 - Paste the output of `checkov -d . -o json` into the modal

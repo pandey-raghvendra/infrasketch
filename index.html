@@ -773,6 +773,41 @@
         .btn-security:hover { border-color: #ef4444; color: #ef4444; }
         .btn-security.has-issues { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
         .btn-security.is-clean { border-color: #10b981; color: #10b981; background: rgba(16,185,129,0.08); }
+        .btn-cost { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all .15s; white-space: nowrap; }
+        .btn-cost:hover { border-color: #f59e0b; color: #f59e0b; }
+        .btn-cost.has-costs { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.08); }
+        /* Infracost modal */
+        .infracost-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(4px); z-index:900; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .infracost-modal-overlay[hidden] { display:none; }
+        .infracost-modal { background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; width:100%; max-width:620px; overflow:hidden; display:flex; flex-direction:column; max-height:88vh; }
+        .infracost-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
+        .infracost-modal-title { font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+        .infracost-modal-badge { font-size:10px; font-family:var(--mono); padding:2px 8px; border-radius:10px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#f59e0b; }
+        .infracost-modal-close { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; line-height:1; padding:2px 6px; border-radius:4px; }
+        .infracost-modal-close:hover { color:var(--text); background:var(--accent-dim); }
+        .infracost-modal-body { padding:16px 20px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1; }
+        .infracost-hint { font-size:12px; color:var(--text-muted); line-height:1.6; }
+        .infracost-hint code { font-family:var(--mono); background:rgba(6,214,160,0.08); color:var(--accent); padding:1px 5px; border-radius:3px; font-size:11px; }
+        .infracost-textarea { width:100%; height:130px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:12px; padding:10px 12px; resize:vertical; outline:none; transition:border-color .15s; }
+        .infracost-textarea:focus { border-color:rgba(245,158,11,0.5); }
+        .infracost-legend { display:flex; gap:12px; flex-wrap:wrap; }
+        .infracost-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; font-family:var(--mono); color:var(--text-muted); }
+        .infracost-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .infracost-results { background:var(--bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; display:none; }
+        .infracost-results.visible { display:block; }
+        .infracost-results-header { padding:10px 14px; font-size:12px; font-weight:600; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .infracost-results-total { font-family:var(--mono); color:#f59e0b; }
+        .infracost-results-list { max-height:200px; overflow-y:auto; }
+        .infracost-result-row { padding:8px 14px; border-bottom:1px solid var(--border); font-size:12px; display:flex; align-items:center; gap:10px; }
+        .infracost-result-row:last-child { border-bottom:none; }
+        .infracost-result-resource { font-family:var(--mono); color:var(--accent); flex:1; }
+        .infracost-result-cost { font-family:var(--mono); font-weight:700; white-space:nowrap; }
+        .infracost-modal-actions { display:flex; justify-content:flex-end; gap:8px; padding:12px 20px; border-top:1px solid var(--border); flex-shrink:0; }
+        .btn-infracost-cancel { padding:8px 16px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; font-size:13px; }
+        .btn-infracost-apply { padding:8px 20px; border:1px solid #f59e0b; border-radius:6px; background:rgba(245,158,11,0.1); color:#f59e0b; cursor:pointer; font-size:13px; font-weight:600; transition:all .15s; }
+        .btn-infracost-apply:hover { background:#f59e0b; color:#0c0f1a; }
+        .btn-infracost-clear { padding:8px 16px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; font-size:13px; display:none; }
+        .btn-infracost-clear.visible { display:block; }
         /* Checkov modal */
         .checkov-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(4px); z-index:900; display:flex; align-items:center; justify-content:center; padding:20px; }
         .checkov-modal-overlay[hidden] { display:none; }
@@ -2096,6 +2131,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <button class="btn-share" id="btn-share">Share</button>
                     <button class="btn-embed" id="btn-embed" title="Get embeddable iframe code for this diagram">&lt;/&gt; Embed</button>
                     <button class="btn-security" id="btn-checkov" title="Import Checkov security scan results and overlay findings on the diagram">🛡 Security</button>
+                    <button class="btn-cost" id="btn-infracost" title="Import Infracost cost estimates and overlay monthly costs on the diagram">💰 Cost</button>
                     <button class="btn-export btn-edit-toggle" id="btn-edit" title="Toggle interactive edit mode — drag nodes to reposition">Edit</button>
                     <button class="btn-export btn-reset-layout" id="btn-reset-layout" title="Reset all nodes to original layout" style="display:none">Reset Layout</button>
                     <span class="export-sep"></span>
@@ -2266,6 +2302,15 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <h3>Checkov security overlay</h3>
             <p>Run <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">checkov -d . -o json</code> and paste the output into the <strong>🛡 Security</strong> panel. Failing resources get a red border, a badge with the failure count, and a hover tooltip with check IDs — directly on the diagram.</p>
         </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+            </div>
+            <h3>Infracost cost overlay</h3>
+            <p>Run <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">infracost breakdown --path . --format json</code> and paste the output into the <strong>💰 Cost</strong> panel. Each resource gets a colour-coded monthly cost badge — green for cheap, amber for moderate, red for expensive.</p>
+        </div>
     </section>
 
     <section class="resources" id="resources">
@@ -2404,6 +2449,53 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         <div class="mermaid-modal-actions">
             <button class="btn-mermaid-cancel" id="mermaid-modal-cancel">Cancel</button>
             <button class="btn-mermaid-copy" id="mermaid-copy-btn">Copy</button>
+        </div>
+    </div>
+</div>
+
+<!-- Infracost Cost modal -->
+<div class="infracost-modal-overlay" id="infracost-modal-overlay" hidden>
+    <div class="infracost-modal">
+        <div class="infracost-modal-header">
+            <span class="infracost-modal-title">
+                💰 Cost Overlay
+                <span class="infracost-modal-badge">Infracost</span>
+            </span>
+            <button class="infracost-modal-close" id="infracost-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="infracost-modal-body">
+            <p class="infracost-hint">
+                Run <code>infracost breakdown --path . --format json &gt; infracost.json</code> then paste the output below.
+                Monthly cost estimates appear as colour-coded badges on each resource node.
+            </p>
+            <textarea class="infracost-textarea" id="infracost-input" placeholder='Paste Infracost JSON output here...
+
+{
+  "projects": [{
+    "breakdown": {
+      "resources": [...]
+    }
+  }]
+}'></textarea>
+            <div class="infracost-legend">
+                <span class="infracost-legend-item"><span class="infracost-legend-dot" style="background:#6b7280"></span>Free</span>
+                <span class="infracost-legend-item"><span class="infracost-legend-dot" style="background:#10b981"></span>&lt;$10/mo</span>
+                <span class="infracost-legend-item"><span class="infracost-legend-dot" style="background:#f59e0b"></span>$10–$100/mo</span>
+                <span class="infracost-legend-item"><span class="infracost-legend-dot" style="background:#f97316"></span>$100–$500/mo</span>
+                <span class="infracost-legend-item"><span class="infracost-legend-dot" style="background:#ef4444"></span>&gt;$500/mo</span>
+            </div>
+            <div class="infracost-results" id="infracost-results">
+                <div class="infracost-results-header">
+                    <span id="infracost-summary"></span>
+                    <span class="infracost-results-total" id="infracost-total"></span>
+                </div>
+                <div class="infracost-results-list" id="infracost-results-list"></div>
+            </div>
+        </div>
+        <div class="infracost-modal-actions">
+            <button class="btn-infracost-clear" id="btn-infracost-clear">Clear overlay</button>
+            <button class="btn-infracost-cancel" id="btn-infracost-cancel">Cancel</button>
+            <button class="btn-infracost-apply" id="btn-infracost-apply">Apply overlay</button>
         </div>
     </div>
 </div>

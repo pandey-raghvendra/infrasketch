@@ -7,6 +7,7 @@ import { generateMermaid } from './mermaid-export.js';
 import { renderDiagram } from './renderer.js';
 import { initEditor, destroyEditor, resetLayout } from './editor.js';
 import { parseCheckovJson, applyCheckovOverlay, clearCheckovOverlay } from './checkov.js';
+import { parseInfracostJson, applyInfracostOverlay, clearInfracostOverlay } from './infracost.js';
 
 let currentVirtualFS = null;
 let autoFetchRegistry = false;
@@ -2819,6 +2820,105 @@ checkovClearBtn?.addEventListener('click', () => {
     closeCheckovModal();
 });
 
+// ── Infracost cost overlay ────────────────────────────────────────────────────
+const infracostBtn        = document.getElementById('btn-infracost');
+const infracostModalEl    = document.getElementById('infracost-modal-overlay');
+const infracostClose      = document.getElementById('infracost-modal-close');
+const infracostCancel     = document.getElementById('btn-infracost-cancel');
+const infracostApply      = document.getElementById('btn-infracost-apply');
+const infracostClearBtn   = document.getElementById('btn-infracost-clear');
+const infracostInput      = document.getElementById('infracost-input');
+const infracostResults    = document.getElementById('infracost-results');
+const infracostSummary    = document.getElementById('infracost-summary');
+const infracostTotal      = document.getElementById('infracost-total');
+const infracostResultList = document.getElementById('infracost-results-list');
+
+let _infracostData = null;
+
+function openInfracostModal() {
+    if (!diagramSvg) { showToast('Generate a diagram first.', 'info'); return; }
+    infracostModalEl.removeAttribute('hidden');
+    infracostInput.focus();
+}
+function closeInfracostModal() { infracostModalEl.setAttribute('hidden', ''); }
+
+function _costColor(monthly) {
+    if (monthly == null || monthly === 0) return '#6b7280';
+    if (monthly < 10)  return '#10b981';
+    if (monthly < 100) return '#f59e0b';
+    if (monthly < 500) return '#f97316';
+    return '#ef4444';
+}
+
+function renderInfracostResults(map) {
+    infracostResultList.innerHTML = '';
+    if (!map || map.size === 0) { infracostResults.classList.remove('visible'); return; }
+
+    const priced = [...map.values()].filter(v => v.monthlyCost > 0);
+    const totalMonthly = priced.reduce((s, v) => s + (v.monthlyCost || 0), 0);
+
+    infracostSummary.textContent = `${map.size} resource${map.size !== 1 ? 's' : ''} costed`;
+    infracostTotal.textContent   = totalMonthly > 0
+        ? `Total ~$${totalMonthly < 1000 ? Math.round(totalMonthly) : (totalMonthly/1000).toFixed(1)+'k'}/mo`
+        : '';
+    infracostResults.classList.add('visible');
+
+    const sorted = [...map.entries()].sort((a, b) => (b[1].monthlyCost || 0) - (a[1].monthlyCost || 0));
+    for (const [resourceId, info] of sorted) {
+        const row = document.createElement('div');
+        row.className = 'infracost-result-row';
+        const color = _costColor(info.monthlyCost);
+        row.innerHTML = `
+            <span class="infracost-result-resource">${resourceId}</span>
+            <span class="infracost-result-cost" style="color:${color}">${info.label}</span>
+        `;
+        infracostResultList.appendChild(row);
+    }
+}
+
+infracostBtn?.addEventListener('click', openInfracostModal);
+infracostClose?.addEventListener('click', closeInfracostModal);
+infracostCancel?.addEventListener('click', closeInfracostModal);
+infracostModalEl?.addEventListener('click', (e) => { if (e.target === infracostModalEl) closeInfracostModal(); });
+
+infracostApply?.addEventListener('click', () => {
+    const json = infracostInput.value.trim();
+    if (!json) { showToast('Paste Infracost JSON first.', 'info'); return; }
+
+    const map = parseInfracostJson(json);
+    if (!map) { showToast('Could not parse Infracost JSON. Check the format.', 'error'); return; }
+
+    _infracostData = map;
+    renderInfracostResults(map);
+
+    const matched = applyInfracostOverlay(diagramSvg, map);
+
+    if (matched === 0) {
+        showToast(`Parsed ${map.size} resources — none matched diagram nodes. Check resource names.`, 'info');
+    } else {
+        const total = [...map.values()].reduce((s, v) => s + (v.monthlyCost || 0), 0);
+        const totalStr = total > 0 ? ` · ~$${Math.round(total)}/mo` : '';
+        infracostBtn.className = 'btn-cost has-costs';
+        infracostBtn.textContent = `💰 ${matched} costed${totalStr}`;
+        showToast(`Cost overlay applied to ${matched} resource${matched !== 1 ? 's' : ''}.`, 'info');
+    }
+
+    infracostClearBtn.classList.add('visible');
+    closeInfracostModal();
+});
+
+infracostClearBtn?.addEventListener('click', () => {
+    clearInfracostOverlay(diagramSvg);
+    _infracostData = null;
+    infracostBtn.className = 'btn-cost';
+    infracostBtn.textContent = '💰 Cost';
+    infracostClearBtn.classList.remove('visible');
+    infracostResults.classList.remove('visible');
+    infracostInput.value = '';
+    showToast('Cost overlay cleared.', 'info');
+    closeInfracostModal();
+});
+
 // Clear overlay when a new diagram is generated
 const _origGenerate = generateButton.onclick;
 generateButton.addEventListener('click', () => {
@@ -2828,6 +2928,13 @@ generateButton.addEventListener('click', () => {
         checkovBtn.className = 'btn-security';
         checkovBtn.textContent = '🛡 Security';
         checkovClearBtn.classList.remove('visible');
+    }
+    if (_infracostData) {
+        clearInfracostOverlay(diagramSvg);
+        _infracostData = null;
+        infracostBtn.className = 'btn-cost';
+        infracostBtn.textContent = '💰 Cost';
+        infracostClearBtn.classList.remove('visible');
     }
 });
 
