@@ -1,5 +1,5 @@
 name: 'InfraSketch Architecture Diagram'
-description: 'Post architecture diagram links on PRs that change infra code (Terraform, Pulumi, Kubernetes, CloudFormation, CDK, Docker Compose)'
+description: 'Auto-comment architecture diagrams on IaC PRs. Free, no login. Supports Terraform, Bicep, Pulumi, K8s, CloudFormation, CDK.'
 author: 'Raghvendra Pandey'
 
 branding:
