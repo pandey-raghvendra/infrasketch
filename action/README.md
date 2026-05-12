@@ -45,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pandey-raghvendra/infrasketch@v1
+      - uses: pandey-raghvendra/infrasketch@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
