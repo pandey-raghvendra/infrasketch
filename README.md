@@ -137,6 +137,19 @@ Covers parser unit tests (all 8 formats), exporter tests, and draw.io XML visual
 
 ---
 
+## Guides & blog posts
+
+| Post | Topic |
+|------|-------|
+| [GitHub Action: Auto-Diagram IaC PRs](https://infrasketch.cloud/blog/github-action-terraform-diagram.html) | CI/CD setup, monorepo, 2-min walkthrough |
+| [Visualize Checkov Results on Diagrams](https://infrasketch.cloud/blog/checkov-diagram-visualization.html) | Security overlay, check IDs, export |
+| [Visualize Infracost on Diagrams](https://infrasketch.cloud/blog/infracost-diagram-visualization.html) | Cost overlay, colour tiers, CI workflow |
+| [Terraform Diagram Generator](https://infrasketch.cloud/blog/terraform-diagram-generator.html) | HCL patterns, VPC, reference arrows |
+| [Terraform Visualization Best Practices](https://infrasketch.cloud/blog/terraform-visualization-best-practices.html) | 5 approaches compared |
+| [How to Create AWS Architecture Diagrams](https://infrasketch.cloud/blog/how-to-create-aws-architecture-diagrams.html) | Tool comparison, 2026 guide |
+
+---
+
 ## Contributing
 
 Issues and PRs welcome. For parser bugs, include a minimal sanitized IaC snippet that reproduces the problem.
