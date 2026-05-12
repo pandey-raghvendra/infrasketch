@@ -36,7 +36,7 @@ jobs:
             fi
           else
             files=$(git diff --name-status HEAD^ HEAD \
-              | awk '$1 == "A" && $2 ~ /^blog\/.+\.html$/ && $2 != "blog/index.html" { print $2 }')
+              | awk '($1 == "A" || $1 == "M") && $2 ~ /^blog\/.+\.html$/ && $2 != "blog/index.html" { print $2 }')
           fi
 
           echo "files<<EOF" >> "$GITHUB_OUTPUT"
