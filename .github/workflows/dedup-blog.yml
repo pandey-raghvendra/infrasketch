@@ -1,0 +1,32 @@
+name: Dedup Blog Posts
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Apply changes (delete duplicates). Leave unchecked to dry-run.'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  dedup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Find (and remove) duplicate posts
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
+          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
+        run: |
+          if [ "${{ github.event.inputs.apply }}" = "true" ]; then
+            node scripts/dedup-blog.js --apply
+          else
+            node scripts/dedup-blog.js
+          fi
