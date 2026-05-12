@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Terraform Diagram Generator — Visualize HCL Architecture Instantly | InfraSketch</title>
+    <meta name="description" content="Turn Terraform HCL into architecture diagrams in seconds. AWS, GCP, and Azure resources auto-detected. Free, no login, runs entirely in your browser.">
+    <meta name="keywords" content="terraform diagram generator, terraform architecture diagram, terraform visualizer, terraform hcl diagram, visualize terraform, terraform aws diagram, terraform infrastructure diagram, terraform to diagram">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/terraform-diagram-generator.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/terraform-diagram-generator.html">
+    <meta property="og:title" content="Terraform Diagram Generator — Visualize HCL Architecture Instantly">
+    <meta property="og:description" content="Turn Terraform HCL into architecture diagrams in seconds. AWS, GCP, and Azure resources auto-detected. Free, no login, runs entirely in your browser.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Terraform Diagram Generator — Visualize HCL Architecture Instantly">
+    <meta name="twitter:description" content="Turn Terraform HCL into architecture diagrams in seconds. AWS, GCP, Azure. Free, no login.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Terraform Diagram Generator — Visualize HCL Architecture Instantly",
+      "description": "Turn Terraform HCL into architecture diagrams in seconds. AWS, GCP, and Azure resources auto-detected. Free, no login, runs entirely in your browser.",
+      "url": "https://infrasketch.cloud/blog/terraform-diagram-generator.html",
+      "datePublished": "2026-05-12",
+      "dateModified": "2026-05-12",
+      "author": {
+        "@type": "Person",
+        "name": "Raghvendra Pandey",
+        "url": "https://github.com/pandey-raghvendra"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"
+        }
+      },
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+        .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}@media(max-width:600px){.feature-grid{grid-template-columns:1fr}}.feature-tile{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:20px}.feature-tile h4{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}.feature-tile p{font-size:13px;color:var(--text-muted);line-height:1.6;margin:0}
+        .callout{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.callout p{margin:0;font-size:14px;color:var(--text-muted)}
+        .faq-item{border-bottom:1px solid var(--border);padding:20px 0}.faq-item:last-child{border-bottom:none}.faq-item h3{font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text)}.faq-item p{font-size:15px;color:var(--text-muted);margin:0}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Terraform</span>
+        <h1>Terraform Diagram Generator — Visualize HCL Architecture Instantly</h1>
+        <div class="meta">By Raghvendra Pandey &middot; May 2026 &middot; 8 min read</div>
+    </div>
+
+    <article>
+
+        <p>Paste your Terraform HCL into <a href="https://infrasketch.cloud">InfraSketch</a> and get a full architecture diagram in seconds — AWS, GCP, and Azure resources auto-detected, grouped by layer, with official cloud provider icons. No CLI, no credentials, no signup. Everything runs in your browser.</p>
+
+        <div class="cta-box">
+            <h3>Try it now — free</h3>
+            <p>Paste your <code>.tf</code> files and see the architecture diagram instantly.</p>
+            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
+        </div>
+
+        <h2>Why Terraform needs a diagram tool</h2>
+
+        <p>A real-world Terraform codebase is hard to read as architecture. Resources live across dozens of files, module calls hide what actually gets deployed, and <code>count</code> / <code>for_each</code> meta-arguments mean one block can create ten resources. Reviewing a PR with 500 lines of HCL changes requires mental simulation to understand what the resulting infrastructure looks like.</p>
+
+        <p>Built-in options fall short. <code>terraform graph</code> outputs DOT format that, when rendered, produces an unreadable tangle of every internal dependency edge — providers, variables, locals, outputs — alongside actual resources. The AWS console shows deployed resources but not their relationships or intended topology. Visio and draw.io require manual box-drawing that drifts from the real infrastructure the moment someone runs <code>terraform apply</code>.</p>
+
+        <p>InfraSketch parses your HCL statically — no plan, no state, no AWS credentials required — and generates a topology diagram grouped by logical layer: Internet, Ingress, Compute, Data, Messaging, Security, and more. It works for AWS, GCP, and Azure resources in the same file.</p>
+
+        <h2>How to generate a Terraform diagram</h2>
+
+        <p>Open <a href="https://infrasketch.cloud">infrasketch.cloud</a>. The <strong>Terraform</strong> tab is selected by default. Paste your HCL — one file, multiple concatenated files, or a partial module — and click <strong>Generate Diagram</strong>. The diagram renders immediately.</p>
+
+        <pre># Example: paste this into the Terraform tab
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+}
+
+resource "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "us-east-1a"
+}
+
+resource "aws_eks_cluster" "app" {
+  name     = "production"
+  role_arn = aws_iam_role.eks.arn
+
+  vpc_config {
+    subnet_ids = [aws_subnet.private.id]
+  }
+}
+
+resource "aws_rds_cluster" "db" {
+  cluster_identifier = "app-db"
+  engine             = "aurora-postgresql"
+  engine_version     = "15.4"
+}
+
+resource "aws_elasticache_replication_group" "cache" {
+  replication_group_id = "app-cache"
+  description          = "Redis for session data"
+  node_type            = "cache.t4g.micro"
+}</pre>
+
+        <div class="callout">
+            <p><strong>Tip:</strong> You can paste multiple <code>.tf</code> files concatenated together. InfraSketch parses the full block structure, so cross-file references like <code>aws_subnet.private.id</code> resolve correctly for containment and connection detection.</p>
+        </div>
+
+        <h2>What gets visualized</h2>
+
+        <div class="feature-grid">
+            <div class="feature-tile">
+                <h4>Resource grouping</h4>
+                <p>Resources grouped into swimlanes — Networking, Compute, Database, Messaging, Security — for instant topology understanding.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>VPC containment</h4>
+                <p>Resources referencing a VPC via <code>vpc_id</code> are drawn inside the VPC boundary. Subnets appear as nested lanes.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Reference arrows</h4>
+                <p>HCL references like <code>aws_subnet.private.id</code> and <code>module.vpc.vpc_id</code> become directed arrows between nodes.</p>
+            </div>
+            <div class="feature-tile">
+                <h4>Multi-cloud support</h4>
+                <p>AWS, GCP, and Azure resource types all parse in the same file. Mixed-provider setups diagram correctly.</p>
+            </div>
+        </div>
+
+        <h2>Three common Terraform patterns</h2>
+
+        <h3>Pattern 1: VPC + EKS + RDS (three-tier web app)</h3>
+
+        <p>The most common AWS architecture: public subnets for load balancers, private subnets for application pods, isolated subnets for databases. InfraSketch detects the subnet references and draws each resource in its correct network zone.</p>
+
+        <pre>resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.0.0/24"
+}
+
+resource "aws_subnet" "private" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+}
+
+resource "aws_lb" "app" {
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public.id]
+}
+
+resource "aws_eks_cluster" "app" {
+  name = "production"
+  vpc_config {
+    subnet_ids = [aws_subnet.private.id]
+  }
+}
+
+resource "aws_db_instance" "postgres" {
+  engine         = "postgres"
+  instance_class = "db.t4g.medium"
+  db_subnet_group_name = aws_db_subnet_group.main.name
+}</pre>
+
+        <p>The diagram shows ALB in the public subnet, EKS in the private subnet, and RDS in the isolated database tier — with arrows following the actual HCL references.</p>
+
+        <h3>Pattern 2: Lambda + SQS + DynamoDB (serverless event pipeline)</h3>
+
+        <p>Serverless architectures have no VPC by default, so InfraSketch groups them by service category rather than network zone. Lambda functions, SQS queues, and DynamoDB tables each land in their logical tier.</p>
+
+        <pre>resource "aws_sqs_queue" "jobs" {
+  name = "job-queue"
+}
+
+resource "aws_lambda_function" "processor" {
+  function_name = "job-processor"
+  runtime       = "python3.12"
+  handler       = "handler.main"
+  filename      = "lambda.zip"
+
+  environment {
+    variables = {
+      QUEUE_URL = aws_sqs_queue.jobs.url
+      TABLE     = aws_dynamodb_table.results.name
+    }
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "trigger" {
+  event_source_arn = aws_sqs_queue.jobs.arn
+  function_name    = aws_lambda_function.processor.arn
+}
+
+resource "aws_dynamodb_table" "results" {
+  name         = "job-results"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "jobId"
+
+  attribute {
+    name = "jobId"
+    type = "S"
+  }
+}</pre>
+
+        <h3>Pattern 3: GCP Terraform with Cloud Run + Cloud SQL</h3>
+
+        <p>InfraSketch supports GCP resources using the <code>google_*</code> provider prefix. Cloud Run services, Cloud SQL instances, Pub/Sub topics, GKE clusters, Cloud Storage buckets, and more all render with GCP icons.</p>
+
+        <pre>resource "google_cloud_run_v2_service" "api" {
+  name     = "api"
+  location = "us-central1"
+
+  template {
+    containers {
+      image = "gcr.io/my-project/api:latest"
+      env {
+        name  = "DB_CONN"
+        value = google_sql_database_instance.main.connection_name
+      }
+    }
+  }
+}
+
+resource "google_sql_database_instance" "main" {
+  name             = "app-db"
+  database_version = "POSTGRES_15"
+  region           = "us-central1"
+}
+
+resource "google_pubsub_topic" "events" {
+  name = "app-events"
+}
+
+resource "google_storage_bucket" "assets" {
+  name     = "my-project-assets"
+  location = "US"
+}</pre>
+
+        <h2>Supported resource types</h2>
+
+        <p>InfraSketch maps 85+ resource types across all three major providers:</p>
+
+        <ul>
+            <li><strong>AWS networking:</strong> VPC, Subnet, ALB/NLB, Route 53, CloudFront, API Gateway, Transit Gateway, NAT Gateway</li>
+            <li><strong>AWS compute:</strong> EC2, ECS, EKS, Lambda, Elastic Beanstalk, Auto Scaling Groups</li>
+            <li><strong>AWS data:</strong> RDS, Aurora, DynamoDB, ElastiCache, Redshift, S3, Glacier</li>
+            <li><strong>AWS messaging:</strong> SQS, SNS, EventBridge, Kinesis, MSK (Kafka)</li>
+            <li><strong>AWS security:</strong> IAM, Security Groups, WAF, Shield, Secrets Manager, KMS</li>
+            <li><strong>AWS observability:</strong> CloudWatch, X-Ray</li>
+            <li><strong>GCP compute:</strong> GCE, GKE, Cloud Run, Cloud Functions, App Engine</li>
+            <li><strong>GCP data:</strong> Cloud SQL, Bigtable, Firestore, Spanner, BigQuery, Cloud Storage</li>
+            <li><strong>GCP networking:</strong> VPC, Load Balancer, Cloud DNS, Cloud CDN</li>
+            <li><strong>GCP messaging:</strong> Pub/Sub, Dataflow</li>
+            <li><strong>Azure:</strong> AKS, App Service, Functions, SQL, Cosmos DB, Service Bus, Key Vault, VNet, and 20+ more</li>
+        </ul>
+
+        <p>Unrecognized resource types are silently skipped — they don't cause errors. The diagram shows what it knows and omits the rest.</p>
+
+        <h2>How Terraform references become diagram connections</h2>
+
+        <p>InfraSketch parses HCL attribute values for resource references in the pattern <code>resource_type.resource_name.attribute</code>. When it finds <code>aws_subnet.private.id</code> inside an <code>aws_eks_cluster</code> block, it draws an arrow from the EKS node to the subnet node. This covers the most common connection patterns:</p>
+
+        <ul>
+            <li><code>vpc_id = aws_vpc.main.id</code> → containment inside VPC boundary</li>
+            <li><code>subnet_ids = [aws_subnet.private.id]</code> → placement in subnet lane</li>
+            <li><code>security_group_ids = [aws_security_group.app.id]</code> → connection to security group node</li>
+            <li><code>db_subnet_group_name = aws_db_subnet_group.main.name</code> → RDS in database tier</li>
+            <li><code>event_source_arn = aws_sqs_queue.jobs.arn</code> → Lambda triggered by SQS</li>
+        </ul>
+
+        <p>Module references like <code>module.vpc.vpc_id</code> also parse — the module name is shown as a dashed group boundary when module blocks are present in the input.</p>
+
+        <h2>Export and share</h2>
+
+        <p>Once your diagram is generated, export it in three formats:</p>
+
+        <ul>
+            <li><strong>PNG</strong> — paste into Confluence, Notion, Slack, or any wiki</li>
+            <li><strong>SVG</strong> — scalable for presentations and design files</li>
+            <li><strong>draw.io XML</strong> — import into draw.io or diagrams.net for manual editing and annotation</li>
+        </ul>
+
+        <p>The <strong>Share</strong> button generates a URL with your diagram state encoded in the hash — shareable without any server, since InfraSketch is 100% client-side.</p>
+
+        <h2>Terraform diagram generator use cases</h2>
+
+        <ul>
+            <li><strong>PR reviews</strong> — paste a PR's <code>.tf</code> changes to see what new resources appear before merging</li>
+            <li><strong>Onboarding</strong> — generate a diagram of your Terraform codebase and share it with new engineers instead of asking them to read HCL</li>
+            <li><strong>Architecture review boards</strong> — export PNG for design review submissions without touching Visio or Lucidchart</li>
+            <li><strong>Documentation</strong> — embed diagrams in README files, runbooks, and ADRs that stay in sync with your IaC</li>
+            <li><strong>Incident response</strong> — quickly diagram the affected infrastructure during an outage to understand blast radius</li>
+            <li><strong>Multi-cloud audits</strong> — diagram AWS + GCP or AWS + Azure resources from the same Terraform workspace</li>
+        </ul>
+
+        <div class="cta-box">
+            <h3>Generate your Terraform diagram now</h3>
+            <p>Paste any <code>.tf</code> file and see your infrastructure topology in seconds. Free, no signup, nothing leaves your browser.</p>
+            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
+        </div>
+
+        <h2>Frequently asked questions</h2>
+
+        <div class="faq-item">
+            <h3>Does InfraSketch run terraform plan or access my AWS account?</h3>
+            <p>No. InfraSketch does static analysis of your HCL source code only. It never runs Terraform, never contacts AWS/GCP/Azure APIs, and never reads your state file. Your code is parsed locally in the browser and nothing is sent to any server.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Does it support Terraform modules?</h3>
+            <p>InfraSketch parses <code>module</code> blocks and shows them as grouped boundaries in the diagram. Resources defined inside modules appear when you paste the module's <code>.tf</code> files into the input along with the root module — just concatenate the files together before pasting.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>What about count and for_each resources?</h3>
+            <p>Resources using <code>count</code> or <code>for_each</code> are shown as single nodes — InfraSketch doesn't expand them into multiple instances since it doesn't evaluate variable values. The diagram shows the intended architecture pattern rather than the exact instance count.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I use it with Terragrunt?</h3>
+            <p>Yes — InfraSketch has a dedicated Terragrunt tab. Paste your <code>terragrunt.hcl</code> files to diagram the dependency graph between Terragrunt units. See the <a href="/blog/">blog</a> for a full Terragrunt walkthrough.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>How is this different from terraform graph?</h3>
+            <p><code>terraform graph</code> outputs a raw dependency graph of every internal Terraform object — providers, variables, locals, outputs, and resources — which renders as an unreadable tangle for any real codebase. InfraSketch produces an architecture diagram grouped by logical layer, using only the resources you care about, with official cloud icons. It's intended for human communication, not debugging execution order.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is it free?</h3>
+            <p>Yes, InfraSketch is completely free with no usage limits. The source code is open on <a href="https://github.com/pandey-raghvendra/infrasketch">GitHub</a>. There's no paid tier, no API key required, and no account to create.</p>
+        </div>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/terraform-visualization-best-practices.html">Terraform Visualization: 5 Ways to See What Your Code Actually Builds</a></li>
+            <li><a href="/blog/bicep-diagram-generator.html">Bicep Diagram Generator — Visualize Azure Bicep &amp; ARM Templates Instantly</a></li>
+            <li><a href="/blog/cdk-architecture-diagram-generator.html">CDK Architecture Diagram Generator — Visualize AWS CDK Stacks Instantly</a></li>
+            <li><a href="/blog/free-vs-paid-diagram-tools.html">Free vs Paid Cloud Architecture Diagram Tools — Honest Comparison 2026</a></li>
+        </ul>
+
+    </article>
+</div>
+
+<footer>
+    <p><a href="https://infrasketch.cloud">infrasketch.cloud</a> &mdash; open source, forever free &mdash; <a href="https://github.com/pandey-raghvendra/infrasketch">GitHub</a></p>
+</footer>
+</body>
+</html>
