@@ -10,7 +10,6 @@
     <title>Kubernetes Diagram Generator — Visualize K8s YAML Instantly | InfraSketch</title>
     <meta name="description" content="Turn Kubernetes YAML manifests into architecture diagrams in seconds. Paste your K8s YAML and get a visual diagram with namespace grouping, service connections, and selector-based wiring. Free, no login.">
     <meta name="keywords" content="kubernetes diagram, k8s diagram generator, kubernetes architecture diagram, kubernetes yaml visualizer, kubernetes deployment diagram, k8s visualizer, kubernetes namespace diagram">
-    <meta name="robots" content="noindex">
     <link rel="canonical" href="https://infrasketch.cloud/blog/kubernetes-diagram-generator.html">
     
     <meta property="og:type" content="article">
@@ -228,7 +227,53 @@ metadata:
         <pre>helm template my-release ./my-chart | pbcopy          # macOS
 kustomize build overlays/production | pbcopy            # macOS</pre>
 
-        <p>This works especially well for understanding what a third-party Helm chart actually deploys before you install it in your cluster.</p>
+        <p>This works especially well for understanding what a third-party Helm chart actually deploys before you install it in your cluster. Paste the rendered output for NGINX Ingress Controller, cert-manager, or Prometheus Operator and see exactly which resources they create before running <code>helm install</code>.</p>
+
+        <h2>Common Kubernetes application patterns</h2>
+
+        <h3>Microservices with shared ingress</h3>
+        <p>Multiple Deployments each with their own Service, all routed through a single Ingress with path-based rules, produce a fan-out diagram: one Ingress node with arrows to each Service, each Service connected to its backing Deployment. InfraSketch draws each Deployment-Service pair as a group and fans the Ingress connections out clearly.</p>
+
+        <h3>Worker with queue</h3>
+        <p>A pattern common in data pipelines: a Deployment that reads from an external queue has no Service (no inbound traffic) but does reference a Secret (for queue credentials) and a ConfigMap (for configuration). InfraSketch draws it as an isolated Deployment node with arrows to the Secret and ConfigMap — the asymmetry in the diagram immediately signals "this is a consumer, not a server."</p>
+
+        <h3>StatefulSet with PVC</h3>
+        <p>Databases deployed as StatefulSets typically have a PersistentVolumeClaim per replica. InfraSketch draws the StatefulSet connected to its PVC(s) in the storage zone, and any Service that selects the StatefulSet connected from the networking zone. This pattern clearly separates the compute layer from the storage layer in the diagram.</p>
+
+        <h3>Multi-namespace monitoring stack</h3>
+        <p>Paste Prometheus, Alertmanager, and Grafana manifests from a <code>monitoring</code> namespace alongside your application manifests from <code>production</code>. InfraSketch draws both namespace boxes side by side with the monitoring stack's ServiceMonitor references shown as cross-namespace connections.</p>
+
+        <h2>Getting YAML from a live cluster</h2>
+
+        <p>Several <code>kubectl</code> commands produce paste-ready YAML for InfraSketch:</p>
+
+        <pre># All resources in a namespace
+kubectl get all -n production -o yaml
+
+# Specific resource kinds
+kubectl get deployments,services,ingresses -n production -o yaml
+
+# A single Helm release's resources
+helm get manifest my-release -n production
+
+# All namespaces at once
+kubectl get all --all-namespaces -o yaml</pre>
+
+        <p>For large clusters, target specific namespaces or resource kinds to keep the diagram readable. Pasting ten namespaces of manifests will produce a technically accurate but visually dense diagram.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>Does InfraSketch need access to my cluster?</h3>
+        <p>No. Everything runs in your browser. InfraSketch reads the YAML you paste — it never makes network requests to your cluster, cloud provider, or any external API. Your manifests never leave your browser tab.</p>
+
+        <h3>My Service selector doesn't match any Deployment — why?</h3>
+        <p>Selector matching requires the Service's <code>spec.selector</code> labels to be a subset of the Deployment's <code>spec.selector.matchLabels</code>. If the manifest is a Deployment template without <code>matchLabels</code> defined (e.g., only <code>spec.template.metadata.labels</code>), InfraSketch falls back to name-based matching. Paste both the Service and its target Deployment together for best results.</p>
+
+        <h3>What about Custom Resource Definitions (CRDs)?</h3>
+        <p>CRDs with unknown <code>kind</code> values are not mapped to diagram nodes — InfraSketch only renders the 16 built-in Kubernetes kinds listed above. Common operator resources (Certificates from cert-manager, VirtualServices from Istio) are skipped. Support for additional kinds will expand in future releases.</p>
+
+        <h3>Can I diagram a single Pod's YAML?</h3>
+        <p>Yes — paste any valid Kubernetes YAML, including standalone Pod specs. A single Pod with <code>envFrom</code> referencing a ConfigMap and a volume mounting a Secret will show the Pod connected to both config resources. It works best when you paste related manifests together so InfraSketch can draw the full connection graph.</p>
 
         <div class="cta-box">
             <h3>Generate your Kubernetes diagram now</h3>

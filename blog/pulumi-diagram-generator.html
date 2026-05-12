@@ -10,7 +10,6 @@
     <title>Pulumi Diagram Generator — Visualize Pulumi Infrastructure Instantly | InfraSketch</title>
     <meta name="description" content="Turn Pulumi TypeScript or Python code into architecture diagrams in seconds. Paste your Pulumi stack and get a visual diagram with VPC containment, subnet grouping, and official AWS, GCP, and Azure icons. Free, no login.">
     <meta name="keywords" content="pulumi diagram, pulumi visualizer, pulumi architecture diagram, pulumi aws diagram, pulumi gcp diagram, infrastructure as code diagram, pulumi typescript diagram">
-    <meta name="robots" content="noindex">
     <link rel="canonical" href="https://infrasketch.cloud/blog/pulumi-diagram-generator.html">
     
     <meta property="og:type" content="article">
@@ -172,6 +171,61 @@ cluster = aws.eks.Cluster("eks", vpc_config=aws.eks.ClusterVpcConfigArgs(
             <li><strong>Architecture reviews</strong> — export as draw.io XML for a fully editable diagram in your design doc</li>
             <li><strong>Multi-stack visibility</strong> — paste each stack separately and compare their architectures side by side</li>
         </ul>
+
+        <h2>GCP resources with Pulumi</h2>
+
+        <p>InfraSketch maps Pulumi GCP resources using the <code>@pulumi/gcp</code> (TypeScript) and <code>pulumi_gcp</code> (Python) providers. Supported GCP types include:</p>
+
+        <ul>
+            <li><strong>Networking:</strong> <code>gcp.compute.Network</code>, <code>gcp.compute.Subnetwork</code>, <code>gcp.compute.Router</code>, <code>gcp.compute.GlobalAddress</code></li>
+            <li><strong>Compute:</strong> <code>gcp.compute.Instance</code>, <code>gcp.container.Cluster</code> (GKE), <code>gcp.cloudrun.Service</code>, <code>gcp.cloudfunctions.Function</code></li>
+            <li><strong>Data:</strong> <code>gcp.sql.DatabaseInstance</code>, <code>gcp.bigquery.Dataset</code>, <code>gcp.spanner.Instance</code>, <code>gcp.bigtable.Instance</code>, <code>gcp.storage.Bucket</code>, <code>gcp.firestore.Database</code></li>
+            <li><strong>Messaging:</strong> <code>gcp.pubsub.Topic</code>, <code>gcp.pubsub.Subscription</code></li>
+            <li><strong>Security:</strong> <code>gcp.kms.KeyRing</code>, <code>gcp.secretmanager.Secret</code>, <code>gcp.serviceaccount.Account</code></li>
+        </ul>
+
+        <pre>// GCP Pulumi example
+import * as gcp from "@pulumi/gcp";
+
+const network = new gcp.compute.Network("vpc", { autoCreateSubnetworks: false });
+const subnet = new gcp.compute.Subnetwork("subnet", {
+    network: network.id,
+    ipCidrRange: "10.0.0.0/24",
+});
+const cluster = new gcp.container.Cluster("gke", {
+    network: network.name,
+    subnetwork: subnet.name,
+});</pre>
+
+        <h2>Azure resources with Pulumi</h2>
+
+        <p>Pulumi supports Azure via two providers: the classic <code>@pulumi/azure</code> (wraps Terraform AzureRM) and the native <code>@pulumi/azure-native</code> (generated directly from the ARM API). InfraSketch supports the classic provider's <code>azurerm_*</code> resource types through Pulumi's wrapping — pass Azure Classic Pulumi code and VNets, AKS clusters, App Services, SQL servers, and Key Vaults all render correctly.</p>
+
+        <h2>Pulumi ComponentResource and abstractions</h2>
+
+        <p>ComponentResource is Pulumi's way of grouping resources into reusable abstractions — similar to CDK Constructs. A <code>ComponentResource</code> might wrap a VPC, security groups, and route tables into a single "Network" abstraction. InfraSketch parses the resources at the leaf level (the actual <code>aws.ec2.Vpc</code>, <code>aws.ec2.SecurityGroup</code> calls inside the component), not at the component level, so you see the underlying resources on the diagram even if they're created inside a ComponentResource.</p>
+
+        <h2>Pulumi vs CDK diagrams</h2>
+
+        <p>Both Pulumi and CDK let you write infrastructure in TypeScript. The key difference for diagramming:</p>
+
+        <ul>
+            <li><strong>Pulumi:</strong> Paste source code directly — InfraSketch parses the TypeScript or Python text. No compilation step needed. Works best with files under ~500 lines; very large stacks may have resources that fall outside the parsed window.</li>
+            <li><strong>CDK:</strong> Requires a <code>cdk synth</code> step first. The synthesized JSON is more complete and deterministic — every resource CDK creates, including automatically-generated IAM roles and security groups, appears in the output. CDK diagrams tend to show more nodes than Pulumi diagrams for equivalent infrastructure.</li>
+        </ul>
+
+        <p>If you need the most accurate diagram, CDK wins because synthesis resolves all abstractions. If you want to paste and go without running any commands, Pulumi wins.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>Does InfraSketch support Pulumi Go or C#?</h3>
+        <p>Not yet. The parser targets TypeScript (<code>.ts</code>) and Python (<code>.py</code>) syntax specifically. Go and C# support is on the roadmap. TypeScript is the most widely used Pulumi language, and Python is second.</p>
+
+        <h3>What if my Pulumi code uses variables and loops?</h3>
+        <p>InfraSketch uses regex-based parsing rather than evaluating the code. Resources created inside <code>for</code> loops will be detected but may appear as a single node (only the first loop iteration's resource constructor is matched). Static resource declarations work fully. Conditional resources (<code>if (isProd) new aws.rds.Instance(...</code>) appear in the diagram regardless of the condition value.</p>
+
+        <h3>Can I paste multiple Pulumi files?</h3>
+        <p>Yes — paste the contents of multiple files concatenated together. InfraSketch scans the entire input for resource constructors. If two files reference the same variable name for different resources, connections may link incorrectly, so it's best to paste one file at a time for large stacks.</p>
 
         <h2>Pulumi vs Terraform diagrams</h2>
 

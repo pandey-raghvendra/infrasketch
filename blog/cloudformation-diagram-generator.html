@@ -10,7 +10,6 @@
     <title>CloudFormation Diagram Generator — Visualize AWS Templates Instantly | InfraSketch</title>
     <meta name="description" content="Turn CloudFormation YAML or JSON into architecture diagrams in seconds. Supports !Ref, !GetAtt, VPC containment, subnet grouping, and 30+ AWS resource types. Free, no login.">
     <meta name="keywords" content="cloudformation, devops, aws, terraform">
-    <meta name="robots" content="noindex">
     <link rel="canonical" href="https://infrasketch.cloud/blog/cloudformation-diagram-generator.html">
     
     <meta property="og:type" content="article">
@@ -218,6 +217,44 @@ Resources:
             <li><strong>draw.io integration</strong> — export as draw.io XML to get a fully editable diagram in diagrams.net or Confluence</li>
             <li><strong>Audit prep</strong> — show reviewers the actual infrastructure topology without sharing credentials</li>
         </ul>
+
+        <h2>AWS SAM templates</h2>
+
+        <p>AWS SAM (Serverless Application Model) templates are CloudFormation templates with additional resource types like <code>AWS::Serverless::Function</code>, <code>AWS::Serverless::Api</code>, and <code>AWS::Serverless::SimpleTable</code>. SAM templates are transformed to standard CloudFormation before deployment — InfraSketch works best with the transformed output.</p>
+
+        <p>To get the transformed template, run:</p>
+
+        <pre>sam build
+sam package --output-template-file packaged.yaml
+# paste packaged.yaml into the CloudFormation tab</pre>
+
+        <p>Alternatively, paste your raw SAM template — <code>AWS::Serverless::Function</code> maps to the Lambda icon, <code>AWS::Serverless::Api</code> maps to API Gateway, and <code>AWS::Serverless::SimpleTable</code> maps to DynamoDB. The diagram won't show automatically-created IAM roles or log groups (those only appear after SAM transform), but the core service topology is correct.</p>
+
+        <h2>Nested stacks</h2>
+
+        <p>CloudFormation nested stacks use <code>AWS::CloudFormation::Stack</code> to reference child templates stored in S3. InfraSketch treats each <code>AWS::CloudFormation::Stack</code> resource as a single node rather than expanding its contents — to diagram a nested stack's internals, paste its template separately. This keeps the parent diagram clean while letting you drill into each child stack independently.</p>
+
+        <h2>Common template patterns</h2>
+
+        <h3>Three-tier web application</h3>
+        <p>A classic three-tier stack — ALB in a public subnet, ECS service in a private app subnet, RDS in a data subnet — produces exactly the layered diagram you'd draw by hand. InfraSketch places the ALB in the Ingress zone, the ECS service inside the VPC's private subnet, and RDS in the Data zone below, with arrows showing ALB → ECS → RDS.</p>
+
+        <h3>Serverless API</h3>
+        <p>A stack with <code>AWS::ApiGateway::RestApi</code>, <code>AWS::Lambda::Function</code>, and <code>AWS::DynamoDB::Table</code> renders as API Gateway in the Internet zone, Lambda in the Compute zone, DynamoDB in the Data zone, with connection arrows showing the invocation chain.</p>
+
+        <h3>Event-driven pipeline</h3>
+        <p>SNS → SQS → Lambda → DynamoDB pipelines produce clean left-to-right flow diagrams, with SNS in the Messaging zone, SQS as the buffer, Lambda in Compute, and DynamoDB in Data. <code>!Ref</code> references between them create the arrows automatically.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>My template uses Parameters — will it still parse?</h3>
+        <p>Yes. InfraSketch doesn't need to resolve parameter values to draw the diagram. Parameters are ignored during parsing; only the <code>Resources</code> block matters. If a resource property is <code>!Ref MyParameter</code>, that reference is skipped (it doesn't point to another resource), and the resource still appears on the diagram.</p>
+
+        <h3>What about Conditions and Mappings?</h3>
+        <p>Resources wrapped in <code>!If [MyCondition, ...]</code> are included in the diagram regardless of the condition — InfraSketch shows the full possible set of resources, not a specific deployment. Mappings are not evaluated; references to them via <code>!FindInMap</code> are ignored for connection purposes.</p>
+
+        <h3>Does it support JSON CloudFormation?</h3>
+        <p>Yes — JSON templates (where properties use <code>{ "Ref": "..." }</code> and <code>{ "Fn::GetAtt": [...] }</code> syntax) work identically to YAML. The parser detects the format automatically from the first character.</p>
 
         <div class="cta-box">
             <h3>Try CloudFormation diagrams now</h3>

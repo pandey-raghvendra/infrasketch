@@ -10,7 +10,6 @@
     <title>CDK Architecture Diagram Generator — Visualize AWS CDK Apps Instantly | InfraSketch</title>
     <meta name="description" content="Turn AWS CDK synth output into architecture diagrams in seconds. Paste cdk synth JSON and get a visual diagram with VPC containment, subnet grouping, and official AWS icons. Free, no login.">
     <meta name="keywords" content="cdk, awscdk, devops, aws">
-    <meta name="robots" content="noindex">
     <link rel="canonical" href="https://infrasketch.cloud/blog/cdk-architecture-diagram-generator.html">
     
     <meta property="og:type" content="article">
@@ -163,6 +162,54 @@ cdk synth &gt; template.json  # save to file</pre>
         <h2>Works with CDK for Terraform too</h2>
 
         <p>CDK for Terraform (CDKTF) can synthesize Terraform JSON. If you're using CDKTF, use the <strong>Terraform</strong> tab and paste the synthesized JSON — InfraSketch's plan JSON parser handles it directly.</p>
+
+        <h2>Common CDK patterns and how they diagram</h2>
+
+        <h3>VPC with public and private subnets</h3>
+
+        <p>CDK's <code>ec2.Vpc</code> construct with <code>maxAzs: 2</code> synthesizes to one VPC, two public subnets, two private subnets, an Internet Gateway, two NAT Gateways, and four route tables — all in a single CloudFormation stack. InfraSketch renders the VPC container with public and private subnet lanes, places the NAT Gateways in the public lane, and draws the IGW in the Internet zone above.</p>
+
+        <pre>// CDK TypeScript — synthesizes to ~30 CloudFormation resources
+const vpc = new ec2.Vpc(this, 'Vpc', {
+  maxAzs: 2,
+  natGateways: 1,
+  subnetConfiguration: [
+    { name: 'Public', subnetType: ec2.SubnetType.PUBLIC },
+    { name: 'Private', subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+  ],
+});</pre>
+
+        <h3>ECS Fargate service with ALB</h3>
+
+        <p>The <code>ecs_patterns.ApplicationLoadBalancedFargateService</code> L3 construct synthesizes to an ECS Cluster, Fargate Task Definition, ECS Service, ALB, Target Group, Security Groups, and IAM Roles. InfraSketch places the ALB in the ingress zone, the ECS service in a private subnet, and draws connections from ALB → Target Group → Service.</p>
+
+        <h3>Lambda with SQS trigger</h3>
+
+        <p>When <code>lambda.Function</code> uses an <code>SqsEventSource</code>, CDK synthesizes an event source mapping resource alongside the Lambda and SQS Queue. InfraSketch draws the SQS Queue in the messaging zone with an arrow to the Lambda, matching the actual invocation direction.</p>
+
+        <h2>Reading CDK-generated logical IDs</h2>
+
+        <p>CDK generates stable but opaque logical IDs like <code>VpcPublicSubnet1Subnet5C2D37C4</code> and <code>ECSClusterA592C0A4</code>. These IDs are hashes of the construct path, not human-friendly names. On InfraSketch diagrams, resources are labelled with their resource type and a truncated version of the logical ID, so you can cross-reference the diagram with your CDK source using the construct ID you gave the resource (e.g., <code>Vpc</code>, <code>ECSCluster</code>).</p>
+
+        <p>To make diagrams easier to read, use descriptive IDs in your CDK code — <code>new eks.Cluster(this, 'ProdEksCluster', ...)</code> produces a more readable diagram label than <code>new eks.Cluster(this, 'Cluster', ...)</code>.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>Can I paste a CDK app with multiple stacks?</h3>
+        <p>Run <code>cdk synth MyStack</code> to target one stack, or diagram each stack separately. Pasting output from <code>cdk synth</code> with multiple stacks concatenated may produce unexpected results since the output is multiple JSON documents.</p>
+
+        <h3>Does InfraSketch support CDK Aspects?</h3>
+        <p>Aspects modify the CDK tree before synthesis — by the time you run <code>cdk synth</code> and paste the JSON, Aspects have already been applied. Any resources or properties added by an Aspect appear in the synthesized output and are diagrammed correctly.</p>
+
+        <h3>What if my synth output is very large?</h3>
+        <p>InfraSketch runs entirely in-browser with no size limits. A typical VPC + EKS + RDS stack synthesizes to 150–300 CloudFormation resources; InfraSketch renders whichever resource types it recognises and omits lower-level resources like route table associations and security group egress rules that would clutter the diagram.</p>
+
+        <h3>Can I diagram a CDK Stage or Environment?</h3>
+        <p>Yes — <code>cdk synth</code> on a Stage produces one CloudFormation template per stack in the Stage. Diagram each stack's JSON separately to compare environments.</p>
+
+        <h2>CDK vs CloudFormation diagrams</h2>
+
+        <p>The CDK and CloudFormation tabs in InfraSketch use the same underlying parser — CDK synthesizes to CloudFormation, so the input format is identical. The practical difference is how you get the input: CDK requires a <code>cdk synth</code> step; CloudFormation templates are static files you already have. If you write CDK, always diagram from synthesized output (not hand-written CloudFormation) to make sure you're seeing exactly what gets deployed.</p>
 
         <div class="cta-box">
             <h3>Generate your CDK diagram now</h3>
