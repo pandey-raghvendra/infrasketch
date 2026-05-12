@@ -3,6 +3,8 @@
 ![Stars](https://img.shields.io/github/stars/pandey-raghvendra/infrasketch?style=flat&color=orange)
 ![License](https://img.shields.io/github/license/pandey-raghvendra/infrasketch?style=flat&color=blue)
 ![Open Source](https://img.shields.io/badge/open%20source-forever-brightgreen?style=flat)
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-InfraSketch%20Action-blue?logo=github&style=flat)](https://github.com/marketplace/actions/infrasketch-architecture-diagram)
+
 If InfraSketch saved you time, consider starring the repo ⭐
 
 <img width="740" height="135" alt="image" src="https://github.com/user-attachments/assets/f77e697a-2a8a-4255-9115-2aaad1b13c17" />
@@ -342,7 +344,9 @@ Pulumi GCP and Azure resources mirror the Terraform GCP/Azure tables above using
 
 ## GitHub Action
 
-Add architecture diagram links to every PR that touches infrastructure code. No secrets needed — `GITHUB_TOKEN` is automatic.
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-InfraSketch%20Architecture%20Diagram-blue?logo=github)](https://github.com/marketplace/actions/infrasketch-architecture-diagram)
+
+Add architecture diagram links to every PR that touches infrastructure code. No secrets needed — `GITHUB_TOKEN` is automatic. **[View on GitHub Marketplace →](https://github.com/marketplace/actions/infrasketch-architecture-diagram)**
 
 ```yaml
 # .github/workflows/infrasketch.yml
