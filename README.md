@@ -69,6 +69,14 @@ No account. No credentials. Everything runs in your browser.
 - Upload any SVG architecture diagram; shapes become fully editable draw.io cells
 - Known AWS/Azure icon filenames mapped to official `mxgraph.aws4` / `mxgraph.azure2` stencils
 
+**Security overlay (Checkov)**
+- Click **🛡 Security** in the export bar after generating a diagram
+- Paste the output of `checkov -d . -o json` into the modal
+- InfraSketch matches failed checks to diagram nodes by resource ID and highlights them with a red border, a failure-count badge, and a hover tooltip listing the check IDs and descriptions
+- Handles array-format output (multiple check types), module-prefixed resource IDs (`module.vpc.aws_subnet.private`), and `count`/`for_each` index suffixes
+- Button turns red with issue count (`🛡 3 issues`) or green (`✓ Clean`) — clears automatically when a new diagram is generated
+- Nothing is sent to any server; all matching runs in the browser
+
 **Other**
 - Shareable URL — **Share** button encodes editor state as a base64 URL hash; recipients land on the rendered diagram
 - Resource summary table — collapsible, lists every resource with name, type, and category
