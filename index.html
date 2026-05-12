@@ -769,6 +769,39 @@
         .btn-share.copied { border-color: #10b981; color: #10b981; }
         .btn-embed { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap; }
         .btn-embed:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-security { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all .15s; white-space: nowrap; }
+        .btn-security:hover { border-color: #ef4444; color: #ef4444; }
+        .btn-security.has-issues { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
+        .btn-security.is-clean { border-color: #10b981; color: #10b981; background: rgba(16,185,129,0.08); }
+        /* Checkov modal */
+        .checkov-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(4px); z-index:900; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .checkov-modal-overlay[hidden] { display:none; }
+        .checkov-modal { background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; width:100%; max-width:620px; overflow:hidden; display:flex; flex-direction:column; max-height:88vh; }
+        .checkov-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
+        .checkov-modal-title { font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+        .checkov-modal-badge { font-size:10px; font-family:var(--mono); padding:2px 8px; border-radius:10px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#ef4444; }
+        .checkov-modal-close { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; line-height:1; padding:2px 6px; border-radius:4px; }
+        .checkov-modal-close:hover { color:var(--text); background:var(--accent-dim); }
+        .checkov-modal-body { padding:16px 20px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1; }
+        .checkov-hint { font-size:12px; color:var(--text-muted); line-height:1.6; }
+        .checkov-hint code { font-family:var(--mono); background:rgba(6,214,160,0.08); color:var(--accent); padding:1px 5px; border-radius:3px; font-size:11px; }
+        .checkov-textarea { width:100%; height:130px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:12px; padding:10px 12px; resize:vertical; outline:none; transition:border-color .15s; }
+        .checkov-textarea:focus { border-color:rgba(239,68,68,0.5); }
+        .checkov-results { background:var(--bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; display:none; }
+        .checkov-results.visible { display:block; }
+        .checkov-results-header { padding:10px 14px; font-size:12px; font-weight:600; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .checkov-results-list { max-height:200px; overflow-y:auto; }
+        .checkov-result-row { padding:8px 14px; border-bottom:1px solid var(--border); font-size:12px; display:flex; align-items:flex-start; gap:10px; }
+        .checkov-result-row:last-child { border-bottom:none; }
+        .checkov-result-resource { font-family:var(--mono); color:var(--accent); min-width:160px; flex-shrink:0; }
+        .checkov-result-checks { color:var(--text-muted); line-height:1.5; }
+        .checkov-result-dot { width:6px; height:6px; border-radius:50%; background:#ef4444; flex-shrink:0; margin-top:5px; }
+        .checkov-modal-actions { display:flex; justify-content:flex-end; gap:8px; padding:12px 20px; border-top:1px solid var(--border); flex-shrink:0; }
+        .btn-checkov-cancel { padding:8px 16px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; font-size:13px; }
+        .btn-checkov-apply { padding:8px 20px; border:1px solid #ef4444; border-radius:6px; background:rgba(239,68,68,0.1); color:#ef4444; cursor:pointer; font-size:13px; font-weight:600; transition:all .15s; }
+        .btn-checkov-apply:hover { background:#ef4444; color:white; }
+        .btn-checkov-clear { padding:8px 16px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; font-size:13px; display:none; }
+        .btn-checkov-clear.visible { display:block; }
 
         /* Embed modal */
         .embed-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -2062,6 +2095,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="export-actions">
                     <button class="btn-share" id="btn-share">Share</button>
                     <button class="btn-embed" id="btn-embed" title="Get embeddable iframe code for this diagram">&lt;/&gt; Embed</button>
+                    <button class="btn-security" id="btn-checkov" title="Import Checkov security scan results and overlay findings on the diagram">🛡 Security</button>
                     <button class="btn-export btn-edit-toggle" id="btn-edit" title="Toggle interactive edit mode — drag nodes to reposition">Edit</button>
                     <button class="btn-export btn-reset-layout" id="btn-reset-layout" title="Reset all nodes to original layout" style="display:none">Reset Layout</button>
                     <span class="export-sep"></span>
@@ -2361,6 +2395,43 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         <div class="mermaid-modal-actions">
             <button class="btn-mermaid-cancel" id="mermaid-modal-cancel">Cancel</button>
             <button class="btn-mermaid-copy" id="mermaid-copy-btn">Copy</button>
+        </div>
+    </div>
+</div>
+
+<!-- Checkov Security modal -->
+<div class="checkov-modal-overlay" id="checkov-modal-overlay" hidden>
+    <div class="checkov-modal">
+        <div class="checkov-modal-header">
+            <span class="checkov-modal-title">
+                🛡 Security Scan Overlay
+                <span class="checkov-modal-badge">Checkov</span>
+            </span>
+            <button class="checkov-modal-close" id="checkov-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="checkov-modal-body">
+            <p class="checkov-hint">
+                Run <code>checkov -d . -o json &gt; checkov.json</code> on your IaC directory, then paste the JSON output below.
+                InfraSketch will highlight affected resources on the diagram with red borders and failure counts.
+            </p>
+            <textarea class="checkov-textarea" id="checkov-input" placeholder='Paste Checkov JSON output here...
+
+{
+  "results": {
+    "failed_checks": [...]
+  }
+}'></textarea>
+            <div class="checkov-results" id="checkov-results">
+                <div class="checkov-results-header">
+                    <span id="checkov-summary"></span>
+                </div>
+                <div class="checkov-results-list" id="checkov-results-list"></div>
+            </div>
+        </div>
+        <div class="checkov-modal-actions">
+            <button class="btn-checkov-clear" id="btn-checkov-clear">Clear overlay</button>
+            <button class="btn-checkov-cancel" id="btn-checkov-cancel">Cancel</button>
+            <button class="btn-checkov-apply" id="btn-checkov-apply">Apply overlay</button>
         </div>
     </div>
 </div>

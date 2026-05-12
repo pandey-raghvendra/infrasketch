@@ -6,6 +6,7 @@ import { buildVirtualFS, expandModules } from './moduleResolver.js';
 import { generateMermaid } from './mermaid-export.js';
 import { renderDiagram } from './renderer.js';
 import { initEditor, destroyEditor, resetLayout } from './editor.js';
+import { parseCheckovJson, applyCheckovOverlay, clearCheckovOverlay } from './checkov.js';
 
 let currentVirtualFS = null;
 let autoFetchRegistry = false;
@@ -2726,6 +2727,108 @@ embedCopy?.addEventListener('click', () => {
         embedCopy.textContent = 'Copied!';
         setTimeout(() => { embedCopy.textContent = 'Copy'; }, 2000);
     });
+});
+
+// ── Checkov security overlay ──────────────────────────────────────────────────
+const checkovBtn        = document.getElementById('btn-checkov');
+const checkovModalEl    = document.getElementById('checkov-modal-overlay');
+const checkovClose      = document.getElementById('checkov-modal-close');
+const checkovCancel     = document.getElementById('btn-checkov-cancel');
+const checkovApply      = document.getElementById('btn-checkov-apply');
+const checkovClearBtn   = document.getElementById('btn-checkov-clear');
+const checkovInput      = document.getElementById('checkov-input');
+const checkovResults    = document.getElementById('checkov-results');
+const checkovSummary    = document.getElementById('checkov-summary');
+const checkovResultList = document.getElementById('checkov-results-list');
+
+let _checkovFailures = null; // current parsed failures map
+
+function openCheckovModal() {
+    if (!diagramSvg) { showToast('Generate a diagram first.', 'info'); return; }
+    checkovModalEl.removeAttribute('hidden');
+    checkovInput.focus();
+}
+function closeCheckovModal() { checkovModalEl.setAttribute('hidden', ''); }
+
+function renderCheckovResults(map) {
+    checkovResultList.innerHTML = '';
+    if (!map || map.size === 0) {
+        checkovResults.classList.remove('visible');
+        return;
+    }
+    const total = [...map.values()].reduce((s, v) => s + v.length, 0);
+    checkovSummary.textContent = `${map.size} resource${map.size !== 1 ? 's' : ''} · ${total} failed check${total !== 1 ? 's' : ''}`;
+    checkovResults.classList.add('visible');
+
+    for (const [resourceId, checks] of map) {
+        const row = document.createElement('div');
+        row.className = 'checkov-result-row';
+        row.innerHTML = `
+            <span class="checkov-result-dot"></span>
+            <span class="checkov-result-resource">${resourceId}</span>
+            <span class="checkov-result-checks">${checks.map(c => `<span title="${c.checkName}">${c.checkId}</span>`).join(', ')}</span>
+        `;
+        checkovResultList.appendChild(row);
+    }
+}
+
+checkovBtn?.addEventListener('click', openCheckovModal);
+checkovClose?.addEventListener('click', closeCheckovModal);
+checkovCancel?.addEventListener('click', closeCheckovModal);
+checkovModalEl?.addEventListener('click', (e) => { if (e.target === checkovModalEl) closeCheckovModal(); });
+
+checkovApply?.addEventListener('click', () => {
+    const json = checkovInput.value.trim();
+    if (!json) { showToast('Paste Checkov JSON first.', 'info'); return; }
+
+    const map = parseCheckovJson(json);
+    if (!map) { showToast('Could not parse Checkov JSON. Check the format.', 'error'); return; }
+
+    _checkovFailures = map;
+    renderCheckovResults(map);
+
+    const matched = applyCheckovOverlay(diagramSvg, map);
+
+    if (map.size === 0) {
+        checkovBtn.className = 'btn-security is-clean';
+        checkovBtn.textContent = '✓ Clean';
+        showToast('No failed checks found in the JSON.', 'info');
+    } else if (matched === 0) {
+        checkovBtn.className = 'btn-security has-issues';
+        checkovBtn.textContent = `🛡 ${map.size} issues`;
+        showToast(`${map.size} resources with issues — none matched diagram nodes. Check resource names.`, 'info');
+    } else {
+        checkovBtn.className = 'btn-security has-issues';
+        checkovBtn.textContent = `🛡 ${matched} issues`;
+        showToast(`Highlighted ${matched} resource${matched !== 1 ? 's' : ''} with security findings.`, 'info');
+    }
+
+    checkovClearBtn.classList.add('visible');
+    closeCheckovModal();
+});
+
+checkovClearBtn?.addEventListener('click', () => {
+    clearCheckovOverlay(diagramSvg);
+    _checkovFailures = null;
+    checkovBtn.className = 'btn-security';
+    checkovBtn.textContent = '🛡 Security';
+    checkovClearBtn.classList.remove('visible');
+    checkovResults.classList.remove('visible');
+    checkovInput.value = '';
+    showToast('Security overlay cleared.', 'info');
+    closeCheckovModal();
+});
+
+// Clear overlay when a new diagram is generated
+const _origGenerate = generateButton.onclick;
+generateButton.addEventListener('click', () => {
+    if (_checkovFailures) {
+        clearCheckovOverlay(diagramSvg);
+        _checkovFailures = null;
+        checkovBtn.className = 'btn-security';
+        checkovBtn.textContent = '🛡 Security';
+        checkovClearBtn.classList.remove('visible');
+    }
 });
 
 if (!loadFromHash()) loadFromQueryParam();
