@@ -2698,6 +2698,42 @@ function loadFromQueryParam() {
     return true;
 }
 
+// ── ?src=URL query param support (used by CLI for remote files) ───────────────
+async function loadFromSrcParam() {
+    const params = new URLSearchParams(location.search);
+    const src = params.get('src');
+    if (!src) return false;
+    const forceType = params.get('type') || null;
+
+    // Show loading state in the editor
+    codeInput.value = `# Fetching ${src} …`;
+    codeInput.disabled = true;
+
+    try {
+        const res = await fetch(src);
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        const code = await res.text();
+
+        const detected = detectFormat(code) || forceType || 'terraform';
+        const tab = document.querySelector(`.input-tab[data-type="${detected}"]`);
+        if (tab) {
+            document.querySelectorAll('.input-tab').forEach((t) => t.classList.remove('active'));
+            tab.classList.add('active');
+            updateEditorForType(detected);
+        }
+        codeInput.value = code;
+        codeInput.disabled = false;
+        generateButton.click();
+    } catch (err) {
+        codeInput.value = `# Error fetching ${src}\n# ${err.message}\n#\n# Paste your IaC code here manually.`;
+        codeInput.disabled = false;
+        showToast(`Failed to fetch: ${err.message}`, 'error', 5000);
+    }
+
+    history.replaceState(null, '', location.pathname + location.hash);
+    return true;
+}
+
 // ── Embed button ──────────────────────────────────────────────────────────────
 const embedButton    = document.getElementById('btn-embed');
 const embedModal     = document.getElementById('embed-modal-overlay');
@@ -2980,4 +3016,4 @@ generateButton.addEventListener('click', () => {
     }
 });
 
-if (!loadFromHash()) loadFromQueryParam();
+if (!loadFromHash() && !loadFromQueryParam()) loadFromSrcParam();
