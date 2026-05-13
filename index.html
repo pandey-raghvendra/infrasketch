@@ -1934,7 +1934,7 @@
 
         <div class="hero-eyebrow">
             <span class="dot"></span>
-            FREE &nbsp;·&nbsp; NO SIGNUP &nbsp;·&nbsp; 100% BROWSER
+            FREE &nbsp;·&nbsp; NO SIGNUP &nbsp;·&nbsp; 100% BROWSER &nbsp;·&nbsp; <a href="https://www.npmjs.com/package/infrasketch" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;opacity:.8">npm: infrasketch</a>
         </div>
 
         <h1>
@@ -2022,6 +2022,40 @@
             <a href="https://github.com/marketplace/actions/infrasketch-architecture-diagram" target="_blank" class="action-callout-link" aria-label="View InfraSketch on GitHub Marketplace">
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 View on Marketplace
+            </a>
+        </div>
+    </div>
+
+    <!-- CLI CALLOUT -->
+    <div class="action-callout">
+        <div class="action-callout-inner">
+            <div class="action-callout-icon">
+                <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            </div>
+            <div class="action-callout-text">
+                <strong>CLI — diagram from your terminal</strong>
+                <span><code style="font-family:var(--mono);font-size:12px;color:var(--accent)">npx infrasketch .</code> &nbsp;— scans your repo and opens a live diagram in the browser. Zero install.</span>
+            </div>
+            <a href="https://www.npmjs.com/package/infrasketch" target="_blank" class="action-callout-link" aria-label="infrasketch on npm">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                View on npm
+            </a>
+        </div>
+    </div>
+
+    <!-- EMBED CALLOUT -->
+    <div class="action-callout">
+        <div class="action-callout-inner">
+            <div class="action-callout-icon">
+                <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="action-callout-text">
+                <strong>Web component — embed diagrams anywhere</strong>
+                <span><code style="font-family:var(--mono);font-size:12px;color:var(--accent)">&lt;infra-sketch src="./main.tf"&gt;</code> &nbsp;— one tag on any blog, docs site, or README preview.</span>
+            </div>
+            <a href="https://infrasketch.cloud/embed.js" target="_blank" class="action-callout-link" aria-label="InfraSketch embed.js">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                embed.js
             </a>
         </div>
     </div>
@@ -2315,6 +2349,24 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             </div>
             <h3>Infracost cost overlay</h3>
             <p>Run <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">infracost breakdown --path . --format json</code> and paste the output into the <strong>💰 Cost</strong> panel. Each resource gets a colour-coded monthly cost badge — green for cheap, amber for moderate, red for expensive.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+                </svg>
+            </div>
+            <h3>CLI — diagram from the terminal</h3>
+            <p>Run <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">npx infrasketch .</code> in any Terraform, Kubernetes, or Pulumi repo. InfraSketch scans all IaC files, auto-detects the format, and opens a live interactive diagram in your browser — no install required.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                </svg>
+            </div>
+            <h3>Embeddable web component</h3>
+            <p>Add <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">&lt;script src="infrasketch.cloud/embed.js"&gt;</code> once, then drop <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">&lt;infra-sketch src="./main.tf"&gt;</code> anywhere on your docs, blog, or README preview page. Or generate an <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">&lt;iframe&gt;</code> embed via the <strong>&lt;/&gt; Embed</strong> button.</p>
         </div>
     </section>
 

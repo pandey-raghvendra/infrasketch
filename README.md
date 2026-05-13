@@ -3,6 +3,7 @@
 ![Stars](https://img.shields.io/github/stars/pandey-raghvendra/infrasketch?style=flat&color=orange)
 ![License](https://img.shields.io/github/license/pandey-raghvendra/infrasketch?style=flat&color=blue)
 ![Open Source](https://img.shields.io/badge/open%20source-forever-brightgreen?style=flat)
+[![npm](https://img.shields.io/npm/v/infrasketch?style=flat&color=cb3837&logo=npm)](https://www.npmjs.com/package/infrasketch)
 [![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-InfraSketch%20Action-blue?logo=github&style=flat)](https://github.com/marketplace/actions/infrasketch-architecture-diagram)
 
 > If InfraSketch saved you time, consider starring the repo ⭐
@@ -17,10 +18,33 @@
 
 ## Quick Start
 
+**Browser:**
 1. Open **https://infrasketch.cloud**
 2. Paste any IaC code — format is auto-detected
 3. Click **Generate Diagram**
 4. Export as **PNG**, **SVG**, **draw.io XML**, or **Mermaid** — or **Share** to copy a link
+
+**Terminal (CLI):**
+```bash
+npx infrasketch .                   # scan current directory
+npx infrasketch main.tf             # single file
+npx infrasketch ./k8s/              # kubernetes manifests folder
+npx infrasketch main.tf --no-open  # CI: print URL, skip browser
+```
+
+**Embed on any page:**
+```html
+<!-- Load once -->
+<script src="https://infrasketch.cloud/embed.js"></script>
+
+<!-- Point at a public IaC file URL -->
+<infra-sketch src="https://raw.githubusercontent.com/org/repo/main/main.tf"></infra-sketch>
+
+<!-- Or paste code inline -->
+<infra-sketch type="terraform" height="480">
+resource "aws_vpc" "main" { cidr_block = "10.0.0.0/16" }
+</infra-sketch>
+```
 
 ---
 
@@ -68,6 +92,70 @@ jobs:
 ```
 
 Detects changed IaC files, identifies format, generates shareable diagram URLs, posts (or updates) a PR comment.
+
+---
+
+## CLI
+
+[![npm](https://img.shields.io/npm/v/infrasketch?style=flat&color=cb3837&logo=npm)](https://www.npmjs.com/package/infrasketch)
+
+Visualise any IaC repo from your terminal — no install needed:
+
+```bash
+npx infrasketch .
+```
+
+Scans for `.tf`, `.yaml`, `.yml`, `.bicep`, `.json`, `.ts`, `.py` files, auto-detects the format, encodes to a URL, and opens a live diagram in your browser. Nothing is uploaded.
+
+```bash
+# Single file
+npx infrasketch main.tf
+
+# Kubernetes manifests
+npx infrasketch ./k8s/
+
+# Remote GitHub raw URL (browser fetches — no upload)
+npx infrasketch https://raw.githubusercontent.com/org/repo/main/main.tf
+
+# CI — print URL without opening browser
+npx infrasketch main.tf --no-open
+
+# Override format detection
+npx infrasketch stack.json --type cloudformation
+```
+
+Install globally: `npm install -g infrasketch`
+
+See [`cli/README.md`](cli/README.md) for full documentation.
+
+---
+
+## Embed web component
+
+Drop a live diagram on any blog, docs site, or GitHub Pages:
+
+```html
+<!-- Add once to your <head> -->
+<script src="https://infrasketch.cloud/embed.js"></script>
+
+<!-- Embed by URL (auto-fetches your IaC file) -->
+<infra-sketch
+  src="https://raw.githubusercontent.com/org/repo/main/main.tf"
+  height="500"
+></infra-sketch>
+
+<!-- Or inline code -->
+<infra-sketch type="kubernetes" height="480">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+</infra-sketch>
+```
+
+Attributes: `src` · `type` · `height` · `width`
+
+Or use the **`</> Embed`** button in the app to get an `<iframe>` or `<infra-sketch>` snippet for the current diagram.
 
 ---
 
