@@ -847,8 +847,13 @@
         .embed-modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px; }
         .embed-modal-close:hover { color: var(--text); background: var(--accent-dim); }
         .embed-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .embed-modal-hint { font-size: 12px; color: var(--text-muted); }
-        .embed-code-block { background: var(--bg-editor); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 11px; color: var(--text); white-space: pre; overflow-x: auto; line-height: 1.6; }
+        .embed-modal-hint { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        .embed-tab-bar { display: flex; gap: 4px; }
+        .embed-tab { padding: 5px 12px; font-size: 11px; font-family: var(--mono); font-weight: 500; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all .15s; }
+        .embed-tab.active { background: var(--accent-dim); border-color: rgba(6,214,160,.35); color: var(--accent); }
+        .embed-tab:hover:not(.active) { border-color: var(--text-muted); color: var(--text); }
+        .embed-code-block { background: var(--bg-editor); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 11px; color: var(--text); white-space: pre; overflow-x: auto; line-height: 1.6; max-height: 260px; overflow-y: auto; }
+        .embed-code-label { font-size: 10px; font-family: var(--mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: -4px; }
         .embed-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
         .btn-embed-cancel { padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; }
         .btn-embed-copy { padding: 8px 20px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-dim); color: var(--accent); cursor: pointer; font-size: 13px; font-weight: 600; }
@@ -2548,8 +2553,22 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <button class="embed-modal-close" id="embed-modal-close" aria-label="Close">&times;</button>
         </div>
         <div class="embed-modal-body">
-            <p class="embed-modal-hint">Paste this snippet into any webpage. The diagram loads directly from your browser — no server, no stored data.</p>
-            <pre class="embed-code-block" id="embed-code"></pre>
+            <div class="embed-tab-bar">
+                <button class="embed-tab active" id="embed-tab-iframe">&lt;iframe&gt;</button>
+                <button class="embed-tab" id="embed-tab-wc">&lt;infra-sketch&gt; web component</button>
+            </div>
+            <p class="embed-modal-hint" id="embed-hint">Paste this snippet into any webpage. The diagram loads directly from your browser — no server, no stored data.</p>
+            <!-- iframe tab -->
+            <div id="embed-panel-iframe">
+                <pre class="embed-code-block" id="embed-code"></pre>
+            </div>
+            <!-- web component tab -->
+            <div id="embed-panel-wc" hidden>
+                <p class="embed-code-label">1 — add once to your &lt;head&gt;</p>
+                <pre class="embed-code-block" id="embed-wc-loader"></pre>
+                <p class="embed-code-label" style="margin-top:8px">2 — embed anywhere on your page</p>
+                <pre class="embed-code-block" id="embed-wc-element"></pre>
+            </div>
             <div class="embed-modal-actions">
                 <button class="btn-embed-cancel" id="embed-cancel-btn">Cancel</button>
                 <button class="btn-embed-copy" id="embed-copy-btn">Copy</button>

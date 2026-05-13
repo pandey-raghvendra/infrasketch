@@ -2699,11 +2699,36 @@ function loadFromQueryParam() {
 }
 
 // ── Embed button ──────────────────────────────────────────────────────────────
-const embedButton = document.getElementById('btn-embed');
-const embedModal = document.getElementById('embed-modal-overlay');
-const embedClose = document.getElementById('embed-modal-close');
-const embedCode = document.getElementById('embed-code');
-const embedCopy = document.getElementById('embed-copy-btn');
+const embedButton    = document.getElementById('btn-embed');
+const embedModal     = document.getElementById('embed-modal-overlay');
+const embedClose     = document.getElementById('embed-modal-close');
+const embedCode      = document.getElementById('embed-code');
+const embedCopy      = document.getElementById('embed-copy-btn');
+const embedHint      = document.getElementById('embed-hint');
+const embedTabIframe = document.getElementById('embed-tab-iframe');
+const embedTabWc     = document.getElementById('embed-tab-wc');
+const embedPanelIframe = document.getElementById('embed-panel-iframe');
+const embedPanelWc   = document.getElementById('embed-panel-wc');
+const embedWcLoader  = document.getElementById('embed-wc-loader');
+const embedWcElement = document.getElementById('embed-wc-element');
+
+let _activeEmbedTab = 'iframe'; // 'iframe' | 'wc'
+
+function _setEmbedTab(tab) {
+    _activeEmbedTab = tab;
+    embedTabIframe?.classList.toggle('active', tab === 'iframe');
+    embedTabWc?.classList.toggle('active', tab === 'wc');
+    if (embedPanelIframe) embedPanelIframe.hidden = tab !== 'iframe';
+    if (embedPanelWc)     embedPanelWc.hidden     = tab !== 'wc';
+    if (embedHint) {
+        embedHint.textContent = tab === 'iframe'
+            ? 'Paste this snippet into any webpage. The diagram loads directly from your browser — no server, no stored data.'
+            : 'Add the script tag once per page, then use <infra-sketch> anywhere — point to a URL or paste code inline. No login required.';
+    }
+}
+
+embedTabIframe?.addEventListener('click', () => _setEmbedTab('iframe'));
+embedTabWc?.addEventListener('click',     () => _setEmbedTab('wc'));
 
 embedButton?.addEventListener('click', () => {
     const code = codeInput.value.trim();
@@ -2711,11 +2736,22 @@ embedButton?.addEventListener('click', () => {
         showToast('Generate a diagram first, then embed it.', 'info');
         return;
     }
-    const hash = encodeState(activeInputType(), code);
+    const type = activeInputType();
+    const hash = encodeState(type, code);
     if (!hash) return;
     history.replaceState(null, '', `#${hash}`);
-    const snippet = `<iframe\n  src="https://infrasketch.cloud/embed.html#${hash}"\n  width="100%"\n  height="520"\n  style="border:none;border-radius:8px"\n  allowfullscreen\n  title="InfraSketch Architecture Diagram"\n></iframe>`;
-    embedCode.textContent = snippet;
+
+    // ── iframe snippet ────────────────────────────────────────────────────────
+    const iframeSnippet = `<iframe\n  src="https://infrasketch.cloud/embed.html#${hash}"\n  width="100%"\n  height="520"\n  style="border:none;border-radius:8px"\n  allowfullscreen\n  title="InfraSketch Architecture Diagram"\n></iframe>`;
+    embedCode.textContent = iframeSnippet;
+
+    // ── web component snippets ────────────────────────────────────────────────
+    const loaderSnippet  = `<script src="https://infrasketch.cloud/embed.js"><\/script>`;
+    const elementSnippet = `<infra-sketch type="${type}" height="520">\n${code}\n</infra-sketch>`;
+    embedWcLoader.textContent  = loaderSnippet;
+    embedWcElement.textContent = elementSnippet;
+
+    _setEmbedTab('iframe'); // always reset to iframe tab on open
     embedModal.removeAttribute('hidden');
 });
 
@@ -2724,7 +2760,13 @@ document.getElementById('embed-cancel-btn')?.addEventListener('click', () => emb
 embedModal?.addEventListener('click', (e) => { if (e.target === embedModal) embedModal.setAttribute('hidden', ''); });
 
 embedCopy?.addEventListener('click', () => {
-    navigator.clipboard.writeText(embedCode.textContent).then(() => {
+    let textToCopy;
+    if (_activeEmbedTab === 'iframe') {
+        textToCopy = embedCode.textContent;
+    } else {
+        textToCopy = embedWcLoader.textContent + '\n\n' + embedWcElement.textContent;
+    }
+    navigator.clipboard.writeText(textToCopy).then(() => {
         embedCopy.textContent = 'Copied!';
         setTimeout(() => { embedCopy.textContent = 'Copy'; }, 2000);
     });
