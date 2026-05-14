@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>How to Embed a Live IaC Architecture Diagram on Any Website with &lt;infra-sketch&gt; | InfraSketch</title>
+    <meta name="description" content="Embed live, interactive Terraform, Kubernetes, and Pulumi diagrams in any website, docs, or wiki using the infra-sketch web component. One script tag, no account needed.">
+    <meta name="keywords" content="embed terraform diagram, iac diagram embed, infrastructure diagram web component, embed kubernetes diagram docs, live terraform diagram blog">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/embed-iac-diagram-web-component.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/embed-iac-diagram-web-component.html">
+    <meta property="og:title" content="How to Embed a Live IaC Architecture Diagram on Any Website with &lt;infra-sketch&gt;">
+    <meta property="og:description" content="Embed live, interactive Terraform, Kubernetes, and Pulumi diagrams in any website, docs, or wiki using the infra-sketch web component. One script tag, no account needed.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="How to Embed a Live IaC Architecture Diagram on Any Website with &lt;infra-sketch&gt;">
+    <meta name="twitter:description" content="Embed live Terraform, Kubernetes, and Pulumi diagrams in any website or docs using a single script tag and the infra-sketch web component.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "How to Embed a Live IaC Architecture Diagram on Any Website with <infra-sketch>",
+      "description": "Embed live, interactive Terraform, Kubernetes, and Pulumi diagrams in any website, docs, or wiki using the infra-sketch web component. One script tag, no account needed.",
+      "url": "https://infrasketch.cloud/blog/embed-iac-diagram-web-component.html",
+      "datePublished": "2026-05-14",
+      "dateModified": "2026-05-14",
+      "author": { "@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra" },
+      "publisher": { "@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": { "@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg" } },
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.25);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+        .callout{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.callout p{margin:0;font-size:14px;color:var(--text-muted)}
+        .step-list{counter-reset:steps;list-style:none;margin-left:0}.step-list li{counter-increment:steps;padding:16px 16px 16px 56px;position:relative;border-left:2px solid var(--border);margin-bottom:12px}.step-list li::before{content:counter(steps);position:absolute;left:-14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+        .faq-item{border-bottom:1px solid var(--border);padding:20px 0}.faq-item:last-child{border-bottom:none}.faq-item h3{font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text)}.faq-item p{font-size:15px;color:var(--text-muted);margin:0}
+        .compare-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}.compare-table th{text-align:left;padding:10px 16px;background:var(--bg-surface);color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border)}.compare-table td{padding:10px 16px;border-bottom:1px solid rgba(30,34,64,0.6);color:#b0b8d1}.compare-table td:first-child{font-family:var(--mono);color:var(--accent);font-size:13px}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links">
+        <li><a href="/">Tool</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+    </ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">🧩 Embed</span>
+        <h1>How to Embed a Live IaC Architecture Diagram on Any Website with &lt;infra-sketch&gt;</h1>
+        <div class="meta">May 14, 2026 &middot; 8 min read &middot; InfraSketch Blog</div>
+    </div>
+    <article>
+
+        <div class="callout">
+            <p><strong>TL;DR:</strong> Add one script tag to your page, then use <code>&lt;infra-sketch src="URL"&gt;</code> or inline your IaC code between the tags. The diagram renders interactively, updates when you update the source, and never sends your code to a server.</p>
+        </div>
+
+        <h2>Why living diagrams beat static images in docs</h2>
+
+        <p>There's a specific kind of documentation rot that hits infrastructure teams hard: the architecture diagram that was accurate when someone drew it, is now pinned to a Confluence page, and describes an environment that no longer exists. Someone added an RDS read replica. Someone else swapped EC2 for ECS Fargate. The diagram stayed put.</p>
+
+        <p>Static diagram images — PNGs and SVGs exported from draw.io or Lucidchart — have a structural problem. Keeping them current requires someone to remember to update them, have the original tool open, export a new image, and re-upload it. That chain breaks constantly in practice. Not because people are careless; they're just busy.</p>
+
+        <p>A living diagram solves this by rendering from the actual IaC file every time the page loads. When the Terraform changes, the diagram changes. No export, no re-upload, no manual step. It's accurate because it's always generated from the current code, not from a snapshot.</p>
+
+        <p>The InfraSketch embed component makes this work on any website, docs platform, or wiki that accepts custom HTML: one script tag, then drop the <code>&lt;infra-sketch&gt;</code> element wherever you want the diagram.</p>
+
+        <h2>Two ways to embed: iframe vs web component</h2>
+
+        <p>Two ways to embed, and which one you use depends on your platform:</p>
+
+        <p><strong>The iframe approach</strong> works everywhere — Confluence, Notion, GitHub Pages, internal wikis, anything that allows an HTML iframe. You generate a diagram URL first (browser tool, CLI, or MCP server), then paste the iframe tag. It's a bit more manual but totally reliable across any platform, including those that restrict JavaScript.</p>
+
+        <p><strong>The web component</strong> is cleaner for HTML-based sites. One script tag in the head, then use <code>&lt;infra-sketch&gt;</code> anywhere on your page — point it at a source URL or write IaC code inline between the tags. The component fetches, detects the format, and renders. For docs sites built with MkDocs, Docusaurus, Hugo, or Jekyll, this is the approach I'd recommend.</p>
+
+        <h2>Getting the iframe embed code (from the app)</h2>
+
+        <p>If you have an existing diagram open in the InfraSketch web app, the fastest way to get embed code is the share button. The app generates both an iframe snippet and a direct link:</p>
+
+        <pre>&lt;iframe
+  src="https://infrasketch.cloud/#eJyVVdtu2zgQffdXEH..."
+  width="100%"
+  height="500"
+  style="border: none; border-radius: 8px;"
+  title="Infrastructure Architecture Diagram"
+&gt;&lt;/iframe&gt;</pre>
+
+        <p>Paste this into any HTML page or any platform with an HTML/embed block. The iframe is fully self-contained — the diagram state is in the URL, so there are no external dependencies beyond the InfraSketch web app itself.</p>
+
+        <p>For platforms that strip the <code>src</code> attribute from iframes for security reasons (some wiki platforms and CMS editors do this), see the CORS considerations section below.</p>
+
+        <h2>The infra-sketch web component: one-line setup</h2>
+
+        <p>The web component is loaded with a single script tag that you add once to your page's <code>&lt;head&gt;</code> or just before <code>&lt;/body&gt;</code>:</p>
+
+        <pre>&lt;script src="https://infrasketch.cloud/embed.js"&gt;&lt;/script&gt;</pre>
+
+        <p>After loading, the <code>&lt;infra-sketch&gt;</code> custom element is registered and available anywhere on the page. It renders as a responsive iframe-like widget with pan and zoom support, the same interactive experience as the full web app.</p>
+
+        <p>The script is small, loads from a CDN, and is cached aggressively. Including it on a documentation page adds negligible overhead — the component only fetches and renders when an <code>&lt;infra-sketch&gt;</code> element is actually present in the DOM, so unused script inclusions don't trigger any work.</p>
+
+        <h2>Embedding by URL: the src= attribute</h2>
+
+        <p>The simplest way to embed a diagram is to point the component at a URL that returns IaC code. The component fetches the URL, detects the format, and renders the diagram:</p>
+
+        <pre>&lt;infra-sketch
+  src="https://raw.githubusercontent.com/your-org/infra/main/terraform/main.tf"
+&gt;&lt;/infra-sketch&gt;</pre>
+
+        <p>When the page loads, the component fetches the <code>src</code> URL, reads the content, auto-detects the IaC format, and renders the interactive diagram. If the file changes in GitHub, the diagram on your documentation page changes the next time someone loads it — without any manual intervention.</p>
+
+        <p>You can also pass an explicit <code>type</code> attribute to skip format detection and ensure correct rendering for ambiguous files:</p>
+
+        <pre>&lt;infra-sketch
+  src="https://raw.githubusercontent.com/your-org/infra/main/k8s/deployment.yaml"
+  type="kubernetes"
+  height="600"
+&gt;&lt;/infra-sketch&gt;</pre>
+
+        <p>The <code>height</code> attribute sets the diagram height in pixels. If omitted, a default of 480px is used. Width is always 100% of the container element, making the component responsive to its parent layout.</p>
+
+        <h2>Embedding inline code</h2>
+
+        <p>For documentation where you want to show a specific, curated snippet rather than an entire file, write the IaC code directly between the <code>&lt;infra-sketch&gt;</code> tags:</p>
+
+        <pre>&lt;infra-sketch type="kubernetes" height="500"&gt;
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-server
+  namespace: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    spec:
+      containers:
+      - name: api
+        image: your-org/api:latest
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  selector:
+    app: api-server
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+&lt;/infra-sketch&gt;</pre>
+
+        <p>When no <code>src</code> attribute is provided, the component uses the element's text content as the IaC code. The <code>type</code> attribute is recommended for inline code since there's no file extension to auto-detect from. The content is treated as plain text — HTML entities inside the element are decoded before parsing, so you can use <code>&amp;lt;</code> safely in an HTML context.</p>
+
+        <div class="callout">
+            <p><strong>Tip:</strong> For documentation sites that process Markdown, wrap inline IaC code in a raw HTML block to prevent the Markdown parser from mangling the whitespace or escaping characters inside the element.</p>
+        </div>
+
+        <h2>All supported attributes (src, type, height, width)</h2>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>Attribute</th>
+                    <th>Required</th>
+                    <th>Default</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>src</td>
+                    <td>No</td>
+                    <td>—</td>
+                    <td>URL of the IaC file to fetch and render. Omit to use inline content.</td>
+                </tr>
+                <tr>
+                    <td>type</td>
+                    <td>No</td>
+                    <td>auto-detect</td>
+                    <td>IaC format: terraform, kubernetes, pulumi, cloudformation, cdk, bicep, terragrunt, docker-compose</td>
+                </tr>
+                <tr>
+                    <td>height</td>
+                    <td>No</td>
+                    <td>480</td>
+                    <td>Height of the diagram widget in pixels</td>
+                </tr>
+                <tr>
+                    <td>width</td>
+                    <td>No</td>
+                    <td>100%</td>
+                    <td>Width of the diagram widget. Accepts px or % values.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>The component also exposes a custom event, <code>infra-sketch-load</code>, that fires when the diagram has finished rendering. You can listen to it for analytics, lazy-load triggers, or to show/hide a loading skeleton:</p>
+
+        <pre>document.querySelector('infra-sketch').addEventListener('infra-sketch-load', (e) => {
+  console.log('Diagram rendered:', e.detail.resourceCount, 'resources');
+});</pre>
+
+        <h2>Real examples: GitHub Pages docs, Backstage, Confluence, Notion</h2>
+
+        <h3>GitHub Pages / Jekyll / Hugo / MkDocs</h3>
+
+        <p>For static site generators, add the embed script to your theme's base template and use the component in any page. For MkDocs with the Material theme, add the script to <code>overrides/main.html</code>. For Jekyll, add it to <code>_layouts/default.html</code>. Then use the component in any Markdown file within a raw HTML block:</p>
+
+        <pre>## Network Architecture
+
+The following diagram shows the production VPC layout:
+
+&lt;infra-sketch
+  src="https://raw.githubusercontent.com/your-org/infra/main/terraform/vpc.tf"
+  height="550"
+&gt;&lt;/infra-sketch&gt;</pre>
+
+        <h3>Backstage TechDocs</h3>
+
+        <p>Backstage TechDocs is built on MkDocs and renders Markdown for service catalogs. The same pattern applies — add the script to the TechDocs theme override and embed diagrams inline in your service's <code>docs/</code> directory. Because TechDocs serves content from the same origin as Backstage, there are no CORS restrictions when fetching from GitHub raw URLs.</p>
+
+        <h3>Confluence</h3>
+
+        <p>Confluence's HTML macro lets you paste raw HTML including script tags. Create an HTML macro block on your page, paste in the embed script tag and the <code>&lt;infra-sketch&gt;</code> element. Alternatively, use the iframe approach — generate the iframe URL from the InfraSketch app and paste it using Confluence's iframe macro. The iframe approach is more reliable across Confluence versions since some restrict JavaScript in HTML macros by default.</p>
+
+        <h3>Notion</h3>
+
+        <p>Notion doesn't support arbitrary HTML or script tags in pages, but it does have an Embed block that accepts iframe URLs. Generate the diagram URL from the InfraSketch app (or via the CLI with <code>--no-open</code>), then use Notion's <code>/embed</code> command and paste the URL. Notion will render it as an embedded iframe. The result is an interactive diagram inside your Notion page that anyone with page access can pan and zoom.</p>
+
+        <h2>Loading from GitHub raw URLs — the recommended pattern</h2>
+
+        <p>Pointing the <code>src</code> attribute at a GitHub raw URL is the most maintainable pattern for living diagrams. The URL format is:</p>
+
+        <pre>https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}</pre>
+
+        <p>For example:</p>
+
+        <pre>&lt;infra-sketch
+  src="https://raw.githubusercontent.com/your-org/infra/main/modules/networking/main.tf"
+  type="terraform"
+  height="600"
+&gt;&lt;/infra-sketch&gt;</pre>
+
+        <p>When <code>main.tf</code> is updated and merged, the next page load will show the updated diagram. No documentation update required. No diagram export needed. The diagram is always synchronized with the code in your default branch.</p>
+
+        <p>For branch-specific documentation — for example, showing the architecture as it will look after a specific feature branch is merged — use the branch name in the URL:</p>
+
+        <pre>&lt;infra-sketch
+  src="https://raw.githubusercontent.com/your-org/infra/feature/new-vpc/modules/networking/main.tf"
+  type="terraform"
+&gt;&lt;/infra-sketch&gt;</pre>
+
+        <p>This is particularly useful when combined with the <a href="/blog/github-action-terraform-diagram.html">GitHub Action</a>, which posts a diagram to the PR. You can also link to branch-specific documentation that shows what the architecture will look like after the PR is merged, and the diagram will automatically become the "post-merge" diagram once the branch is merged to main.</p>
+
+        <p>For private repositories, GitHub raw URLs require authentication. In that case, you can either use the inline code approach (copy the relevant code into your documentation page directly) or host your own IaC files on an authenticated endpoint and point <code>src</code> at that.</p>
+
+        <h2>Error handling and CORS considerations</h2>
+
+        <p>When using the <code>src</code> attribute, the web component fetches the URL from the browser using the Fetch API. This means the target URL must be accessible from the user's browser and must allow cross-origin requests via CORS headers.</p>
+
+        <p>GitHub raw URLs (<code>raw.githubusercontent.com</code>) are served with permissive CORS headers — they allow requests from any origin, so they work out of the box. Most public file hosting services and CDNs also support CORS for public content.</p>
+
+        <p>If the <code>src</code> URL is on a private server or an origin that doesn't send CORS headers, the fetch will fail with a network error. In that case:</p>
+
+        <ul>
+            <li>Use inline content instead of <code>src</code></li>
+            <li>Configure your server to send <code>Access-Control-Allow-Origin: *</code> for the IaC files</li>
+            <li>Use a CORS proxy (only for non-sensitive content)</li>
+            <li>Generate the diagram URL server-side and embed it as a static iframe URL instead of using the web component's dynamic fetch</li>
+        </ul>
+
+        <p>When a fetch fails, the component shows a visible error state — it doesn't silently disappear. Non-200 response, empty body, network error — you get "Could not load diagram source" in the widget and the actual error in the browser console, so you know what went wrong.</p>
+
+        <p>For inline content, there's no network request and no CORS consideration — the content is right there in the DOM, and the component reads it synchronously.</p>
+
+        <h2>Privacy: what the embed does and doesn't send</h2>
+
+        <p>Same privacy model as the rest of InfraSketch: your IaC code never touches InfraSketch servers. Here's exactly what happens when you use <code>src</code>:</p>
+
+        <ol>
+            <li>The browser fetches the <code>src</code> URL — request goes to GitHub or wherever you're hosting the file, not to InfraSketch</li>
+            <li>File content lands in the browser</li>
+            <li>The component encodes it into a URL fragment (gzip + base64) in-memory</li>
+            <li>Creates an iframe pointing to <code>https://infrasketch.cloud/#&lt;fragment&gt;</code></li>
+            <li>Browser loads the InfraSketch web app — the HTTP request goes to our CDN, but fragments are never included in HTTP requests (that's the HTTP spec)</li>
+            <li>The web app decodes the fragment client-side and renders</li>
+        </ol>
+
+        <p>What InfraSketch servers actually see: a request for the embed script, a request for the web app assets. That's it. No IaC code, no diagram content, no infrastructure metadata. Standard CDN logs with IP, user agent, timestamp — same as any website.</p>
+
+        <p>With inline content, step 1 doesn't happen at all. The only network contact is loading the web app assets.</p>
+
+        <h2>A complete minimal embed page</h2>
+
+        <p>Here's a full, self-contained HTML page that embeds a Terraform diagram using the web component. You can use this as a starting point for a GitHub Pages documentation page or any static HTML site:</p>
+
+        <pre>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Network Architecture - Internal Docs&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        h1 { font-size: 24px; margin-bottom: 8px; }
+        p { color: #555; margin-bottom: 24px; }
+    &lt;/style&gt;
+    &lt;script src="https://infrasketch.cloud/embed.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Production Network Architecture&lt;/h1&gt;
+    &lt;p&gt;This diagram is generated live from the Terraform source in the infra repository.&lt;/p&gt;
+
+    &lt;infra-sketch
+        src="https://raw.githubusercontent.com/your-org/infra/main/terraform/networking/main.tf"
+        type="terraform"
+        height="580"
+    &gt;&lt;/infra-sketch&gt;
+
+    &lt;p style="margin-top: 16px; font-size: 13px; color: #888;"&gt;
+        Diagram always reflects the current &lt;code&gt;main&lt;/code&gt; branch.
+        &lt;a href="https://github.com/your-org/infra/blob/main/terraform/networking/main.tf"&gt;View source&lt;/a&gt;
+    &lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+
+        <p>This page requires no build step, no server-side processing, and no InfraSketch account. It works as a standalone HTML file served from any static host.</p>
+
+        <h2>FAQ</h2>
+
+        <div class="faq-item">
+            <h3>Does the embed component work with private GitHub repositories?</h3>
+            <p>The <code>src</code> fetch runs in the user's browser, so private GitHub raw URLs would need a token — which you obviously can't bake into a public HTML page. For private repos, use inline content instead: copy the relevant Terraform or Kubernetes code between the tags. Or generate the URL server-side with <code>npx infrasketch main.tf --no-open</code> and embed it as a static iframe. The state is in the fragment, so it doesn't expire.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Will the diagram break if infrasketch.cloud goes down?</h3>
+            <p>If the web app is unavailable, iframes and components pointing to it will show an error. If you need high reliability for critical docs, pre-generate the URL with the CLI and embed it as a static iframe — then if you ever want to self-host the web app, the same URL works unchanged.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I control the diagram layout or colors through the embed?</h3>
+            <p>Not through attributes currently. Users can pan, zoom, and move nodes interactively inside the embedded diagram. If you want a specific layout, open the diagram in the full web app, arrange it, and use the "share" URL — it encodes the adjusted node positions in the fragment. Custom theming via attributes is on the roadmap.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Does the component support lazy loading for pages with many diagrams?</h3>
+            <p>Yes — it uses <code>IntersectionObserver</code> internally to defer fetching and rendering until the element is near the viewport. Put 10 diagrams on a page and only the visible ones actually load. The rest wait until you scroll to them. This makes diagram-heavy runbooks and wikis load fast enough to be practical.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I use the embed component with React, Vue, or other frameworks?</h3>
+            <p>Web components work natively in all modern browsers, so any framework is fine. React treats it like any other HTML element. Vue might show an "unknown element" warning — add <code>infra-sketch</code> to <code>compilerOptions.isCustomElement</code> in your Vite/Vue config to silence it. No npm package needed — just the script tag.</p>
+        </div>
+
+        <div class="cta-box">
+            <h3>Turn your IaC docs into living architecture diagrams</h3>
+            <p>Add one script tag to your docs site and your diagrams stay synchronized with your code automatically. Try it in the browser first — no account needed.</p>
+            <a href="/" class="btn">Try InfraSketch Free →</a>
+        </div>
+
+    </article>
+</div>
+<footer>
+    <p><a href="/">infrasketch.cloud</a> &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a></p>
+</footer>
+</body>
+</html>

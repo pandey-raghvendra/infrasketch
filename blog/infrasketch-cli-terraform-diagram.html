@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Visualize Terraform, Kubernetes, and Pulumi from the Terminal with npx infrasketch | InfraSketch</title>
+    <meta name="description" content="Generate architecture diagrams from Terraform, Kubernetes, and Pulumi files directly in your terminal. Zero install, works in CI/CD with --no-open flag.">
+    <meta name="keywords" content="terraform diagram cli, npx infrasketch, kubernetes diagram command line, iac visualization terminal, terraform visualizer npm, pulumi diagram terminal">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/infrasketch-cli-terraform-diagram.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/infrasketch-cli-terraform-diagram.html">
+    <meta property="og:title" content="Visualize Terraform, Kubernetes, and Pulumi from the Terminal with npx infrasketch">
+    <meta property="og:description" content="Generate architecture diagrams from Terraform, Kubernetes, and Pulumi files directly in your terminal. Zero install, works in CI/CD with --no-open flag.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Visualize Terraform, Kubernetes, and Pulumi from the Terminal with npx infrasketch">
+    <meta name="twitter:description" content="Generate architecture diagrams from Terraform, Kubernetes, and Pulumi files directly in your terminal. Zero install required.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Visualize Terraform, Kubernetes, and Pulumi from the Terminal with npx infrasketch",
+      "description": "Generate architecture diagrams from Terraform, Kubernetes, and Pulumi files directly in your terminal. Zero install, works in CI/CD with --no-open flag.",
+      "url": "https://infrasketch.cloud/blog/infrasketch-cli-terraform-diagram.html",
+      "datePublished": "2026-05-14",
+      "dateModified": "2026-05-14",
+      "author": { "@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra" },
+      "publisher": { "@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": { "@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg" } },
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.25);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+        .callout{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.callout p{margin:0;font-size:14px;color:var(--text-muted)}
+        .step-list{counter-reset:steps;list-style:none;margin-left:0}.step-list li{counter-increment:steps;padding:16px 16px 16px 56px;position:relative;border-left:2px solid var(--border);margin-bottom:12px}.step-list li::before{content:counter(steps);position:absolute;left:-14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+        .faq-item{border-bottom:1px solid var(--border);padding:20px 0}.faq-item:last-child{border-bottom:none}.faq-item h3{font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text)}.faq-item p{font-size:15px;color:var(--text-muted);margin:0}
+        .compare-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}.compare-table th{text-align:left;padding:10px 16px;background:var(--bg-surface);color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border)}.compare-table td{padding:10px 16px;border-bottom:1px solid rgba(30,34,64,0.6);color:#b0b8d1}.compare-table td:first-child{font-family:var(--mono);color:var(--accent);font-size:13px}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links">
+        <li><a href="/">Tool</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+    </ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">⚡ CLI</span>
+        <h1>Visualize Terraform, Kubernetes, and Pulumi from the Terminal with npx infrasketch</h1>
+        <div class="meta">May 14, 2026 &middot; 9 min read &middot; InfraSketch Blog</div>
+    </div>
+    <article>
+
+        <div class="callout">
+            <p><strong>TL;DR:</strong> Run <code>npx infrasketch .</code> in any IaC repository to instantly open an interactive architecture diagram in your browser. No login, no install, no file upload. Works with Terraform, Kubernetes, Pulumi, CloudFormation, CDK, Bicep, Terragrunt, and Docker Compose.</p>
+        </div>
+
+        <h2>The copy-paste problem with IaC diagrams</h2>
+
+        <p>You finish a Terraform module, open Lucidchart or draw.io, manually drag in an EC2 box, an RDS cylinder, an ALB arrow — 45 minutes recreating what the code already describes. Two weeks later the code changes, the diagram doesn't, and you've got a lie pinned to your Confluence page. I've seen this on every team I've worked with.</p>
+
+        <p>The browser-based InfraSketch tool at <a href="/">infrasketch.cloud</a> cuts most of that: paste your HCL, YAML, or JSON and get an interactive diagram instantly, no account required. But there was still friction. You had to leave your terminal, copy the file contents, navigate to a website. For anyone living in the command line, that adds up over a day.</p>
+
+        <p>The CLI removes that last step. Point it at a file, a directory, or a raw GitHub URL, and it generates the diagram and opens your browser — usually in under two seconds. In CI where there's no browser to open, <code>--no-open</code> prints the shareable URL to stdout so you can pipe it wherever you need it.</p>
+
+        <h2>What npx infrasketch does (and what it doesn't)</h2>
+
+        <p>The CLI is a thin Node.js wrapper published to npm as <code>infrasketch</code>. When you run it, it reads your IaC file or directory, serializes the content into a base64-encoded JSON fragment, appends that fragment to the InfraSketch web app URL, and opens the result in your default browser.</p>
+
+        <p>What it <em>doesn't</em> do matters more than you'd expect:</p>
+
+        <ul>
+            <li>Your code never leaves your machine — no upload, no server processing.</li>
+            <li>No account, no API key, nothing to sign up for.</li>
+            <li>It doesn't touch your IaC files. Read-only.</li>
+            <li>No background process. It runs, opens the browser, and exits.</li>
+        </ul>
+
+        <p>The diagram is rendered entirely in the browser using the URL fragment. Browsers don't send the hash to the server — they only transmit the path and query string. So when you open <code>https://infrasketch.cloud/#eJy...</code>, the server gets a plain <code>GET /</code> with no idea what's in the fragment. That's not a hack; it's just how HTTP works, and we're leaning into it deliberately. It also means the tool works in air-gapped environments as long as the browser can load the InfraSketch page.</p>
+
+        <h2>Zero-install usage: your first diagram in 10 seconds</h2>
+
+        <p>Because the CLI is on npm, you can run it immediately with <code>npx</code> without installing anything globally. Navigate to any directory that contains IaC files and run:</p>
+
+        <pre>npx infrasketch .</pre>
+
+        <p>That's it. The CLI will scan the current directory, detect the format automatically, and open your browser. If you have a mixed repository with, say, a <code>terraform/</code> subdirectory and a <code>k8s/</code> subdirectory, run it from the root — it will pick the dominant format or let you point it at a subdirectory.</p>
+
+        <p>If you prefer a permanent global install to skip the npx overhead on every invocation, add it to your PATH once:</p>
+
+        <pre>npm install -g infrasketch</pre>
+
+        <p>After that, <code>infrasketch .</code> works from any directory, just like <code>terraform</code> or <code>kubectl</code>.</p>
+
+        <h2>Single file mode</h2>
+
+        <p>When you want to diagram a specific file rather than an entire directory, pass the file path directly:</p>
+
+        <pre>npx infrasketch main.tf</pre>
+
+        <p>Single file mode is useful when you're working on a large module and want to check just the resources you're currently editing. The CLI reads only that file, so it's faster for large repositories where a full directory scan would pull in many files you don't care about right now.</p>
+
+        <p>The format is auto-detected from the file extension and content. <code>.tf</code> files are parsed as Terraform HCL, <code>.yaml</code> and <code>.yml</code> files trigger heuristic detection to distinguish between Kubernetes manifests, Docker Compose files, and CloudFormation templates. For ambiguous cases you can override with the <code>--type</code> flag:</p>
+
+        <pre>npx infrasketch template.yaml --type cloudformation</pre>
+
+        <p>Supported values for <code>--type</code> are: <code>terraform</code>, <code>kubernetes</code>, <code>pulumi</code>, <code>cloudformation</code>, <code>cdk</code>, <code>bicep</code>, <code>terragrunt</code>, <code>docker-compose</code>.</p>
+
+        <h2>Directory scan mode — multi-file Terraform projects</h2>
+
+        <p>Real Terraform projects rarely live in a single file. A production module typically spans <code>main.tf</code>, <code>variables.tf</code>, <code>outputs.tf</code>, <code>locals.tf</code>, and any number of resource-specific files. Directory scan mode reads all of them and stitches them into one diagram:</p>
+
+        <pre>npx infrasketch ./terraform/environments/prod/</pre>
+
+        <p>The CLI recursively finds all <code>.tf</code> files under the given path, concatenates their contents, and feeds the combined HCL to the diagram renderer. This gives you a complete picture of the environment rather than a partial view of whichever file you happened to open first.</p>
+
+        <p>For Terragrunt projects where each module lives in its own subdirectory with a <code>terragrunt.hcl</code>, point the CLI at the root of the deployment tree:</p>
+
+        <pre>npx infrasketch ./live/prod/ --type terragrunt</pre>
+
+        <p>It will discover all <code>terragrunt.hcl</code> files and combine the dependency graph across modules, giving you visibility into how modules reference each other — something that's notoriously hard to visualize manually.</p>
+
+        <div class="callout">
+            <p><strong>Tip:</strong> For very large Terraform codebases (hundreds of files), consider running the CLI against a specific module subdirectory rather than the repository root. The URL fragment has a practical size limit around 2 MB of raw content, which covers most real-world modules comfortably.</p>
+        </div>
+
+        <h2>Kubernetes and Pulumi projects</h2>
+
+        <p>Kubernetes works the same way. Point it at a directory of YAML files and it picks up Deployments, Services, Ingresses, ConfigMaps, StatefulSets, DaemonSets — and renders how they connect:</p>
+
+        <pre>npx infrasketch ./k8s/ --type kubernetes</pre>
+
+        <p>The <code>--type</code> flag is optional here if your YAML files have the standard <code>apiVersion</code> and <code>kind</code> fields — the auto-detector recognizes Kubernetes manifests reliably. But if you have a directory that mixes Kubernetes YAML with other YAML (for example, a Helm chart with both templates and values files), being explicit avoids ambiguity.</p>
+
+        <p>For more detail on the Kubernetes diagram format and what relationships are visualized, see the <a href="/blog/kubernetes-diagram-generator.html">Kubernetes diagram generator guide</a>.</p>
+
+        <p>Pulumi projects work similarly. Navigate to a Pulumi project directory (the one containing <code>Pulumi.yaml</code>) and run:</p>
+
+        <pre>npx infrasketch . --type pulumi</pre>
+
+        <p>The CLI reads the Pulumi program source — TypeScript, Python, Go, or YAML — and extracts resource declarations. Because Pulumi programs are general-purpose code rather than declarative config, the extraction is necessarily heuristic: it looks for <code>new aws.ec2.Instance()</code>-style patterns in TypeScript/Python and equivalent patterns in other languages. Coverage is good for standard resource declarations but may miss resources created inside complex loops or conditional logic.</p>
+
+        <h2>Remote GitHub raw URL mode</h2>
+
+        <p>You don't have to clone a repository to diagram it. Pass any raw GitHub URL (or any other URL that returns plain text) and the CLI will fetch it, parse it, and open the diagram:</p>
+
+        <pre>npx infrasketch https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/examples/two-tier/main.tf</pre>
+
+        <p>This mode is particularly useful for:</p>
+
+        <ul>
+            <li>Reviewing open-source Terraform modules before adding them as dependencies</li>
+            <li>Quickly understanding the architecture of a reference implementation you found</li>
+            <li>Sharing a diagram of a public repository without cloning it locally</li>
+            <li>Generating diagrams in documentation pipelines where the source lives in a separate repo</li>
+        </ul>
+
+        <p>The URL is fetched by the CLI process on your machine (not by the browser or any server), parsed locally, and then encoded into the diagram URL. Your network request goes to GitHub's raw content CDN, not to InfraSketch servers.</p>
+
+        <h2>CI/CD pipeline integration (--no-open flag)</h2>
+
+        <p>In a headless CI environment there's no browser to open, so the default behavior would hang or error. The <code>--no-open</code> flag suppresses browser launch and instead prints the diagram URL to stdout:</p>
+
+        <pre>npx infrasketch main.tf --no-open</pre>
+
+        <p>This emits a single line like:</p>
+
+        <pre>https://infrasketch.cloud/#eJyVVdtu2zgQ...</pre>
+
+        <p>You can capture this URL and use it anywhere: a PR comment, a Slack notification, a build artifact, a release note. Here's a complete GitHub Actions workflow that posts the diagram URL as a PR comment whenever Terraform files change:</p>
+
+        <pre>name: Terraform Diagram
+
+on:
+  pull_request:
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+
+jobs:
+  diagram:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate diagram URL
+        id: diagram
+        run: |
+          URL=$(npx infrasketch . --no-open)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Post diagram comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.diagram.outputs.url }}';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## Architecture Diagram\n\n[View interactive diagram](${url})\n\n> Generated by InfraSketch CLI`
+            });</pre>
+
+        <p>If you'd rather use the purpose-built GitHub Action instead of the raw CLI in CI, see the <a href="/blog/github-action-terraform-diagram.html">GitHub Action guide</a> — it handles the comment posting and diff detection automatically with less boilerplate.</p>
+
+        <h2>How it works under the hood (URL encoding, no upload, privacy)</h2>
+
+        <p>If you're going to run a tool against production Terraform code, you should know what it actually does. Here's the full flow:</p>
+
+        <ol class="step-list">
+            <li>Reads file contents from disk (or fetches from URL). No preprocessing — the raw content goes through as-is, including variable references and module calls.</li>
+            <li>Wraps the content in a JSON envelope: <code>{"type":"terraform","code":"..."}</code>. Multi-file mode concatenates everything into the <code>code</code> field with separator comments between files.</li>
+            <li>Gzip-compresses the JSON and base64-encodes the result into a compact ASCII string.</li>
+            <li>Appends the encoded string to the InfraSketch URL as a hash fragment: <code>https://infrasketch.cloud/#&lt;base64&gt;</code>.</li>
+            <li>Opens that URL in your default browser (<code>open</code> on macOS, <code>xdg-open</code> on Linux, <code>start</code> on Windows). The web app decodes the fragment entirely client-side.</li>
+        </ol>
+
+        <p>The key detail is step 5. The URL fragment — everything after the <code>#</code> — is never transmitted in HTTP requests. When your browser loads <code>https://infrasketch.cloud/#eJy...</code>, the actual HTTP request to the server is just <code>GET /</code>. No server ever sees your infrastructure code. That's a browser standard, not something we're doing specially — we're just building on top of it.</p>
+
+        <p>This also means the diagram URL is a permanent, shareable link with no expiry. The entire diagram state is encoded in the URL itself — there's no server-side session or storage. You can bookmark it, share it in Slack, or save it in documentation and it will work forever, as long as the InfraSketch web app is running.</p>
+
+        <h2>Combining CLI with GitHub Action for full automation</h2>
+
+        <p>The CLI is for you while you're coding. The GitHub Action is for your reviewers when they're not.</p>
+
+        <p>Practically, the workflow goes: you write a new Terraform module for a VPC peering connection, run <code>npx infrasketch .</code> locally to make sure the diagram looks right (subnets, route tables, peering connections all there), then open a PR. The <a href="/blog/github-action-terraform-diagram.html">GitHub Action (<code>pandey-raghvendra/infrasketch@v4</code>)</a> fires automatically and posts the diagram as a comment. Reviewers click the link, see the architecture interactively, no tooling required on their end.</p>
+
+        <p>The CLI is fast and zero-ceremony — just a command. The Action is automated and requires no one to remember to run anything. They cover different moments in the same workflow, not the same moment twice.</p>
+
+        <h2>Comparison table: CLI vs browser vs GitHub Action vs MCP</h2>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Best for</th>
+                    <th>Install needed</th>
+                    <th>Works in CI</th>
+                    <th>Opens browser</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Browser</td>
+                    <td>Quick one-off diagrams, paste-and-view</td>
+                    <td>None</td>
+                    <td>No</td>
+                    <td>Already in browser</td>
+                </tr>
+                <tr>
+                    <td>CLI (npx infrasketch)</td>
+                    <td>Local dev, scripting, remote URLs</td>
+                    <td>Node.js (npx auto-installs)</td>
+                    <td>Yes (--no-open)</td>
+                    <td>Yes (default)</td>
+                </tr>
+                <tr>
+                    <td>GitHub Action</td>
+                    <td>Automated PR comments on IaC changes</td>
+                    <td>None (uses Action)</td>
+                    <td>Yes (built for it)</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td>MCP Server</td>
+                    <td>AI-assisted coding in Claude Code / Cursor</td>
+                    <td>Node.js (npx auto-installs)</td>
+                    <td>No</td>
+                    <td>Yes (via AI prompt)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>FAQ</h2>
+
+        <div class="faq-item">
+            <h3>Does npx infrasketch work without internet access?</h3>
+            <p>First run via npx needs to download the package, so yes, internet required there. After that, <code>npm install -g infrasketch</code> once and it runs offline. The generated URL needs a browser to load the InfraSketch web app — so some internet to load the page initially, though your IaC code never gets uploaded to any server regardless.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>What happens with .tfvars files that contain secrets?</h3>
+            <p>The code goes into the URL fragment, which is never sent to a server. But the fragment does show up in browser history and in any URL you share. So treat the URL like you'd treat the source code — don't paste it in a public Slack channel if the file has real credentials in it. Stick to <code>main.tf</code> or module directories for diagramming; leave the <code>.tfvars</code> with the actual secrets out of it.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I use the CLI with Terraform workspaces?</h3>
+            <p>Yes, workspaces only affect state — the HCL source files are the same regardless of which workspace you're on. <code>npx infrasketch .</code> works normally. If you have workspace-specific variable files like <code>prod.tfvars</code>, you can point the CLI at them directly.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>How large can the IaC file be before the URL gets too long?</h3>
+            <p>HCL compresses well — gzip typically gets 5-10x reduction before base64, so a 500 KB Terraform project ends up under 100 KB in the URL. In practice, URL length limits never bite you with normal module-sized codebases. If you're running against an entire monorepo root with hundreds of files, run it against a subdirectory instead.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I get the diagram URL without opening the browser, even locally?</h3>
+            <p><code>--no-open</code> works anywhere, not just CI. <code>npx infrasketch main.tf --no-open</code> on your laptop prints the URL to stdout without touching the browser. Pipe it to <code>pbcopy</code>, drop it in a script, whatever you need.</p>
+        </div>
+
+        <div class="cta-box">
+            <h3>Diagram your infrastructure in 10 seconds</h3>
+            <p>Run <code>npx infrasketch .</code> in your IaC repo right now — or try the browser tool directly with no install required.</p>
+            <a href="/" class="btn">Try InfraSketch Free →</a>
+        </div>
+
+    </article>
+</div>
+<footer>
+    <p><a href="/">infrasketch.cloud</a> &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a></p>
+</footer>
+</body>
+</html>

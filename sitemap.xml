@@ -59,6 +59,27 @@
 
   <!-- Blog posts — newest first -->
   <url>
+    <loc>https://infrasketch.cloud/blog/infrasketch-mcp-server-claude-code-cursor.html</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://infrasketch.cloud/blog/infrasketch-cli-terraform-diagram.html</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://infrasketch.cloud/blog/embed-iac-diagram-web-component.html</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
     <loc>https://infrasketch.cloud/blog/github-action-terraform-diagram.html</loc>
     <lastmod>2026-05-12</lastmod>
     <changefreq>monthly</changefreq>

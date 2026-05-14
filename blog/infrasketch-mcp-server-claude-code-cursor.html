@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Generate IaC Architecture Diagrams Inside Claude Code and Cursor with InfraSketch MCP | InfraSketch</title>
+    <meta name="description" content="Use the InfraSketch MCP server to generate Terraform, Kubernetes, and Pulumi diagrams directly inside Claude Code, Cursor, and Windsurf. No context switching.">
+    <meta name="keywords" content="mcp server iac diagram, claude code terraform diagram, cursor terraform visualization, infrasketch mcp, model context protocol infrastructure diagram, ai terraform diagram generator">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/infrasketch-mcp-server-claude-code-cursor.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/infrasketch-mcp-server-claude-code-cursor.html">
+    <meta property="og:title" content="Generate IaC Architecture Diagrams Inside Claude Code and Cursor with InfraSketch MCP">
+    <meta property="og:description" content="Use the InfraSketch MCP server to generate Terraform, Kubernetes, and Pulumi diagrams directly inside Claude Code, Cursor, and Windsurf. No context switching.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Generate IaC Architecture Diagrams Inside Claude Code and Cursor with InfraSketch MCP">
+    <meta name="twitter:description" content="Use InfraSketch MCP to get Terraform and Kubernetes diagrams without leaving your AI coding environment.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Generate IaC Architecture Diagrams Inside Claude Code and Cursor with InfraSketch MCP",
+      "description": "Use the InfraSketch MCP server to generate Terraform, Kubernetes, and Pulumi diagrams directly inside Claude Code, Cursor, and Windsurf. No context switching.",
+      "url": "https://infrasketch.cloud/blog/infrasketch-mcp-server-claude-code-cursor.html",
+      "datePublished": "2026-05-14",
+      "dateModified": "2026-05-14",
+      "author": { "@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra" },
+      "publisher": { "@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": { "@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg" } },
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.25);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+        .callout{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.callout p{margin:0;font-size:14px;color:var(--text-muted)}
+        .step-list{counter-reset:steps;list-style:none;margin-left:0}.step-list li{counter-increment:steps;padding:16px 16px 16px 56px;position:relative;border-left:2px solid var(--border);margin-bottom:12px}.step-list li::before{content:counter(steps);position:absolute;left:-14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+        .faq-item{border-bottom:1px solid var(--border);padding:20px 0}.faq-item:last-child{border-bottom:none}.faq-item h3{font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text)}.faq-item p{font-size:15px;color:var(--text-muted);margin:0}
+        .compare-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}.compare-table th{text-align:left;padding:10px 16px;background:var(--bg-surface);color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border)}.compare-table td{padding:10px 16px;border-bottom:1px solid rgba(30,34,64,0.6);color:#b0b8d1}.compare-table td:first-child{font-family:var(--mono);color:var(--accent);font-size:13px}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links">
+        <li><a href="/">Tool</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+    </ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">🤖 AI / MCP</span>
+        <h1>Generate IaC Architecture Diagrams Inside Claude Code and Cursor with InfraSketch MCP</h1>
+        <div class="meta">May 14, 2026 &middot; 10 min read &middot; InfraSketch Blog</div>
+    </div>
+    <article>
+
+        <div class="callout">
+            <p><strong>TL;DR:</strong> Install the InfraSketch MCP server with one command (<code>claude mcp add infrasketch -- npx infrasketch-mcp</code>), then ask Claude Code to diagram any Terraform, Kubernetes, or Pulumi code without leaving your editor. The diagram opens in your browser, your code never leaves your machine.</p>
+        </div>
+
+        <h2>The context-switching problem: diagrams while you code</h2>
+
+        <p>AI editors like Claude Code, Cursor, and Windsurf have gotten surprisingly good at infrastructure work. You can paste a 2,000-line Terraform module into context, ask it to refactor a subnet configuration, and get a working diff in seconds. But ask it to show you an architecture diagram of that same code? Until recently, the answer was "open a browser, paste it somewhere else, render it there."</p>
+
+        <p>That break is annoying in a specific way. It's not just the thirty seconds — it's that you lose the thread. The AI has been building context about your codebase, your constraints, what you're trying to do. When you jump to another tool and come back, you're starting that context fresh.</p>
+
+        <p>The InfraSketch MCP server fixes this by adding diagram generation as a tool your AI assistant can call natively. Two tools: <code>generate_diagram</code> and <code>detect_iac_format</code>. Ask Claude "can you show me a diagram of this?" and it calls the tool, gets a URL, and includes it in its response. You never left the editor.</p>
+
+        <h2>What is MCP and why it matters for infrastructure teams</h2>
+
+        <p>Model Context Protocol (MCP) is an open standard developed by Anthropic that lets AI assistants communicate with external tools and services through a standardized interface. Instead of an AI assistant being limited to the text in its context window, MCP lets it call out to tools — read files, run searches, query APIs, generate artifacts — and incorporate the results back into the conversation.</p>
+
+        <p>For infrastructure teams the implication is straightforward: your AI assistant can now do things that previously required leaving the editor:</p>
+
+        <ul>
+            <li>Look up the current state of a Terraform resource in a cloud account</li>
+            <li>Check a security scanner for misconfigurations</li>
+            <li>Generate an architecture diagram of whatever code it's currently looking at</li>
+            <li>Figure out what IaC format a file is before processing it</li>
+        </ul>
+
+        <p>MCP servers are lightweight processes that run locally alongside your editor. They communicate with the AI assistant over a stdio or SSE transport — there's no cloud intermediary. The InfraSketch MCP server is published as <code>infrasketch-mcp</code> on npm and requires only Node.js to run.</p>
+
+        <h2>Installing infrasketch-mcp (npx, global, Claude Code one-liner)</h2>
+
+        <p>The fastest way to install is the Claude Code one-liner, which registers the MCP server in your Claude Code configuration in a single command:</p>
+
+        <pre>claude mcp add infrasketch -- npx infrasketch-mcp</pre>
+
+        <p>This tells Claude Code to start the InfraSketch MCP server on demand using npx, which downloads and runs the package without a global install. The server starts fresh each session and exits when Claude Code closes — no persistent daemon.</p>
+
+        <p>If you prefer a global install to avoid npx startup overhead:</p>
+
+        <pre>npm install -g infrasketch-mcp</pre>
+
+        <p>Then reference it directly in your MCP configuration as <code>infrasketch-mcp</code> instead of <code>npx infrasketch-mcp</code>.</p>
+
+        <h2>Setup: Claude Code (claude mcp add command + settings.json method)</h2>
+
+        <p>After running the <code>claude mcp add</code> command above, the server is registered automatically. To verify it's registered correctly, run:</p>
+
+        <pre>claude mcp list</pre>
+
+        <p>You should see <code>infrasketch</code> in the list. If you prefer to configure it manually, or if you're deploying a shared configuration to a team, edit your Claude Code MCP settings file at <code>~/.claude/settings.json</code> and add the server to the <code>mcpServers</code> object:</p>
+
+        <pre>{
+  "mcpServers": {
+    "infrasketch": {
+      "command": "npx",
+      "args": ["infrasketch-mcp"]
+    }
+  }
+}</pre>
+
+        <p>For project-level configuration (useful when you want to check the MCP config into your repository so the whole team gets it automatically), create or edit <code>.claude/settings.json</code> in your project root:</p>
+
+        <pre>{
+  "mcpServers": {
+    "infrasketch": {
+      "command": "npx",
+      "args": ["infrasketch-mcp"],
+      "description": "Generate architecture diagrams from IaC code"
+    }
+  }
+}</pre>
+
+        <p>After editing the settings file, restart Claude Code for the changes to take effect. The MCP server will be available in all sessions in that project.</p>
+
+        <h2>Setup: Cursor and Windsurf</h2>
+
+        <p>Cursor uses the same MCP configuration format. Create or edit <code>~/.cursor/mcp.json</code> (for global configuration) or <code>.cursor/mcp.json</code> in your project root:</p>
+
+        <pre>{
+  "mcpServers": {
+    "infrasketch": {
+      "command": "npx",
+      "args": ["infrasketch-mcp"]
+    }
+  }
+}</pre>
+
+        <p>In Cursor, go to <strong>Settings → MCP</strong> to verify the server appears and shows a green connected status. You may need to click "Reload MCP Servers" after saving the config file.</p>
+
+        <p>Windsurf follows the same pattern. Edit <code>~/.windsurf/mcp.json</code> with the same configuration block. Once the server is connected, both Cursor's Composer and Windsurf's Cascade will have access to the InfraSketch tools and can call them in response to natural language prompts about your infrastructure code.</p>
+
+        <div class="callout">
+            <p><strong>Node.js required:</strong> The MCP server requires Node.js 18 or later. Run <code>node --version</code> to check. If you're using a version manager like nvm or fnm, make sure the active version is 18+ before starting your editor.</p>
+        </div>
+
+        <h2>The generate_diagram tool in action (with example prompt + example output)</h2>
+
+        <p>Once the MCP server is connected, you can ask Claude to generate diagrams in natural language. You don't need to know the tool name or its parameters — just describe what you want:</p>
+
+        <pre>Generate a diagram for this terraform code:
+
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  tags = { Name = "main-vpc" }
+}
+
+resource "aws_subnet" "public" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "us-east-1a"
+}
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}</pre>
+
+        <p>Claude will call the <code>generate_diagram</code> MCP tool with the code and format, and return something like:</p>
+
+        <pre>Here's your architecture diagram:
+
+**[View Interactive Diagram](https://infrasketch.cloud/#eJyVVdtu2zgQffdXEH...)**
+
+The diagram shows:
+- **VPC** (10.0.0.0/16) as the top-level container
+- **Public Subnet** (10.0.1.0/24) in us-east-1a inside the VPC
+- **Internet Gateway** attached to the VPC
+- **Route Table** with a default route (0.0.0.0/0) pointing to the IGW
+- **Route Table Association** linking the public subnet to the route table
+
+You can click the link to open an interactive, zoomable diagram in your browser.
+
+&lt;iframe src="https://infrasketch.cloud/#eJyVVdtu2zgQffdXEH..."
+        width="100%" height="500" style="border:none;"&gt;&lt;/iframe&gt;</pre>
+
+        <p>The diagram URL is a permanent shareable link. The iframe embed lets you paste the diagram directly into documentation, Notion, Confluence, or any HTML page. The AI assistant also provides a human-readable summary of what the diagram shows, which is useful for accessibility and for quickly confirming the rendering is correct without opening a browser.</p>
+
+        <h2>The detect_iac_format tool</h2>
+
+        <p>The second tool exposed by the MCP server is <code>detect_iac_format</code>. This is useful when you have an ambiguous file and want the AI to determine its format before processing it. You can invoke it explicitly:</p>
+
+        <pre>What IaC format is this file?
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21</pre>
+
+        <p>The tool returns the detected format (<code>kubernetes</code> in this case) along with a confidence score. Claude Code will then use this information to call <code>generate_diagram</code> with the correct <code>type</code> parameter, producing an accurate diagram for Kubernetes resources rather than trying to parse it as Terraform or CloudFormation.</p>
+
+        <p>In practice, the format detection runs automatically when you ask for a diagram — you rarely need to invoke it explicitly. It's most useful in agentic workflows where code is being passed programmatically and the format isn't known in advance.</p>
+
+        <h2>Real workflow: reviewing a Terraform PR with Claude + InfraSketch</h2>
+
+        <p>Concrete example. A teammate opens a PR adding an ECS cluster with autoscaling to an existing VPC. You're reviewing it in Claude Code:</p>
+
+        <ol class="step-list">
+            <li>Ask Claude to show you what changed: "What's different in the terraform/ directory compared to main?" It reads the diff and summarizes.</li>
+            <li>"Generate a diagram of the full terraform/environments/prod/ directory so I can see how the ECS cluster fits in." Claude calls <code>generate_diagram</code>, gets a URL back.</li>
+            <li>Click the URL. You get an interactive, zoomable diagram — ECS cluster, task definitions, ALB, target groups, VPC subnets, security groups, all in one view.</li>
+            <li>Back in Claude: "The ECS tasks are in the public subnet. Intentional?" Claude already has all the code in context and can answer immediately.</li>
+            <li>Your review comment is specific — "the ECS tasks should be in the private subnet per our networking standards, the security group on line 43 is too permissive" — not just "looks good" or a vague worry about networking.</li>
+        </ol>
+
+        <p>Reading HCL line by line is fine for small changes. For anything spanning multiple resources and subnets, the diagram gets you oriented in about ten seconds instead of ten minutes.</p>
+
+        <p>For teams that want this diagram to appear automatically on every PR without any manual step, the <a href="/blog/github-action-terraform-diagram.html">GitHub Action (<code>pandey-raghvendra/infrasketch@v4</code>)</a> posts the diagram as a PR comment whenever Terraform files change.</p>
+
+        <h2>How the URL is generated (no upload, privacy-first, works offline)</h2>
+
+        <p>The MCP server uses the same URL-encoding approach as the CLI and browser tool. When <code>generate_diagram</code> is called:</p>
+
+        <ul>
+            <li>The code is serialized into a JSON envelope with the detected format</li>
+            <li>The JSON is compressed with gzip and base64-encoded</li>
+            <li>The encoded string is appended as a URL fragment to <code>https://infrasketch.cloud/</code></li>
+            <li>The resulting URL is returned to the AI assistant, which includes it in its response</li>
+        </ul>
+
+        <p>The MCP server process runs entirely on your machine. It never makes outbound HTTP requests to InfraSketch servers. The URL it generates encodes your code in the fragment, which — by the HTTP specification — is never transmitted to a server. When you open the URL in a browser, the InfraSketch web app decodes and renders the diagram entirely client-side.</p>
+
+        <p>This means the tool works in air-gapped environments (as long as your browser can load the web app), needs no API keys, stores nothing server-side, and leaves no audit trail. If your team has strict data residency requirements, that matters. Cloud-hosted diagramming APIs typically process your code on their servers — this one doesn't, by design.</p>
+
+        <h2>Combining MCP with CLI and embed for full workflow</h2>
+
+        <p>The MCP server, CLI, and embed component are designed to complement each other across different parts of the development lifecycle:</p>
+
+        <ul>
+            <li><strong>MCP server</strong> — Use during active coding and code review inside your AI editor. Get diagrams inline without leaving your editor or conversation.</li>
+            <li><strong>CLI (<code>npx infrasketch</code>)</strong> — Use for quick local checks, scripting, and CI pipelines. See the <a href="/blog/infrasketch-cli-terraform-diagram.html">CLI guide</a> for full details.</li>
+            <li><strong>GitHub Action</strong> — Use for automated PR comments. Zero friction for reviewers — the diagram appears without anyone running a command.</li>
+            <li><strong>Embed web component</strong> — Use for documentation, runbooks, and internal wikis. Keep diagrams live and synchronized with the source code.</li>
+        </ul>
+
+        <p>In practice, a team that's using all four ends up with: MCP for daily coding and reviews, CLI for pre-commit sanity checks and one-off scripting, the GitHub Action for automated PR comments, and embed for the internal docs wiki. Every diagram comes from the same source of truth. Nothing ever gets uploaded.</p>
+
+        <h2>Supported formats and limitations</h2>
+
+        <p>The MCP server supports the same eight IaC formats as the web tool and CLI:</p>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>Format</th>
+                    <th>Auto-detected</th>
+                    <th>Multi-file support</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>terraform</td>
+                    <td>Yes (.tf extension)</td>
+                    <td>Yes (concatenated)</td>
+                    <td>Best coverage of all formats</td>
+                </tr>
+                <tr>
+                    <td>kubernetes</td>
+                    <td>Yes (apiVersion field)</td>
+                    <td>Yes</td>
+                    <td>Helm chart values not rendered</td>
+                </tr>
+                <tr>
+                    <td>pulumi</td>
+                    <td>Partial (Pulumi.yaml)</td>
+                    <td>Partial</td>
+                    <td>Heuristic extraction from source</td>
+                </tr>
+                <tr>
+                    <td>cloudformation</td>
+                    <td>Yes (Resources key)</td>
+                    <td>Yes</td>
+                    <td>Nested stacks shown as references</td>
+                </tr>
+                <tr>
+                    <td>cdk</td>
+                    <td>Partial</td>
+                    <td>Partial</td>
+                    <td>Works best with synthesized output</td>
+                </tr>
+                <tr>
+                    <td>bicep</td>
+                    <td>Yes (.bicep extension)</td>
+                    <td>Yes</td>
+                    <td>Modules shown as references</td>
+                </tr>
+                <tr>
+                    <td>terragrunt</td>
+                    <td>Yes (terragrunt.hcl)</td>
+                    <td>Yes</td>
+                    <td>Module dependency graph included</td>
+                </tr>
+                <tr>
+                    <td>docker-compose</td>
+                    <td>Yes (services key)</td>
+                    <td>Single file</td>
+                    <td>Networks and volumes visualized</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>The main limitation to be aware of is code size. The URL fragment approach has a practical ceiling around 2 MB of raw IaC content before browser URL limits become a concern. For most individual modules and services this is not an issue, but for very large monorepos you should point the tool at a specific subdirectory rather than the entire repository root.</p>
+
+        <h2>FAQ</h2>
+
+        <div class="faq-item">
+            <h3>Does the MCP server require any API key or account?</h3>
+            <p>No. Completely free, no authentication. It runs locally and talks to your AI editor over stdio. No InfraSketch account, no key, no usage limits. Just Node.js.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Does my Terraform code get sent to InfraSketch servers?</h3>
+            <p>No. The MCP server encodes your code into a URL fragment. Fragments are never transmitted in HTTP requests — that's part of the HTTP spec, not something special we're doing. The InfraSketch web app decodes and renders everything in the browser. The InfraSketch server only ever serves the static HTML/JS/CSS files, same as any website.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I use the MCP server with VS Code or other editors?</h3>
+            <p>Anything that supports Model Context Protocol over stdio will work. Claude Code, Cursor, and Windsurf are the most common. VS Code has MCP support in some extensions. For editors that don't support MCP at all, the CLI and browser tool still cover most of the same use cases.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>What happens if the diagram looks wrong?</h3>
+            <p>The MCP server passes your code to the renderer exactly as-is — no modification, no interpretation. So if the diagram is wrong, it's the renderer's parsing that's off, not how the AI called the tool. Open the interactive diagram in your browser, check what's there, and if you spot a bug file it on GitHub with the example code.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I use the MCP server in a team setting with a shared configuration?</h3>
+            <p>Yes, and this is actually the easiest setup. Add the MCP config to <code>.claude/settings.json</code> (Claude Code) or <code>.cursor/mcp.json</code> (Cursor) at the project root and check it into your repo. Anyone who clones gets it automatically. Since it uses <code>npx</code>, nobody needs to install anything manually.</p>
+        </div>
+
+        <div class="cta-box">
+            <h3>Diagram your infrastructure without leaving your editor</h3>
+            <p>Add the InfraSketch MCP server to Claude Code in one command, or try the browser tool right now — no account needed.</p>
+            <a href="/" class="btn">Try InfraSketch Free →</a>
+        </div>
+
+    </article>
+</div>
+<footer>
+    <p><a href="/">infrasketch.cloud</a> &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a></p>
+</footer>
+</body>
+</html>
