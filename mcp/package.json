@@ -4,7 +4,7 @@
   "description": "MCP server for InfraSketch — generate IaC architecture diagram URLs from Claude Code, Cursor, and any MCP client",
   "type": "module",
   "bin": {
-    "infrasketch-mcp": "./index.js"
+    "infrasketch-mcp": "index.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0"
@@ -30,7 +30,7 @@
   "homepage": "https://infrasketch.cloud",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pandey-raghvendra/infrasketch.git",
+    "url": "git+https://github.com/pandey-raghvendra/infrasketch.git",
     "directory": "mcp"
   },
   "bugs": {
