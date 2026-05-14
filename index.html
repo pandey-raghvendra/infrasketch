@@ -1404,6 +1404,138 @@
             color: #67e8f9;
         }
 
+        /* ── Integrations section ────────────────────────────────────── */
+        .integrations {
+            padding: 72px 0;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .integrations-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .integrations-header h2 {
+            font-size: clamp(26px, 4vw, 36px);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+
+        .integrations-header p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .integrations-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media(max-width: 700px) { .integrations-grid { grid-template-columns: 1fr; } }
+
+        .integration-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .integration-card:hover {
+            border-color: rgba(6,214,160,.3);
+            box-shadow: 0 0 24px rgba(6,214,160,.06);
+        }
+
+        .integration-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .integration-icon {
+            width: 38px; height: 38px;
+            border-radius: 9px;
+            background: rgba(6,214,160,.08);
+            border: 1px solid rgba(6,214,160,.18);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .integration-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .integration-card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .integration-snippet {
+            background: var(--bg-editor);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: var(--mono);
+            font-size: 11.5px;
+            color: var(--accent);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .integration-snippet code {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-copy-snippet {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-family: var(--sans);
+            white-space: nowrap;
+            transition: all .15s;
+            flex-shrink: 0;
+        }
+
+        .btn-copy-snippet:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-copy-snippet.copied { color: var(--accent); border-color: var(--accent); }
+
+        .integration-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .integration-link {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color .15s;
+        }
+
+        .integration-link:hover { color: var(--accent); }
+
         /* ── Resources / blog section ─────────────────────────────────── */
         .resources {
             padding: 64px 0;
@@ -1910,6 +2042,7 @@
                 <li><a href="#tool">Tool</a></li>
                 <li><a href="#how-it-works">How it works</a></li>
                 <li><a href="#features">Features</a></li>
+                <li><a href="#integrations">Integrations</a></li>
                 <li><a href="examples/">Examples</a></li>
                 <li><a href="blog/index.html">Blog</a></li>
                 <li><a href="about.html">About</a></li>
@@ -2396,6 +2529,117 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         </div>
     </section>
 
+    <!-- INTEGRATIONS -->
+    <section class="integrations" id="integrations">
+        <div class="integrations-header">
+            <h2>Use <span class="gradient-text">everywhere</span></h2>
+            <p>Browser, terminal, AI editor, or embedded in your docs — InfraSketch fits your workflow.</p>
+        </div>
+        <div class="integrations-grid">
+
+            <!-- Web App -->
+            <div class="integration-card">
+                <div class="integration-card-header">
+                    <div class="integration-icon">
+                        <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg>
+                    </div>
+                    <h3>Web App</h3>
+                </div>
+                <p>Paste any IaC code and get an instant diagram. No install, no login, no data uploaded. Works in any browser.</p>
+                <div class="integration-snippet">
+                    <code>infrasketch.cloud</code>
+                    <button class="btn-copy-snippet" data-copy="https://infrasketch.cloud">Copy URL</button>
+                </div>
+                <div class="integration-links">
+                    <a href="#tool" class="integration-link">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        Try it now
+                    </a>
+                    <a href="examples/" class="integration-link">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                        View examples
+                    </a>
+                </div>
+            </div>
+
+            <!-- CLI -->
+            <div class="integration-card">
+                <div class="integration-card-header">
+                    <div class="integration-icon">
+                        <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                    </div>
+                    <h3>CLI — Terminal</h3>
+                </div>
+                <p>Run from any Terraform, Kubernetes, or Pulumi repo. Scans all IaC files, detects format, opens a live diagram in the browser. Zero install via npx.</p>
+                <div class="integration-snippet">
+                    <code>npx infrasketch .</code>
+                    <button class="btn-copy-snippet" data-copy="npx infrasketch .">Copy</button>
+                </div>
+                <div class="integration-links">
+                    <a href="https://www.npmjs.com/package/infrasketch" target="_blank" rel="noopener" class="integration-link">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        npm: infrasketch
+                    </a>
+                    <a href="https://github.com/pandey-raghvendra/infrasketch/blob/main/cli/README.md" target="_blank" rel="noopener" class="integration-link">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Docs
+                    </a>
+                </div>
+            </div>
+
+            <!-- MCP -->
+            <div class="integration-card">
+                <div class="integration-card-header">
+                    <div class="integration-icon">
+                        <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                    </div>
+                    <h3>MCP — Claude Code &amp; Cursor</h3>
+                </div>
+                <p>Add as an MCP server. Ask your AI to diagram any IaC code — it calls <code style="color:var(--accent);font-family:var(--mono);font-size:11px">generate_diagram</code> and returns a URL + embed snippet inline in chat.</p>
+                <div class="integration-snippet">
+                    <code>npx infrasketch-mcp</code>
+                    <button class="btn-copy-snippet" data-copy="npx infrasketch-mcp">Copy</button>
+                </div>
+                <div class="integration-links">
+                    <a href="https://www.npmjs.com/package/infrasketch-mcp" target="_blank" rel="noopener" class="integration-link">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        npm: infrasketch-mcp
+                    </a>
+                    <a href="https://github.com/pandey-raghvendra/infrasketch/blob/main/mcp/README.md" target="_blank" rel="noopener" class="integration-link">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Setup guide
+                    </a>
+                </div>
+            </div>
+
+            <!-- Embed -->
+            <div class="integration-card">
+                <div class="integration-card-header">
+                    <div class="integration-icon">
+                        <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    </div>
+                    <h3>Embed — Docs &amp; Blogs</h3>
+                </div>
+                <p>Drop a live diagram on any webpage. Point at a public IaC URL or paste code inline. Renders an interactive iframe — no iframe boilerplate needed.</p>
+                <div class="integration-snippet">
+                    <code>&lt;infra-sketch src="./main.tf"&gt;</code>
+                    <button class="btn-copy-snippet" data-copy='<script src="https://infrasketch.cloud/embed.js"></script>&#10;<infra-sketch src="YOUR_FILE_URL"></infra-sketch>'>Copy</button>
+                </div>
+                <div class="integration-links">
+                    <a href="https://infrasketch.cloud/embed.js" target="_blank" rel="noopener" class="integration-link">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        embed.js
+                    </a>
+                    <a href="#tool" class="integration-link" id="open-embed-docs">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Get embed code
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
     <section class="resources" id="resources">
         <div class="section-header">
             <h2>From the <span class="hl">blog</span></h2>
@@ -2459,7 +2703,9 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                     <li><a href="#tool">Diagram Generator</a></li>
                     <li><a href="examples/">Example Gallery</a></li>
                     <li><a href="#features">Features</a></li>
-                    <li><a href="#how-it-works">How it works</a></li>
+                    <li><a href="#integrations">Integrations</a></li>
+                    <li><a href="https://www.npmjs.com/package/infrasketch" target="_blank">CLI (npm)</a></li>
+                    <li><a href="https://www.npmjs.com/package/infrasketch-mcp" target="_blank">MCP Server (npm)</a></li>
                 </ul>
             </div>
             <div>
@@ -2675,5 +2921,23 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
 </script>
 
 <div id="toast-container"></div>
+
+<script>
+    // Integration card copy buttons
+    document.querySelectorAll('.btn-copy-snippet').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const text = btn.dataset.copy || '';
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = orig;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    });
+</script>
 </body>
 </html>
