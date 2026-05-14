@@ -2060,6 +2060,23 @@
         </div>
     </div>
 
+    <!-- MCP CALLOUT -->
+    <div class="action-callout">
+        <div class="action-callout-inner">
+            <div class="action-callout-icon">
+                <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            </div>
+            <div class="action-callout-text">
+                <strong>MCP server — diagram from Claude Code &amp; Cursor</strong>
+                <span><code style="font-family:var(--mono);font-size:12px;color:var(--accent)">npx infrasketch-mcp</code> &nbsp;— ask your AI to diagram IaC without leaving the editor.</span>
+            </div>
+            <a href="https://www.npmjs.com/package/infrasketch-mcp" target="_blank" class="action-callout-link" aria-label="infrasketch-mcp on npm">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                View on npm
+            </a>
+        </div>
+    </div>
+
     <!-- WHAT IS -->
     <section class="what-is" id="what-is">
         <div class="section-label">// about</div>
@@ -2367,6 +2384,15 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             </div>
             <h3>Embeddable web component</h3>
             <p>Add <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">&lt;script src="infrasketch.cloud/embed.js"&gt;</code> once, then drop <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">&lt;infra-sketch src="./main.tf"&gt;</code> anywhere on your docs, blog, or README preview page. Or generate an <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">&lt;iframe&gt;</code> embed via the <strong>&lt;/&gt; Embed</strong> button.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg>
+            </div>
+            <h3>MCP server for AI editors</h3>
+            <p>Run <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">npx infrasketch-mcp</code> as an MCP server in Claude Code, Cursor, or Windsurf. Ask your AI to diagram your Terraform or Kubernetes code — it calls <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">generate_diagram</code> and returns a shareable URL + embed snippet without leaving the editor.</p>
         </div>
     </section>
 

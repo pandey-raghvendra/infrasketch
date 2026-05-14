@@ -95,6 +95,37 @@ Detects changed IaC files, identifies format, generates shareable diagram URLs, 
 
 ---
 
+## MCP Server (Claude Code / Cursor / Windsurf)
+
+[![npm](https://img.shields.io/npm/v/infrasketch-mcp?style=flat&color=cb3837&logo=npm&label=infrasketch-mcp)](https://www.npmjs.com/package/infrasketch-mcp)
+
+Generate architecture diagrams without leaving your editor.
+
+**Claude Code — add once:**
+```bash
+claude mcp add infrasketch -- npx infrasketch-mcp
+```
+
+**Cursor / Windsurf — add to `.cursor/mcp.json` or `mcp.json`:**
+```json
+{
+  "mcpServers": {
+    "infrasketch": {
+      "command": "npx",
+      "args": ["infrasketch-mcp"]
+    }
+  }
+}
+```
+
+Then ask your AI: *"Generate a diagram for this Terraform code"* → Claude calls `generate_diagram` and returns a shareable URL + iframe + web component snippet inline in chat.
+
+Tools exposed: `generate_diagram` · `detect_iac_format`
+
+See [`mcp/README.md`](mcp/README.md) for full documentation.
+
+---
+
 ## CLI
 
 [![npm](https://img.shields.io/npm/v/infrasketch?style=flat&color=cb3837&logo=npm)](https://www.npmjs.com/package/infrasketch)
