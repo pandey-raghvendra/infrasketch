@@ -1,0 +1,12 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="6" fill="#326CE5"/>
+  <!-- PVC: storage cylinder with claim indicator -->
+  <!-- Cylinder body -->
+  <rect x="16" y="22" width="32" height="26" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <!-- Cylinder top ellipse -->
+  <ellipse cx="32" cy="22" rx="16" ry="5" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <!-- Cylinder bottom ellipse hint -->
+  <ellipse cx="32" cy="48" rx="16" ry="5" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <!-- Claim "C" label in center -->
+  <text x="32" y="38" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="14" font-family="monospace" font-weight="bold">PVC</text>
+</svg>

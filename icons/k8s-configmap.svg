@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="6" fill="#326CE5"/>
+  <!-- ConfigMap: document/file with key-value lines -->
+  <rect x="14" y="10" width="36" height="44" rx="3" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <!-- Key = value lines -->
+  <line x1="20" y1="22" x2="28" y2="22" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="31" y1="22" x2="44" y2="22" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="20" y1="30" x2="28" y2="30" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="31" y1="30" x2="44" y2="30" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="20" y1="38" x2="28" y2="38" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="31" y1="38" x2="44" y2="38" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <!-- Gear icon at bottom right -->
+  <circle cx="44" cy="48" r="5" fill="#326CE5" stroke="#fff" stroke-width="2"/>
+  <circle cx="44" cy="48" r="2" fill="#fff"/>
+</svg>

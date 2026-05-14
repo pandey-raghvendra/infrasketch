@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="6" fill="#326CE5"/>
+  <!-- HPA: horizontal scaling — boxes expanding outward -->
+  <!-- Center pod -->
+  <rect x="24" y="24" width="16" height="16" rx="2.5" fill="#fff"/>
+  <!-- Left arrow -->
+  <line x1="24" y1="32" x2="13" y2="32" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <polyline points="17,27 12,32 17,37" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Left ghost pod -->
+  <rect x="4" y="24" width="8" height="16" rx="2" fill="rgba(255,255,255,0.45)"/>
+  <!-- Right arrow -->
+  <line x1="40" y1="32" x2="51" y2="32" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <polyline points="47,27 52,32 47,37" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Right ghost pod -->
+  <rect x="52" y="24" width="8" height="16" rx="2" fill="rgba(255,255,255,0.45)"/>
+  <!-- Up arrow (vertical scaling indicator) -->
+  <line x1="32" y1="24" x2="32" y2="13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
+</svg>

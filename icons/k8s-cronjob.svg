@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="6" fill="#326CE5"/>
+  <!-- CronJob: clock with circular arrow -->
+  <!-- Clock face -->
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <!-- Clock hands -->
+  <line x1="32" y1="32" x2="32" y2="18" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="32" y1="32" x2="42" y2="38" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Clock center dot -->
+  <circle cx="32" cy="32" r="2.5" fill="#fff"/>
+  <!-- Circular repeat arrow (schedule) at bottom-right -->
+  <path d="M46 46 Q54 38 46 30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <polyline points="43,31 46,29 49,33" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

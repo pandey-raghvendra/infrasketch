@@ -1,0 +1,10 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="6" fill="#326CE5"/>
+  <!-- StatefulSet: stacked boxes (ordered, persistent) -->
+  <rect x="13" y="38" width="38" height="10" rx="2.5" fill="#fff"/>
+  <rect x="13" y="26" width="38" height="10" rx="2.5" fill="rgba(255,255,255,0.75)"/>
+  <rect x="13" y="14" width="38" height="10" rx="2.5" fill="rgba(255,255,255,0.5)"/>
+  <!-- Link lines on right side -->
+  <line x1="47" y1="24" x2="47" y2="26" stroke="#fff" stroke-width="2"/>
+  <line x1="47" y1="36" x2="47" y2="38" stroke="#fff" stroke-width="2"/>
+</svg>

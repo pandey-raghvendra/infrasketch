@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="6" fill="#326CE5"/>
+  <!-- NetworkPolicy: shield with network lines -->
+  <!-- Shield -->
+  <path d="M32 8 L52 16 L52 34 Q52 50 32 58 Q12 50 12 34 L12 16 Z" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Network rule lines inside shield -->
+  <line x1="22" y1="28" x2="42" y2="28" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="22" cy="28" r="2.5" fill="#fff"/>
+  <!-- Blocked line (crossed) -->
+  <line x1="22" y1="38" x2="38" y2="38" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="41" y1="35" x2="35" y2="41" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="41" y1="41" x2="35" y2="35" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+</svg>

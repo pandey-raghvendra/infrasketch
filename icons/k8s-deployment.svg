@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="6" fill="#326CE5"/>
+  <!-- Deployment: box with 3 pods and a rolling-update arrow -->
+  <!-- Main box -->
+  <rect x="10" y="16" width="44" height="32" rx="3" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <!-- Three pod squares inside -->
+  <rect x="16" y="23" width="9" height="9" rx="2" fill="#fff"/>
+  <rect x="27" y="23" width="9" height="9" rx="2" fill="#fff"/>
+  <rect x="38" y="23" width="9" height="9" rx="2" fill="#fff"/>
+  <!-- Rolling update arrow at bottom -->
+  <path d="M24 38 Q32 43 40 38" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <polyline points="38,35 40,38 43,37" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
