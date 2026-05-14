@@ -22,8 +22,6 @@ jobs:
       - name: Find (and remove) duplicate posts
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
-          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
-          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
         run: |
           if [ "${{ github.event.inputs.apply }}" = "true" ]; then
             node scripts/dedup-blog.js --apply

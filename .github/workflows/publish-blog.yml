@@ -50,12 +50,10 @@ jobs:
             echo "$files"
           fi
 
-      - name: Publish to dev.to and Hashnode
+      - name: Publish to dev.to
         if: steps.resolve.outputs.files != ''
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
-          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
-          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
         run: |
           while IFS= read -r file; do
             [ -z "$file" ] && continue

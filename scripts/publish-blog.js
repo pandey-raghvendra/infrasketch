@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Publishes a single blog HTML file to dev.to and Hashnode.
+// Publishes a single blog HTML file to dev.to.
 // Usage: node scripts/publish-blog.js blog/my-post.html
 
 import fs from 'fs';
@@ -12,8 +12,6 @@ if (!filePath) {
 }
 
 const DEVTO_API_KEY = process.env.DEVTO_API_KEY;
-const HASHNODE_TOKEN = process.env.HASHNODE_TOKEN;
-const HASHNODE_PUBLICATION_ID = process.env.HASHNODE_PUBLICATION_ID;
 
 const RETRY_DELAY_MS = 30_000;
 const MAX_RETRIES = 3;
@@ -241,108 +239,6 @@ async function postToDevTo() {
   }
 }
 
-// ── Hashnode ─────────────────────────────────────────────────────────────────
-
-async function gql(query, variables) {
-  const res = await fetchWithRetry(
-    'https://gql.hashnode.com',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: HASHNODE_TOKEN },
-      body: JSON.stringify({ query, variables }),
-    },
-    'Hashnode'
-  );
-  return res.json();
-}
-
-async function findHashnodePost() {
-  const query = `
-    query GetPosts($id: ObjectId!, $after: String) {
-      publication(id: $id) {
-        posts(first: 50, after: $after) {
-          edges { node { id title url canonicalUrl } }
-          pageInfo { hasNextPage endCursor }
-        }
-      }
-    }
-  `;
-
-  let after = null;
-  while (true) {
-    const data = await gql(query, { id: HASHNODE_PUBLICATION_ID, after });
-    const posts = data.data?.publication?.posts;
-    if (!posts) return null;
-
-    const match = posts.edges.find(({ node }) =>
-      (canonical && node.canonicalUrl === canonical) ||
-      node.title.toLowerCase() === title.toLowerCase()
-    );
-    if (match) return match.node;
-
-    if (!posts.pageInfo.hasNextPage) return null;
-    after = posts.pageInfo.endCursor;
-  }
-}
-
-async function postToHashnode() {
-  if (!HASHNODE_TOKEN || !HASHNODE_PUBLICATION_ID) {
-    console.warn('HASHNODE_TOKEN or HASHNODE_PUBLICATION_ID not set — skipping Hashnode');
-    return;
-  }
-
-  const existing = await findHashnodePost();
-
-  if (existing) {
-    const mutation = `
-      mutation UpdatePost($input: UpdatePostInput!) {
-        updatePost(input: $input) {
-          post { id title url }
-        }
-      }
-    `;
-    const input = {
-      id: existing.id,
-      title,
-      contentMarkdown: markdown,
-      originalArticleURL: canonical || undefined,
-      subtitle: description || undefined,
-    };
-    const data = await gql(mutation, { input });
-    if (data.errors) {
-      console.error(`✗ Hashnode: ${JSON.stringify(data.errors)}`);
-      process.exitCode = 1;
-    } else {
-      console.log(`↺ Hashnode (updated): ${data.data?.updatePost?.post?.url}`);
-    }
-  } else {
-    const mutation = `
-      mutation PublishPost($input: PublishPostInput!) {
-        publishPost(input: $input) {
-          post { id title url }
-        }
-      }
-    `;
-    const input = {
-      title,
-      contentMarkdown: markdown,
-      publicationId: HASHNODE_PUBLICATION_ID,
-      tags: [],
-      originalArticleURL: canonical || undefined,
-      subtitle: description || undefined,
-      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
-    };
-    const data = await gql(mutation, { input });
-    if (data.errors) {
-      console.error(`✗ Hashnode: ${JSON.stringify(data.errors)}`);
-      process.exitCode = 1;
-    } else {
-      console.log(`✓ Hashnode (created): ${data.data?.publishPost?.post?.url}`);
-    }
-  }
-}
-
 // ── run ──────────────────────────────────────────────────────────────────────
 
 await postToDevTo();
-await postToHashnode();

@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 /**
- * dedup-blog.js — find and remove duplicate posts on dev.to and Hashnode.
+ * dedup-blog.js — find and remove duplicate posts on dev.to.
  *
  * Duplicates = same canonical_url OR same title (case-insensitive).
- * Strategy: keep the oldest post (lowest ID / earliest published_at), remove the rest.
- *   - dev.to:   no public DELETE API → unpublishes duplicates (published: false)
- *   - Hashnode: uses removePost mutation to hard-delete duplicates
+ * Strategy: keep the oldest post (lowest ID), unpublish the rest.
+ *   - dev.to: no public DELETE API → unpublishes duplicates (published: false)
  *
  * Usage:
  *   node scripts/dedup-blog.js            # dry-run (no changes)
  *   node scripts/dedup-blog.js --apply    # actually remove duplicates
  *
- * Required env vars (same as publish-blog.js):
- *   DEVTO_API_KEY, HASHNODE_TOKEN, HASHNODE_PUBLICATION_ID
+ * Required env vars:
+ *   DEVTO_API_KEY
  */
 
 const DRY_RUN = !process.argv.includes('--apply');
@@ -20,9 +19,7 @@ if (DRY_RUN) {
   console.log('🔍 DRY RUN — pass --apply to make changes\n');
 }
 
-const DEVTO_API_KEY         = process.env.DEVTO_API_KEY;
-const HASHNODE_TOKEN        = process.env.HASHNODE_TOKEN;
-const HASHNODE_PUBLICATION_ID = process.env.HASHNODE_PUBLICATION_ID;
+const DEVTO_API_KEY = process.env.DEVTO_API_KEY;
 
 const RETRY_DELAY_MS = 30_000;
 const MAX_RETRIES    = 3;
@@ -134,102 +131,6 @@ async function deduplicateDevTo() {
   }
 }
 
-// ── Hashnode ──────────────────────────────────────────────────────────────────
-
-async function gql(query, variables) {
-  const res = await fetchWithRetry(
-    'https://gql.hashnode.com',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: HASHNODE_TOKEN },
-      body: JSON.stringify({ query, variables }),
-    },
-    'Hashnode'
-  );
-  return res.json();
-}
-
-async function fetchAllHashnodePosts() {
-  const all = [];
-  let after = null;
-  const query = `
-    query GetPosts($id: ObjectId!, $after: String) {
-      publication(id: $id) {
-        posts(first: 50, after: $after) {
-          edges { node { id title url canonicalUrl publishedAt } }
-          pageInfo { hasNextPage endCursor }
-        }
-      }
-    }
-  `;
-  while (true) {
-    const data = await gql(query, { id: HASHNODE_PUBLICATION_ID, after });
-    const posts = data.data?.publication?.posts;
-    if (!posts) break;
-    all.push(...posts.edges.map(e => e.node));
-    if (!posts.pageInfo.hasNextPage) break;
-    after = posts.pageInfo.endCursor;
-  }
-  return all;
-}
-
-async function deduplicateHashnode() {
-  if (!HASHNODE_TOKEN || !HASHNODE_PUBLICATION_ID) {
-    console.warn('HASHNODE_TOKEN or HASHNODE_PUBLICATION_ID not set — skipping Hashnode');
-    return;
-  }
-
-  console.log('\n── Hashnode ─────────────────────────────────');
-  const posts = await fetchAllHashnodePosts();
-  console.log(`Fetched ${posts.length} posts`);
-
-  // Group by dedup key; sort oldest-first by publishedAt
-  const groups = new Map();
-  for (const p of posts) {
-    const key = dedupKey(p.canonicalUrl, p.title);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(p);
-  }
-
-  let totalDups = 0;
-  for (const [key, group] of groups) {
-    if (group.length <= 1) continue;
-
-    group.sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt)); // keep oldest
-    const [keep, ...dupes] = group;
-    totalDups += dupes.length;
-
-    console.log(`\nDuplicate: "${keep.title}" (${group.length} copies)`);
-    console.log(`  ✓ keep  [${keep.publishedAt}] ${keep.url}`);
-    for (const d of dupes) {
-      console.log(`  ✗ remove [${d.publishedAt}] ${d.url}`);
-      if (!DRY_RUN) {
-        const mutation = `
-          mutation RemovePost($input: RemovePostInput!) {
-            removePost(input: $input) {
-              post { id title }
-            }
-          }
-        `;
-        const data = await gql(mutation, { input: { postId: d.id } });
-        if (data.errors) {
-          console.error(`    ✗ failed: ${JSON.stringify(data.errors)}`);
-          process.exitCode = 1;
-        } else {
-          console.log(`    → deleted`);
-        }
-      }
-    }
-  }
-
-  if (totalDups === 0) {
-    console.log('No duplicates found on Hashnode ✓');
-  } else {
-    console.log(`\nHashnode: ${DRY_RUN ? 'would remove' : 'removed'} ${totalDups} duplicate(s)`);
-  }
-}
-
 // ── run ───────────────────────────────────────────────────────────────────────
 
 await deduplicateDevTo();
-await deduplicateHashnode();
