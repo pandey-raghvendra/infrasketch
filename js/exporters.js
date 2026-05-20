@@ -168,8 +168,29 @@ async function inlineSvgImages(svg) {
     return clone;
 }
 
+function addSvgWatermark(svgEl) {
+    const viewBox = svgEl.getAttribute('viewBox') || '0 0 1200 800';
+    const parts = viewBox.split(/\s+/).map(Number);
+    const svgW = parts[2] || 1200;
+    const svgH = parts[3] || 800;
+
+    const wm = document.createElementNS(SVG_NS, 'text');
+    wm.setAttribute('x', svgW - 10);
+    wm.setAttribute('y', svgH - 8);
+    wm.setAttribute('text-anchor', 'end');
+    wm.setAttribute('font-family', 'DM Sans, sans-serif');
+    wm.setAttribute('font-size', '11');
+    wm.setAttribute('font-weight', '600');
+    wm.setAttribute('fill', '#94a3b8');
+    wm.setAttribute('opacity', '0.6');
+    wm.setAttribute('pointer-events', 'none');
+    wm.textContent = 'infrasketch.cloud';
+    svgEl.appendChild(wm);
+}
+
 async function serializedStandaloneSvg(svg) {
     const clone = await inlineSvgImages(svg);
+    addSvgWatermark(clone);
     return new XMLSerializer().serializeToString(clone);
 }
 
@@ -199,6 +220,12 @@ export async function exportPng(svg) {
     ctx.scale(scale, scale);
     ctx.drawImage(image, 0, 0, width, height);
     URL.revokeObjectURL(svgUrl);
+
+    // Watermark
+    ctx.font = '600 11px "DM Sans", sans-serif';
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+    ctx.textAlign = 'right';
+    ctx.fillText('infrasketch.cloud', width - 10, height - 8);
 
     const dataUrl = canvas.toDataURL('image/png');
     const link = document.createElement('a');

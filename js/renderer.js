@@ -133,9 +133,13 @@ function appendConnection(svg, conn, layout) {
     }));
 }
 
-function appendResourceNode(svg, resource, position, config) {
+function appendResourceNode(svg, resource, position, config, nodeIndex = 0) {
     const group = append(svg, svgElement('g', { class: 'resource-node', 'data-node-id': resource.id, filter: 'url(#shadow)' }));
 
+    // Staggered entrance animation
+    group.style.animationDelay = `${nodeIndex * 0.04}s`;
+
+    // Card background
     append(group, svgElement('rect', {
         x: position.x,
         y: position.y,
@@ -144,7 +148,29 @@ function appendResourceNode(svg, resource, position, config) {
         rx: 8,
         fill: 'white',
         stroke: resource.color,
-        'stroke-width': 1.5,
+        'stroke-width': 1,
+        'stroke-opacity': 0.35,
+    }));
+
+    // Subtle color tint
+    append(group, svgElement('rect', {
+        x: position.x + 1,
+        y: position.y + 1,
+        width: config.NW - 2,
+        height: config.NH - 2,
+        rx: 7,
+        fill: resource.color,
+        opacity: 0.05,
+    }));
+
+    // Top accent bar — signature InfraSketch style
+    append(group, svgElement('rect', {
+        x: position.x + 8,
+        y: position.y,
+        width: config.NW - 16,
+        height: 3,
+        rx: 1.5,
+        fill: resource.color,
     }));
 
     const iconPath = ICON_PATHS[resource.icon];
@@ -152,7 +178,7 @@ function appendResourceNode(svg, resource, position, config) {
         const icon = append(group, svgElement('image', {
             href: iconPath,
             x: position.x + (config.NW - config.ICON_S) / 2,
-            y: position.y + 5,
+            y: position.y + 7,
             width: config.ICON_S,
             height: config.ICON_S,
         }));
@@ -163,7 +189,7 @@ function appendResourceNode(svg, resource, position, config) {
 
     append(group, svgElement('text', {
         x: position.x + config.NW / 2,
-        y: position.y + 50,
+        y: position.y + 52,
         'text-anchor': 'middle',
         'font-family': 'DM Sans,sans-serif',
         'font-size': 10,
@@ -350,10 +376,11 @@ export function renderDiagram(parsed, svg) {
         appendConnection(layer, conn, layout);
     }
 
+    let nodeIndex = 0;
     for (const resource of layout.resources) {
         const pos = positions[resource.id];
         if (!pos || pos.isSubnet) continue;
-        appendResourceNode(layer, resource, pos, config);
+        appendResourceNode(layer, resource, pos, config, nodeIndex++);
     }
 
     return layout;

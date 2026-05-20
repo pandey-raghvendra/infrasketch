@@ -22,9 +22,9 @@
     <meta property="og:url" content="https://infrasketch.cloud/">
     <meta property="og:title" content="InfraSketch — IaC Architecture Diagram Generator">
     <meta property="og:description" content="Paste Terraform, Bicep, Pulumi, Kubernetes, CloudFormation, CDK, or Docker Compose. Get instant AWS, Azure &amp; GCP architecture diagrams. Free, no signup, 100% browser-based.">
-    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
-    <meta property="og:image:width" content="800">
-    <meta property="og:image:height" content="457">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/og-diagram.svg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -687,14 +687,20 @@
         }
 
         /* Resource nodes in diagram */
+        @keyframes isNodeIn {
+            from { opacity: 0; transform: scale(0.88); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
         .resource-node {
             cursor: pointer;
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: isNodeIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
             transition: transform 0.15s ease, filter 0.15s ease;
         }
 
         .resource-node:hover {
-            transform-box: fill-box;
-            transform-origin: center;
             transform: scale(1.05);
             filter: drop-shadow(0 4px 12px rgba(6, 214, 160, 0.2));
         }
