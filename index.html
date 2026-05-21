@@ -2716,6 +2716,20 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
         <div class="feature-card">
             <div class="feature-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="4"/>
+                    <line x1="4.93" y1="4.93" x2="8.17" y2="8.17"/>
+                    <line x1="19.07" y1="4.93" x2="15.83" y2="8.17"/>
+                    <line x1="4.93" y1="19.07" x2="8.17" y2="15.83"/>
+                    <line x1="19.07" y1="19.07" x2="15.83" y2="15.83"/>
+                </svg>
+            </div>
+            <h3>⚡ Blast radius &amp; change impact</h3>
+            <p>Click any resource to instantly see its <strong style="color:#ef4444">direct downstream impact</strong> (red), <strong style="color:#f97316">indirect downstream</strong> (orange), and <strong style="color:#3b82f6">upstream dependencies</strong> (blue) — everything else dims. A side panel lists every affected service with counts. Click any item to pivot. On TF plan JSON, nodes show <strong>+/~/×</strong> badges for create, update, and delete actions.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.31 11.31l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l1.41 1.41"/>
                     <circle cx="12" cy="12" r="5"/>
                 </svg>

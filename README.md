@@ -56,7 +56,9 @@ resource "aws_vpc" "main" { cidr_block = "10.0.0.0/16" }
 | **3 cloud providers** | AWS (30+ types), Azure (40+ types), GCP (23+ types) with official icons |
 | **VPC containment** | Resources drawn inside VPC/VNet/subnet boundaries with colour-coded borders |
 | **Connection arrows** | Inferred from HCL references, `dependsOn`, `!Ref`, Pulumi variable refs |
+| **⚡ Blast radius** | Click any node → direct downstream (red), indirect downstream (orange), upstream deps (blue); everything else dims; side panel lists every affected service with counts |
 | **📦 Module grouping** | Terraform plan JSON auto-detects `module.X.*` addresses → labeled bounding boxes per module; click `[−]` to collapse a group to a single summary card |
+| **Plan change badges** | TF plan JSON annotates each node with `+` (create), `~` (update), `↺` (replace), `×` (delete) badges |
 | **Module expansion** | ZIP upload expands local modules inline; registry auto-fetch for public TF modules |
 | **Interactive editor** | Drag nodes to reposition; arrows update live; Reset Layout restores auto-layout |
 | **🛡 Security overlay** | Paste `checkov -d . -o json` output → failing resources get red borders + badge |
@@ -214,7 +216,8 @@ Cost tiers: grey (free) → green (<$10) → amber ($10–$100) → orange ($100
 ```bash
 # HCL — paste one or more .tf files concatenated
 # Plan JSON — most accurate: resolves count, for_each, module addresses
-# Resources with module.X.* addresses are automatically grouped with collapse/expand
+# module.X.* addresses get grouped into labeled boxes + collapse/expand
+# + change badges (create/update/replace/delete) appear on each node
 terraform plan -out=tfplan && terraform show -json tfplan | pbcopy
 
 # CDK
@@ -224,6 +227,20 @@ cdk synth | pbcopy
 kubectl get all -n my-namespace -o yaml | pbcopy
 helm template my-release ./my-chart | pbcopy
 ```
+
+---
+
+## Blast radius workflow
+
+1. Generate a diagram from any IaC format
+2. Click any resource node → blast radius mode activates
+3. **Red** = services directly broken if this resource changes
+4. **Orange** = indirectly affected (2+ hops downstream)
+5. **Blue** = what this resource depends on (upstream)
+6. Side panel lists every affected resource — click any to pivot and re-analyze from there
+7. Press `Esc` or click the selected node again to exit
+
+Works best with Terraform plan JSON — connections are inferred from the `configuration.root_module` expression references.
 
 ---
 
