@@ -56,6 +56,7 @@ resource "aws_vpc" "main" { cidr_block = "10.0.0.0/16" }
 | **3 cloud providers** | AWS (30+ types), Azure (40+ types), GCP (23+ types) with official icons |
 | **VPC containment** | Resources drawn inside VPC/VNet/subnet boundaries with colour-coded borders |
 | **Connection arrows** | Inferred from HCL references, `dependsOn`, `!Ref`, Pulumi variable refs |
+| **📦 Module grouping** | Terraform plan JSON auto-detects `module.X.*` addresses → labeled bounding boxes per module; click `[−]` to collapse a group to a single summary card |
 | **Module expansion** | ZIP upload expands local modules inline; registry auto-fetch for public TF modules |
 | **Interactive editor** | Drag nodes to reposition; arrows update live; Reset Layout restores auto-layout |
 | **🛡 Security overlay** | Paste `checkov -d . -o json` output → failing resources get red borders + badge |
@@ -212,7 +213,8 @@ Cost tiers: grey (free) → green (<$10) → amber ($10–$100) → orange ($100
 
 ```bash
 # HCL — paste one or more .tf files concatenated
-# Plan JSON — most accurate (resolves count, for_each, modules)
+# Plan JSON — most accurate: resolves count, for_each, module addresses
+# Resources with module.X.* addresses are automatically grouped with collapse/expand
 terraform plan -out=tfplan && terraform show -json tfplan | pbcopy
 
 # CDK
@@ -231,6 +233,7 @@ helm template my-release ./my-chart | pbcopy
 |-------|-----------|
 | HCL doesn't evaluate `count`, `for_each`, variables | Use plan JSON (`terraform show -json`) |
 | Cross-file references not resolved from HCL | Concatenate `.tf` files or use plan JSON |
+| Module grouping only works with plan JSON | HCL `module {}` blocks render as single opaque nodes; plan JSON shows full `module.X.*` addresses |
 | Module ZIP resolves only relative (`./`) paths | `git::` / `http` sources need manual extraction |
 | Registry auto-fetch needs network + CORS | Private modules fall back to opaque nodes |
 
