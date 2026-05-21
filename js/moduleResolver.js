@@ -146,6 +146,7 @@ function prefixParsedResult(parsed, modulePrefix) {
         connections: parsed.connections.map(c => ({ from: p(c.from), to: p(c.to) })),
         vpcOf: Object.fromEntries(Object.entries(parsed.vpcOf).map(([k, v]) => [p(k), p(v)])),
         subnetOf: Object.fromEntries(Object.entries(parsed.subnetOf).map(([k, v]) => [p(k), p(v)])),
+        moduleGroups: {},
     };
 }
 
@@ -206,6 +207,7 @@ async function expandModulesRecursive(rootParsed, rootCode, virtualFS, fetchRegi
         connections: [...rootParsed.connections, ...extra.connections],
         vpcOf: { ...rootParsed.vpcOf, ...extra.vpcOf },
         subnetOf: { ...rootParsed.subnetOf, ...extra.subnetOf },
+        moduleGroups: rootParsed.moduleGroups || {},
     };
 }
 

@@ -75,7 +75,7 @@ export function parseArm(code) {
     const hasArmSchema = schema.includes('deploymentTemplate') || schema.includes('subscriptionDeploymentTemplate');
     const hasResources = Array.isArray(template.resources);
     if (!hasArmSchema && !hasResources) return null;
-    if (!hasResources) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+    if (!hasResources) return { resources: [], connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 
     const resources = [];
     const supportedIds = new Set();
@@ -109,7 +109,7 @@ export function parseArm(code) {
 
     for (const res of template.resources) processRes(res);
 
-    if (!resources.length) return { resources, connections: [], vpcOf: {}, subnetOf: {} };
+    if (!resources.length) return { resources, connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 
     const vpcOf = {};
     const subnetOf = {};
@@ -187,7 +187,7 @@ export function parseArm(code) {
         }
     }
 
-    return { resources, connections, vpcOf, subnetOf };
+    return { resources, connections, vpcOf, subnetOf, moduleGroups: {} };
 }
 
 function findMatchingBraceMixed(source, openIndex) {
@@ -243,7 +243,7 @@ export function parseBicep(code) {
         resourceRe.lastIndex = closeIndex + 1;
     }
 
-    if (!entries.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+    if (!entries.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 
     const varToId = new Map();
     const resources = [];
@@ -259,7 +259,7 @@ export function parseBicep(code) {
         supportedIds.add(id);
     }
 
-    if (!resources.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+    if (!resources.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 
     const vpcOf = {};
     const subnetOf = {};
@@ -317,7 +317,7 @@ export function parseBicep(code) {
         }
     }
 
-    return { resources, connections, vpcOf, subnetOf };
+    return { resources, connections, vpcOf, subnetOf, moduleGroups: {} };
 }
 
 function loadScript(src) {
@@ -472,7 +472,7 @@ export function parseTerraform(code) {
     const supportedBlocks = blocks.filter((block) => supportedIds.has(block.id));
 
     if (!allResources.length) {
-        return { resources: allResources, connections: [], vpcOf: {}, subnetOf: {} };
+        return { resources: allResources, connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
     }
 
     const vpcOf = {};
@@ -548,7 +548,7 @@ export function parseTerraform(code) {
         }
     }
 
-    return { resources: allResources, connections, vpcOf, subnetOf };
+    return { resources: allResources, connections, vpcOf, subnetOf, moduleGroups: {} };
 }
 
 function normalizeDependsOn(dependsOn) {
@@ -594,7 +594,7 @@ export async function parseDockerCompose(code) {
         }
     }
 
-    return { resources, connections, vpcOf: {}, subnetOf: {} };
+    return { resources, connections, vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 }
 
 // ─── parseTerraformPlan ───────────────────────────────────────────────────────
@@ -699,7 +699,20 @@ export function parseTerraformPlan(jsonText) {
         }
     }
 
-    return { resources, connections, vpcOf, subnetOf };
+    // Build moduleGroups from module-prefixed addresses (e.g. module.vpc.aws_vpc.main → "vpc")
+    const moduleGroups = {};
+    for (const r of resources) {
+        const m = /^module\.([^.]+)\./.exec(r.id);
+        if (m) {
+            const gName = m[1];
+            (moduleGroups[gName] = moduleGroups[gName] || []).push(r.id);
+        }
+    }
+    for (const k of Object.keys(moduleGroups)) {
+        if (moduleGroups[k].length < 2) delete moduleGroups[k];
+    }
+
+    return { resources, connections, vpcOf, subnetOf, moduleGroups };
 }
 
 // ─── parseCloudFormation ──────────────────────────────────────────────────────
@@ -873,7 +886,7 @@ export async function parseCloudFormation(code) {
         }
     }
 
-    return { resources, connections, vpcOf, subnetOf };
+    return { resources, connections, vpcOf, subnetOf, moduleGroups: {} };
 }
 
 // ─── parseTerragrunt ─────────────────────────────────────────────────────────
@@ -943,7 +956,7 @@ export function parseTerragrunt(code) {
         }
     }
 
-    return { resources, connections, vpcOf: {}, subnetOf: {} };
+    return { resources, connections, vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 }
 
 // ─── parsePulumi ──────────────────────────────────────────────────────────────
@@ -1100,7 +1113,7 @@ function extractPulumiResources(code) {
 
 export function parsePulumi(code) {
     const entries = extractPulumiResources(code);
-    if (!entries.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+    if (!entries.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 
     const varToId = new Map();
     for (const e of entries) varToId.set(e.varName, `${e.tfType}.${e.logicalName}`);
@@ -1116,7 +1129,7 @@ export function parsePulumi(code) {
         supportedIds.add(id);
     }
 
-    if (!resources.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+    if (!resources.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 
     const varNames = [...varToId.keys()];
     const vpcOf = {};
@@ -1168,7 +1181,7 @@ export function parsePulumi(code) {
         }
     }
 
-    return { resources, connections, vpcOf, subnetOf };
+    return { resources, connections, vpcOf, subnetOf, moduleGroups: {} };
 }
 
 // ─── parseKubernetes ──────────────────────────────────────────────────────────
@@ -1206,9 +1219,9 @@ export async function parseKubernetes(code) {
 
     const docs = [];
     try { yaml.loadAll(code, (doc) => { if (doc && doc.kind) docs.push(doc); }); }
-    catch { return { resources: [], connections: [], vpcOf: {}, subnetOf: {} }; }
+    catch { return { resources: [], connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} }; }
 
-    if (!docs.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {} };
+    if (!docs.length) return { resources: [], connections: [], vpcOf: {}, subnetOf: {}, moduleGroups: {} };
 
     const rawResources = [];
     const supportedIds = new Set();
@@ -1309,5 +1322,5 @@ export async function parseKubernetes(code) {
     }
 
     const cleanResources = [...nsResources, ...rawResources.map(({ _doc, _ns, _kind, ...r }) => r)];
-    return { resources: cleanResources, connections, vpcOf, subnetOf: {} };
+    return { resources: cleanResources, connections, vpcOf, subnetOf: {}, moduleGroups: {} };
 }

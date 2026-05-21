@@ -93,6 +93,85 @@ function appendZoneBadge(layer, { x, y, fill, label }) {
     }, label));
 }
 
+// ── Module group bounding boxes (TF Plan with module.X.* addresses) ──────────
+// Returns computed bounds so collapse buttons can be drawn above nodes.
+function computeModuleGroupBounds(moduleGroups, positions, config) {
+    const { NW, NH } = config;
+    const PAD = 18;
+    const bounds = {};
+
+    for (const [name, memberIds] of Object.entries(moduleGroups)) {
+        const memberPos = memberIds
+            .map((id) => positions[id])
+            .filter((p) => p && !p.isSubnet);
+
+        if (memberPos.length < 1) continue;
+
+        const minX = Math.min(...memberPos.map((p) => p.x)) - PAD;
+        const minY = Math.min(...memberPos.map((p) => p.y)) - PAD - 14;
+        const maxX = Math.max(...memberPos.map((p) => p.x + NW)) + PAD;
+        const maxY = Math.max(...memberPos.map((p) => p.y + NH)) + PAD;
+        bounds[name] = { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
+    }
+    return bounds;
+}
+
+// Draw the background boxes (called before nodes so nodes float on top).
+function renderModuleGroupBgs(layer, moduleGroups, bounds) {
+    for (const [name] of Object.entries(moduleGroups)) {
+        const b = bounds[name];
+        if (!b) continue;
+
+        const grpG = append(layer, svgElement('g', {
+            class: 'module-group',
+            'data-module': name,
+        }));
+
+        append(grpG, svgElement('rect', {
+            x: b.minX, y: b.minY, width: b.w, height: b.h,
+            rx: 10, fill: '#eef0ff',
+            stroke: '#6366f1', 'stroke-width': 1.5, 'stroke-dasharray': '7 4',
+        }));
+        append(grpG, svgElement('rect', {
+            x: b.minX, y: b.minY + 4, width: 4, height: b.h - 8,
+            rx: 2, fill: '#6366f1', opacity: 0.4,
+        }));
+        appendZoneBadge(grpG, {
+            x: b.minX + 10, y: b.minY + 16,
+            fill: '#4338ca',
+            label: `MODULE · ${name.toUpperCase()}`,
+        });
+    }
+}
+
+// Draw collapse buttons above nodes so they stay clickable.
+function renderModuleGroupBtns(layer, moduleGroups, bounds) {
+    for (const [name] of Object.entries(moduleGroups)) {
+        const b = bounds[name];
+        if (!b) continue;
+
+        const btnX = b.maxX - 22;
+        const btnY = b.minY + 4;
+        const btnG = append(layer, svgElement('g', {
+            class: 'module-collapse-btn',
+            'data-module': name,
+        }));
+        append(btnG, svgElement('rect', {
+            x: btnX, y: btnY, width: 16, height: 14,
+            rx: 3, fill: '#6366f1', opacity: 0.15,
+        }));
+        append(btnG, svgElement('text', {
+            x: btnX + 8, y: btnY + 10,
+            'text-anchor': 'middle',
+            'font-family': 'DM Mono,monospace',
+            'font-size': 10, 'font-weight': 700,
+            fill: '#4338ca',
+            class: 'module-collapse-icon',
+            'pointer-events': 'none',
+        }, '−'));
+    }
+}
+
 // ── Cubic-bezier connection paths — kills the ReactFlow L-shape ───────────────
 function connectionPath(from, to, config) {
     const { NW, NH } = config;
@@ -377,6 +456,13 @@ export function renderDiagram(parsed, svg) {
         });
     }
 
+    // ── Module groups — background boxes (drawn before nodes) ───────────────
+    const mg = parsed.moduleGroups || {};
+    const mgBounds = Object.keys(mg).length ? computeModuleGroupBounds(mg, positions, config) : {};
+    if (Object.keys(mgBounds).length) {
+        renderModuleGroupBgs(layer, mg, mgBounds);
+    }
+
     // ── Connections (cubic bezier) ────────────────────────────────────────────
     let connIndex = 0;
     for (const conn of layout.connections) {
@@ -389,6 +475,11 @@ export function renderDiagram(parsed, svg) {
         const pos = positions[resource.id];
         if (!pos || pos.isSubnet) continue;
         appendResourceNode(layer, resource, pos, config, nodeIndex++);
+    }
+
+    // ── Module groups — collapse buttons (drawn above nodes) ─────────────────
+    if (Object.keys(mgBounds).length) {
+        renderModuleGroupBtns(layer, mg, mgBounds);
     }
 
     return layout;

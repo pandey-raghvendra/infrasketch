@@ -1668,6 +1668,30 @@ const SAMPLE_ARM = `{
   ]
 }`;
 
+const SAMPLE_TF_PLAN_MODULES = `{
+  "format_version": "1.2",
+  "resource_changes": [
+    {"address":"module.networking.aws_vpc.main","type":"aws_vpc","name":"main","change":{"actions":["create"],"after":{}}},
+    {"address":"module.networking.aws_subnet.public","type":"aws_subnet","name":"public","change":{"actions":["create"],"after":{}}},
+    {"address":"module.networking.aws_subnet.private","type":"aws_subnet","name":"private","change":{"actions":["create"],"after":{}}},
+    {"address":"module.networking.aws_internet_gateway.main","type":"aws_internet_gateway","name":"main","change":{"actions":["create"],"after":{}}},
+    {"address":"module.networking.aws_nat_gateway.main","type":"aws_nat_gateway","name":"main","change":{"actions":["create"],"after":{}}},
+    {"address":"module.compute.aws_eks_cluster.main","type":"aws_eks_cluster","name":"main","change":{"actions":["create"],"after":{}}},
+    {"address":"module.compute.aws_eks_node_group.workers","type":"aws_eks_node_group","name":"workers","change":{"actions":["create"],"after":{}}},
+    {"address":"module.compute.aws_lb.frontend","type":"aws_lb","name":"frontend","change":{"actions":["create"],"after":{"load_balancer_type":"application"}}},
+    {"address":"module.compute.aws_lb_target_group.app","type":"aws_lb_target_group","name":"app","change":{"actions":["create"],"after":{}}},
+    {"address":"module.data.aws_db_instance.postgres","type":"aws_db_instance","name":"postgres","change":{"actions":["create"],"after":{}}},
+    {"address":"module.data.aws_elasticache_replication_group.redis","type":"aws_elasticache_replication_group","name":"redis","change":{"actions":["create"],"after":{}}},
+    {"address":"module.data.aws_s3_bucket.assets","type":"aws_s3_bucket","name":"assets","change":{"actions":["create"],"after":{}}},
+    {"address":"module.security.aws_iam_role.eks_cluster","type":"aws_iam_role","name":"eks_cluster","change":{"actions":["create"],"after":{}}},
+    {"address":"module.security.aws_iam_role.eks_nodes","type":"aws_iam_role","name":"eks_nodes","change":{"actions":["create"],"after":{}}},
+    {"address":"module.security.aws_kms_key.secrets","type":"aws_kms_key","name":"secrets","change":{"actions":["create"],"after":{}}},
+    {"address":"aws_cloudwatch_log_group.eks","type":"aws_cloudwatch_log_group","name":"eks","change":{"actions":["create"],"after":{}}},
+    {"address":"aws_cloudwatch_metric_alarm.cpu","type":"aws_cloudwatch_metric_alarm","name":"cpu","change":{"actions":["create"],"after":{}}}
+  ],
+  "configuration": { "root_module": { "resources": [] } }
+}`;
+
 const EXTRA_SAMPLES = {
     kubernetes: {
         basic: { label: 'Web app stack — Deployment + StatefulSet + Ingress + HPA + CronJob', code: SAMPLE_K8S_BASIC },
@@ -1683,6 +1707,7 @@ const EXTRA_SAMPLES = {
         gcp: { label: 'Production GCP stack (VPC + GKE + SQL + Pub/Sub)', code: SAMPLE_TERRAFORM_GCP },
         modules: { label: 'Multi-module AWS (VPC + EKS + RDS + serverless)', code: SAMPLE_TERRAFORM_MODULES },
         serverless: { label: 'AWS serverless pipeline (multi-file)', code: SAMPLE_TERRAFORM_SERVERLESS },
+        plan_modules: { label: 'Terraform plan JSON — 4 module groups (networking, compute, data, security)', code: SAMPLE_TF_PLAN_MODULES },
     },
     docker: {
         basic: { label: 'Web app (nginx + API + DB + cache)', code: SAMPLE_DOCKER_COMPOSE },
@@ -1917,6 +1942,7 @@ let lastParsed = null;
 let lastLayout = null;
 let tableOpen = false;
 let editMode = false;
+let collapsedGroups = new Set();
 
 // ── Zoom controller ──────────────────────────────────────────────────────────
 
@@ -2165,6 +2191,7 @@ generateButton.addEventListener('click', async () => {
         lastParsed = parsed;
         lastLayout = layout;
         window._lastParsed = parsed;
+        collapsedGroups.clear();
         resetZoom();
         zoomControls.style.display = 'flex';
         updateStats(parsed.resources);
@@ -3092,6 +3119,112 @@ traceFlowBtn?.addEventListener('click', () => {
         stopTraceFlow();
     } else {
         startTraceFlow();
+    }
+});
+
+// ── Module group collapse / expand ────────────────────────────────────────────
+diagramSvg.addEventListener('click', (e) => {
+    const btn = e.target.closest('.module-collapse-btn');
+    if (!btn) return;
+
+    const moduleName = btn.dataset.module;
+    const moduleGroups = lastParsed?.moduleGroups || {};
+    const memberIds = moduleGroups[moduleName];
+    if (!memberIds) return;
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const layer = diagramSvg.querySelector('.zoom-layer');
+    const icon = btn.querySelector('.module-collapse-icon');
+
+    if (collapsedGroups.has(moduleName)) {
+        // ── Expand ──
+        collapsedGroups.delete(moduleName);
+
+        memberIds.forEach((id) => {
+            const node = diagramSvg.querySelector(`[data-node-id="${id}"]`);
+            if (node) node.style.display = '';
+        });
+        diagramSvg.querySelectorAll('.diagram-connection').forEach((conn) => {
+            if (memberIds.includes(conn.dataset.from) || memberIds.includes(conn.dataset.to)) {
+                conn.style.display = '';
+            }
+        });
+        layer.querySelector(`.module-summary[data-module="${moduleName}"]`)?.remove();
+        if (icon) icon.textContent = '−';
+    } else {
+        // ── Collapse ──
+        collapsedGroups.add(moduleName);
+
+        memberIds.forEach((id) => {
+            const node = diagramSvg.querySelector(`[data-node-id="${id}"]`);
+            if (node) node.style.display = 'none';
+        });
+        diagramSvg.querySelectorAll('.diagram-connection').forEach((conn) => {
+            if (memberIds.includes(conn.dataset.from) || memberIds.includes(conn.dataset.to)) {
+                conn.style.display = 'none';
+            }
+        });
+
+        // Summary card at centroid of group bounding box
+        const grpEl = diagramSvg.querySelector(`.module-group[data-module="${moduleName}"]`);
+        const bgRect = grpEl?.querySelector('rect');
+        if (bgRect) {
+            const bx = parseFloat(bgRect.getAttribute('x'));
+            const by = parseFloat(bgRect.getAttribute('y'));
+            const bw = parseFloat(bgRect.getAttribute('width'));
+            const bh = parseFloat(bgRect.getAttribute('height'));
+            const cx = bx + bw / 2;
+            const cy = by + bh / 2;
+
+            const summary = document.createElementNS(svgNS, 'g');
+            summary.classList.add('module-summary');
+            summary.dataset.module = moduleName;
+
+            const cardW = 106, cardH = 40;
+            const r = document.createElementNS(svgNS, 'rect');
+            r.setAttribute('x', cx - cardW / 2);
+            r.setAttribute('y', cy - cardH / 2);
+            r.setAttribute('width', cardW);
+            r.setAttribute('height', cardH);
+            r.setAttribute('rx', '8');
+            r.setAttribute('fill', '#ede9fe');
+            r.setAttribute('stroke', '#6366f1');
+            r.setAttribute('stroke-width', '1.5');
+            summary.appendChild(r);
+
+            const accentBar = document.createElementNS(svgNS, 'rect');
+            accentBar.setAttribute('x', cx - cardW / 2 + 8);
+            accentBar.setAttribute('y', cy - cardH / 2);
+            accentBar.setAttribute('width', cardW - 16);
+            accentBar.setAttribute('height', '3');
+            accentBar.setAttribute('rx', '1.5');
+            accentBar.setAttribute('fill', '#6366f1');
+            summary.appendChild(accentBar);
+
+            const nameTxt = document.createElementNS(svgNS, 'text');
+            nameTxt.setAttribute('x', cx);
+            nameTxt.setAttribute('y', cy + 1);
+            nameTxt.setAttribute('text-anchor', 'middle');
+            nameTxt.setAttribute('font-family', 'DM Mono,monospace');
+            nameTxt.setAttribute('font-size', '10');
+            nameTxt.setAttribute('font-weight', '700');
+            nameTxt.setAttribute('fill', '#4338ca');
+            nameTxt.textContent = `module.${moduleName}`;
+            summary.appendChild(nameTxt);
+
+            const cntTxt = document.createElementNS(svgNS, 'text');
+            cntTxt.setAttribute('x', cx);
+            cntTxt.setAttribute('y', cy + 13);
+            cntTxt.setAttribute('text-anchor', 'middle');
+            cntTxt.setAttribute('font-family', 'DM Sans,sans-serif');
+            cntTxt.setAttribute('font-size', '8');
+            cntTxt.setAttribute('fill', '#6d28d9');
+            cntTxt.textContent = `${memberIds.length} resources`;
+            summary.appendChild(cntTxt);
+
+            layer.appendChild(summary);
+        }
+        if (icon) icon.textContent = '+';
     }
 });
 

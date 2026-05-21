@@ -844,6 +844,12 @@
         .btn-checkov-clear { padding:8px 16px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; font-size:13px; display:none; }
         .btn-checkov-clear.visible { display:block; }
 
+        /* Module group overlays */
+        .module-group { pointer-events: none; }
+        .module-collapse-btn { pointer-events: all; cursor: pointer; }
+        .module-collapse-btn:hover > rect { opacity: 0.35 !important; }
+        .module-summary { pointer-events: none; }
+
         /* Trace Flow button */
         .btn-trace-flow { padding:4px 10px; border:1px solid rgba(6,214,160,0.3); border-radius:6px; background:rgba(6,214,160,0.08); color:var(--accent); cursor:pointer; font-size:12px; font-weight:600; font-family:var(--mono); transition:all .15s; white-space:nowrap; }
         .btn-trace-flow:hover { background:rgba(6,214,160,0.15); border-color:var(--accent); }
