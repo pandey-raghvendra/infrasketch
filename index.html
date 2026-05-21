@@ -844,6 +844,26 @@
         .btn-checkov-clear { padding:8px 16px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; font-size:13px; display:none; }
         .btn-checkov-clear.visible { display:block; }
 
+        /* Trace Flow button */
+        .btn-trace-flow { padding:4px 10px; border:1px solid rgba(6,214,160,0.3); border-radius:6px; background:rgba(6,214,160,0.08); color:var(--accent); cursor:pointer; font-size:12px; font-weight:600; font-family:var(--mono); transition:all .15s; white-space:nowrap; }
+        .btn-trace-flow:hover { background:rgba(6,214,160,0.15); border-color:var(--accent); }
+        .btn-trace-flow.is-tracing { background:rgba(6,214,160,0.18); border-color:var(--accent); color:var(--accent); }
+        .btn-trace-flow.is-tracing::before { content:'■ '; }
+
+        /* Flow tracer dot animation */
+        @keyframes is-tracer-pulse {
+            0%, 100% { r: 4; opacity: 0.9; }
+            50% { r: 5.5; opacity: 1; }
+        }
+        .flow-tracer { filter: url(#tracer-glow); }
+
+        /* Active connection highlight */
+        .diagram-connection.flow-active {
+            stroke: #06d6a0 !important;
+            opacity: 0.7 !important;
+            stroke-dasharray: none !important;
+        }
+
         /* Embed modal */
         .embed-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .embed-modal-overlay[hidden] { display: none; }
@@ -2415,6 +2435,7 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
                 <div class="export-actions">
                     <button class="btn-share" id="btn-share">Share</button>
                     <button class="btn-embed" id="btn-embed" title="Get embeddable iframe code for this diagram">&lt;/&gt; Embed</button>
+                    <button class="btn-trace-flow" id="btn-trace-flow" title="Animate request flow through the architecture">▶ Trace Flow</button>
                     <button class="btn-security" id="btn-checkov" title="Import Checkov security scan results and overlay findings on the diagram">🛡 Security</button>
                     <button class="btn-cost" id="btn-infracost" title="Import Infracost cost estimates and overlay monthly costs on the diagram">💰 Cost</button>
                     <button class="btn-export btn-edit-toggle" id="btn-edit" title="Toggle interactive edit mode — drag nodes to reposition">Edit</button>

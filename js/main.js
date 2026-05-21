@@ -3017,3 +3017,83 @@ generateButton.addEventListener('click', () => {
 });
 
 if (!loadFromHash() && !loadFromQueryParam()) loadFromSrcParam();
+
+// ── Trace Flow animation ───────────────────────────────────────────────────────
+const traceFlowBtn = document.getElementById('btn-trace-flow');
+let _traceActive = false;
+let _tracerEls = [];
+
+function stopTraceFlow() {
+    _traceActive = false;
+    traceFlowBtn?.classList.remove('is-tracing');
+    traceFlowBtn && (traceFlowBtn.textContent = '▶ Trace Flow');
+    _tracerEls.forEach(el => el.remove());
+    _tracerEls = [];
+    diagramSvg.querySelectorAll('.diagram-connection.flow-active').forEach(p => {
+        p.classList.remove('flow-active');
+    });
+}
+
+function startTraceFlow() {
+    const paths = [...diagramSvg.querySelectorAll('path.diagram-connection')];
+    if (!paths.length) { showToast('Generate a diagram first.', 'info'); return; }
+
+    _traceActive = true;
+    traceFlowBtn?.classList.add('is-tracing');
+    traceFlowBtn && (traceFlowBtn.textContent = 'Tracing…');
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const xlinkNS = 'http://www.w3.org/1999/xlink';
+    const layer = diagramSvg.querySelector('.zoom-layer');
+
+    paths.forEach((path, i) => {
+        path.classList.add('flow-active');
+
+        // Tracer dot
+        const g = document.createElementNS(svgNS, 'g');
+        g.classList.add('flow-tracer');
+
+        // Outer glow ring
+        const ring = document.createElementNS(svgNS, 'circle');
+        ring.setAttribute('r', '7');
+        ring.setAttribute('fill', '#06d6a0');
+        ring.setAttribute('opacity', '0.25');
+        g.appendChild(ring);
+
+        // Core dot
+        const dot = document.createElementNS(svgNS, 'circle');
+        dot.setAttribute('r', '4');
+        dot.setAttribute('fill', '#06d6a0');
+        dot.setAttribute('opacity', '0.95');
+        g.appendChild(dot);
+
+        // animateMotion along path
+        const motion = document.createElementNS(svgNS, 'animateMotion');
+        const totalDur = 1.4;
+        const delay = (i * 0.28) % (paths.length * 0.28);
+        motion.setAttribute('dur', `${totalDur}s`);
+        motion.setAttribute('begin', `${delay}s`);
+        motion.setAttribute('repeatCount', 'indefinite');
+        motion.setAttribute('calcMode', 'linear');
+        motion.setAttribute('rotate', 'auto');
+
+        const mpath = document.createElementNS(svgNS, 'mpath');
+        mpath.setAttributeNS(xlinkNS, 'xlink:href', `#${path.id}`);
+        motion.appendChild(mpath);
+        g.appendChild(motion);
+
+        layer.appendChild(g);
+        _tracerEls.push(g);
+    });
+}
+
+traceFlowBtn?.addEventListener('click', () => {
+    if (_traceActive) {
+        stopTraceFlow();
+    } else {
+        startTraceFlow();
+    }
+});
+
+// Stop trace when new diagram generated
+generateButton.addEventListener('click', stopTraceFlow);
