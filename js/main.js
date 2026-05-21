@@ -1944,6 +1944,12 @@ let tableOpen = false;
 let editMode = false;
 let collapsedGroups = new Set();
 
+// ── Blast Radius state ────────────────────────────────────────────────────────
+let blastMode = false;
+let blastSelected = null;
+let adjDown = {}; // resourceId → [downstream ids]
+let adjUp   = {}; // resourceId → [upstream ids]
+
 // ── Zoom controller ──────────────────────────────────────────────────────────
 
 const zoomState = { scale: 1, tx: 0, ty: 0 };
@@ -2192,6 +2198,8 @@ generateButton.addEventListener('click', async () => {
         lastLayout = layout;
         window._lastParsed = parsed;
         collapsedGroups.clear();
+        exitBlastMode();
+        buildAdjacency(parsed.connections);
         resetZoom();
         zoomControls.style.display = 'flex';
         updateStats(parsed.resources);
@@ -2646,6 +2654,9 @@ generateButton.addEventListener('click', async (e) => {
 
         lastParsed = parsed2;
         lastLayout = layout;
+        collapsedGroups.clear();
+        exitBlastMode();
+        buildAdjacency(parsed2.connections);
         resetZoom();
         zoomControls.style.display = 'flex';
         updateStats(parsed2.resources);
@@ -3119,6 +3130,173 @@ traceFlowBtn?.addEventListener('click', () => {
         stopTraceFlow();
     } else {
         startTraceFlow();
+    }
+});
+
+// ── Blast Radius / Impact Analysis ───────────────────────────────────────────
+
+const impactPanel        = document.getElementById('impact-panel');
+const impactSelectedName = document.getElementById('impact-selected-name');
+const impactDirectCount  = document.getElementById('impact-direct-count');
+const impactIndirectCount= document.getElementById('impact-indirect-count');
+const impactUpstreamCount= document.getElementById('impact-upstream-count');
+const impactDirectList   = document.getElementById('impact-direct-list');
+const impactIndirectList = document.getElementById('impact-indirect-list');
+const impactUpstreamList = document.getElementById('impact-upstream-list');
+const impactEmpty        = document.getElementById('impact-empty');
+const impactFooter       = document.getElementById('impact-footer');
+const impactBtn          = document.getElementById('btn-impact');
+
+function buildAdjacency(connections) {
+    adjDown = {};
+    adjUp   = {};
+    for (const { from, to } of (connections || [])) {
+        (adjDown[from] = adjDown[from] || []).push(to);
+        (adjUp[to]     = adjUp[to]     || []).push(from);
+    }
+}
+
+function bfsTraverse(startId, adj) {
+    const visited = new Map(); // id → depth
+    const queue = [[startId, 0]];
+    while (queue.length) {
+        const [id, depth] = queue.shift();
+        if (visited.has(id)) continue;
+        visited.set(id, depth);
+        for (const next of (adj[id] || [])) {
+            if (!visited.has(next)) queue.push([next, depth + 1]);
+        }
+    }
+    visited.delete(startId);
+    return visited;
+}
+
+function enterBlastMode(resourceId) {
+    if (!lastParsed) return;
+    blastMode = true;
+    blastSelected = resourceId;
+    stopTraceFlow();
+    impactBtn?.classList.add('is-active');
+
+    const downstream = bfsTraverse(resourceId, adjDown);
+    const upstream   = bfsTraverse(resourceId, adjUp);
+
+    const directIds   = new Set([...downstream].filter(([, d]) => d === 1).map(([id]) => id));
+    const indirectIds = new Set([...downstream].filter(([, d]) => d > 1).map(([id]) => id));
+    const upstreamIds = new Set(upstream.keys());
+
+    // Apply highlight classes to SVG nodes
+    diagramSvg.classList.add('blast-mode');
+    diagramSvg.querySelectorAll('[data-node-id]').forEach((node) => {
+        const id = node.dataset.nodeId;
+        node.classList.remove('is-selected', 'is-direct', 'is-indirect', 'is-upstream');
+        if (id === resourceId)      node.classList.add('is-selected');
+        else if (directIds.has(id)) node.classList.add('is-direct');
+        else if (indirectIds.has(id)) node.classList.add('is-indirect');
+        else if (upstreamIds.has(id)) node.classList.add('is-upstream');
+    });
+
+    // Highlight connections that link affected nodes
+    const affectedIds = new Set([resourceId, ...directIds, ...indirectIds, ...upstreamIds]);
+    diagramSvg.querySelectorAll('.diagram-connection').forEach((conn) => {
+        conn.classList.remove('is-affected');
+        if (affectedIds.has(conn.dataset.from) && affectedIds.has(conn.dataset.to)) {
+            conn.classList.add('is-affected');
+        }
+    });
+
+    populateImpactPanel(resourceId, directIds, indirectIds, upstreamIds);
+    impactPanel?.classList.add('visible');
+}
+
+function exitBlastMode() {
+    if (!blastMode && !impactPanel?.classList.contains('visible')) return;
+    blastMode = false;
+    blastSelected = null;
+    impactBtn?.classList.remove('is-active');
+    diagramSvg.classList.remove('blast-mode');
+    diagramSvg.querySelectorAll('[data-node-id]').forEach((n) => {
+        n.classList.remove('is-selected', 'is-direct', 'is-indirect', 'is-upstream');
+    });
+    diagramSvg.querySelectorAll('.diagram-connection').forEach((c) => c.classList.remove('is-affected'));
+    impactPanel?.classList.remove('visible');
+}
+
+function populateImpactPanel(selectedId, directIds, indirectIds, upstreamIds) {
+    impactSelectedName.textContent = selectedId;
+
+    impactDirectCount.textContent    = directIds.size;
+    impactIndirectCount.textContent  = indirectIds.size;
+    impactUpstreamCount.textContent  = upstreamIds.size;
+
+    [impactDirectList, impactIndirectList, impactUpstreamList].forEach((el) => (el.innerHTML = ''));
+
+    function makeItem(id, cls) {
+        const el = document.createElement('div');
+        el.className = `impact-item ${cls}`;
+        const shortId = id.length > 34 ? `…${id.slice(-33)}` : id;
+        el.textContent = shortId;
+        el.title = id;
+        el.addEventListener('click', () => {
+            exitBlastMode();
+            setTimeout(() => enterBlastMode(id), 30);
+        });
+        return el;
+    }
+
+    directIds.forEach((id) => impactDirectList.appendChild(makeItem(id, 'direct')));
+    indirectIds.forEach((id) => impactIndirectList.appendChild(makeItem(id, 'indirect')));
+    upstreamIds.forEach((id) => impactUpstreamList.appendChild(makeItem(id, 'upstream')));
+
+    const hasAny = directIds.size || indirectIds.size || upstreamIds.size;
+    impactEmpty.style.display = hasAny ? 'none' : 'block';
+
+    const total = directIds.size + indirectIds.size;
+    if (total === 0 && upstreamIds.size === 0) {
+        impactFooter.textContent = 'Isolated — no connections found';
+    } else if (total === 0) {
+        impactFooter.textContent = `Leaf node — ${upstreamIds.size} upstream dep${upstreamIds.size > 1 ? 's' : ''}`;
+    } else {
+        impactFooter.textContent = `${total} service${total !== 1 ? 's' : ''} affected (${directIds.size} direct, ${indirectIds.size} indirect)`;
+    }
+}
+
+// Impact button toggles mode hint (actual blast entry is via node click)
+impactBtn?.addEventListener('click', () => {
+    if (blastMode) {
+        exitBlastMode();
+    } else {
+        showToast('Click any node to analyze its blast radius', 'info');
+        impactBtn.classList.add('is-active');
+        setTimeout(() => { if (!blastMode) impactBtn.classList.remove('is-active'); }, 2000);
+    }
+});
+
+// Close button
+document.getElementById('btn-impact-close')?.addEventListener('click', exitBlastMode);
+
+// Escape exits blast mode
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && blastMode) exitBlastMode();
+});
+
+// Node click → enter blast mode (separate from module-collapse handler)
+diagramSvg.addEventListener('click', (e) => {
+    // Ignore if clicking collapse buttons or impact panel
+    if (e.target.closest('.module-collapse-btn')) return;
+
+    const nodeEl = e.target.closest('[data-node-id]');
+    if (!nodeEl) {
+        // Click on canvas background → exit blast mode
+        if (blastMode) exitBlastMode();
+        return;
+    }
+
+    const id = nodeEl.dataset.nodeId;
+    if (blastMode && id === blastSelected) {
+        exitBlastMode();
+    } else {
+        enterBlastMode(id);
     }
 });
 

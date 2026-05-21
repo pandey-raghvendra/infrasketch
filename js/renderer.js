@@ -284,6 +284,22 @@ function appendResourceNode(svg, resource, position, config, nodeIndex = 0) {
         'font-family': 'DM Mono,monospace',
         'font-size': 8, fill: '#6b7280',
     }, truncateLabel(resource.name)));
+
+    // ── Plan change action badge (TF Plan only) ──────────────────────────────
+    if (resource.action && resource.action !== 'no-op') {
+        const badgeColor = { create: '#10b981', update: '#f59e0b', replace: '#f97316', delete: '#ef4444' }[resource.action] || '#94a3b8';
+        const badgeLabel = { create: '+', update: '~', replace: '↺', delete: '×' }[resource.action] || '?';
+        const bx = position.x + config.NW - 10;
+        const by = position.y + 9;
+        append(group, svgElement('circle', { cx: bx, cy: by, r: 7, fill: badgeColor }));
+        append(group, svgElement('text', {
+            x: bx, y: by + 4,
+            'text-anchor': 'middle',
+            'font-family': 'DM Mono,monospace',
+            'font-size': 9, 'font-weight': 700,
+            fill: 'white', 'pointer-events': 'none',
+        }, badgeLabel));
+    }
 }
 
 export function renderDiagram(parsed, svg) {

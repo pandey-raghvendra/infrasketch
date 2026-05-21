@@ -648,6 +648,7 @@ export function parseTerraformPlan(jsonText) {
     for (const change of changes) {
         const { type, name, address } = change;
         const after = change.change?.after || {};
+        const acts = change.change?.actions || [];
 
         let category;
         if (type === 'aws_lb' || type === 'aws_alb') {
@@ -657,9 +658,16 @@ export function parseTerraformPlan(jsonText) {
         }
         if (!category) continue;
 
+        // Derive human-readable action from plan actions array
+        let action = 'no-op';
+        if (acts.includes('create') && acts.includes('delete')) action = 'replace';
+        else if (acts.includes('create')) action = 'create';
+        else if (acts.includes('update')) action = 'update';
+        else if (acts.includes('delete')) action = 'delete';
+
         const config = RESOURCE_CATEGORIES[category];
         if (!supportedIds.has(address)) {
-            resources.push({ id: address, type, name, category, label: config.label, color: config.color, icon: config.icon });
+            resources.push({ id: address, type, name, category, label: config.label, color: config.color, icon: config.icon, action });
             supportedIds.add(address);
         }
     }
