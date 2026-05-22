@@ -179,6 +179,94 @@ rover -planPath plan.out</pre>
 
         <p>The best approach for most teams is to combine methods: use InfraSketch or Rover for day-to-day visualization, and the Python Diagrams library for documentation that needs to look polished.</p>
 
+        <h2>Going deeper: Terraform plan JSON</h2>
+
+        <p>One thing worth calling out separately is the difference between visualizing HCL source files versus visualizing a Terraform plan. Most visualization tools — including InfraSketch's HCL mode — parse your <code>.tf</code> files statically. That means they can't evaluate <code>count</code>, <code>for_each</code>, or variables. If you have <code>count = var.az_count</code> on a subnet, the tool doesn't know how many subnets you actually get.</p>
+
+        <p>Terraform plan JSON solves this. When you run <code>terraform plan -out=tfplan && terraform show -json tfplan</code>, you get a fully resolved representation of exactly what Terraform is about to create, update, or destroy. Resource addresses are fully qualified — <code>module.vpc.aws_subnet.private[0]</code>, <code>module.vpc.aws_subnet.private[1]</code>, <code>module.eks.aws_eks_node_group.workers</code> — and each resource carries a <code>change.actions</code> field indicating what will happen: <code>["create"]</code>, <code>["update"]</code>, <code>["delete"]</code>, or <code>["create","delete"]</code> for a replace.</p>
+
+        <p>InfraSketch reads this format and uses the module address prefix (<code>module.vpc.*</code>, <code>module.eks.*</code>) to automatically group resources into labeled boxes. It also annotates each node with a change badge — green <strong>+</strong> for creates, amber <strong>~</strong> for updates, orange <strong>↺</strong> for replacements, and red <strong>×</strong> for deletes. When you're reviewing a PR that changes 30 resources across 6 modules, this visual context is far more useful than reading a raw plan output line by line.</p>
+
+<pre># Generate plan JSON (copy to clipboard on macOS)
+terraform plan -out=tfplan
+terraform show -json tfplan | pbcopy
+
+# On Linux
+terraform show -json tfplan | xclip -selection clipboard
+
+# Paste into InfraSketch → module groups + change badges appear automatically</pre>
+
+        <p>This is where diagram-from-code approaches become genuinely useful for engineering workflows, not just documentation. You're not just generating a pretty picture — you're getting a structured view of what's changing and what it might affect.</p>
+
+        <h2>Blast radius: what breaks when you change something?</h2>
+
+        <p>Understanding what a change affects is one of the most underrated aspects of infrastructure review. In application code, you can trace function calls. In Terraform, you have HCL references — <code>aws_subnet.private.id</code>, <code>module.vpc.aws_security_group.web.id</code> — but tracing them manually across dozens of files is tedious.</p>
+
+        <p>Modern visualization tools can automate this. InfraSketch builds a dependency graph from the connections it detects, then lets you click any resource to enter blast radius mode:</p>
+
+        <ul>
+            <li><strong>Red border</strong> — resources directly downstream (one hop). If you change or delete the selected resource, these break immediately.</li>
+            <li><strong>Orange border</strong> — indirectly affected (two or more hops). They depend on something that depends on the selected resource.</li>
+            <li><strong>Blue border</strong> — upstream dependencies. What the selected resource itself relies on.</li>
+            <li>Everything else dims, so you can focus on the blast radius.</li>
+        </ul>
+
+        <p>A side panel lists every affected resource with counts. Clicking any entry in the panel re-centers the blast radius analysis on that resource — useful for understanding cascading dependencies.</p>
+
+        <p>This analysis works best with Terraform plan JSON because the connection graph is derived from the <code>configuration.root_module</code> expression references, which are more complete than what static HCL parsing can infer. With HCL, InfraSketch infers connections from resource attribute references; with plan JSON, it uses the resolved dependency graph that Terraform itself computed.</p>
+
+        <h2>Embedding diagrams in pull request reviews</h2>
+
+        <p>The most impactful place to surface Terraform visualizations is during code review — not after the fact. If a PR changes six <code>.tf</code> files, reviewers are reading diffs without any visual context. They can't easily tell whether the PR adds a new subnet to an existing VPC or creates an entirely new network segment.</p>
+
+        <p>The InfraSketch <a href="/blog/github-action-terraform-diagram.html">GitHub Action</a> solves this automatically. It detects when a PR touches <code>.tf</code> files, generates a shareable diagram URL for the changed code, and posts it as a PR comment. The comment updates automatically on each push, so it always reflects the current state of the PR branch.</p>
+
+<pre># .github/workflows/infrasketch.yml
+name: Architecture Diagram
+on:
+  pull_request:
+    paths: ['**/*.tf', '**/terragrunt.hcl']
+jobs:
+  diagram:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pandey-raghvendra/infrasketch@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}</pre>
+
+        <p>Reviewers see the architecture diagram inline in the PR without any setup. The diagram link opens InfraSketch with the exact code from the PR branch pre-loaded. They can drag nodes, inspect resource details, and analyze blast radius — all from the PR review interface.</p>
+
+        <p>This turns diagram generation from a documentation chore into a live engineering tool that's embedded in your existing review workflow.</p>
+
+        <h2>Common pitfalls when visualizing Terraform</h2>
+
+        <p>A few things that trip people up when trying to visualize Terraform code:</p>
+
+        <p><strong>Missing connections between resources.</strong> If you use intermediate variables or locals to pass resource IDs, static analysis tools may not detect the connection. For example, <code>local.private_subnet_ids</code> passed to an EKS cluster creates an implicit dependency that HCL parsers can miss. The fix: use Terraform plan JSON instead of HCL — plan JSON includes the fully resolved reference graph.</p>
+
+        <p><strong>Cross-file references aren't resolved.</strong> Most HCL parsers work on individual files. If your VPC is defined in <code>vpc.tf</code> and your EKS cluster is in <code>eks.tf</code>, a parser that only reads one file will show an isolated node for each. The solution: concatenate your <code>.tf</code> files before pasting (<code>cat *.tf | pbcopy</code>), or use plan JSON which sees the entire configuration.</p>
+
+        <p><strong>Module resources appear as opaque nodes.</strong> With HCL, <code>module "vpc" { source = "./modules/vpc" }</code> renders as a single box — the tool can't see inside the module without reading the module source. Terraform plan JSON expands modules to their full <code>module.vpc.*</code> resource addresses, giving you visibility into what each module actually creates.</p>
+
+        <p><strong>Count and for_each resources are missing or multiplied.</strong> Static HCL analysis can't evaluate expressions, so <code>count = 3</code> might render as one node or be skipped entirely. Plan JSON has the actual instances with their full addresses (<code>aws_subnet.private[0]</code>, <code>[1]</code>, <code>[2]</code>), so you get an accurate picture.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>Does InfraSketch run terraform plan for me?</h3>
+        <p>No. InfraSketch does static analysis of the code you paste. It doesn't execute Terraform, access your cloud credentials, or connect to remote state. If you want the most accurate visualization, run <code>terraform show -json tfplan</code> yourself and paste the JSON output.</p>
+
+        <h3>Can I visualize multiple Terraform workspaces?</h3>
+        <p>Each workspace gets its own plan JSON when you run <code>terraform plan</code>. You can paste each plan separately to get separate diagrams. There's no side-by-side diff view yet, but the plan change badges (+/~/↺/×) on each node make it easy to see what changed in any given workspace's plan.</p>
+
+        <h3>What about Terragrunt?</h3>
+        <p>InfraSketch has a Terragrunt parser that handles <code>terragrunt.hcl</code> files. It detects <code>dependency</code> blocks and generates connection arrows between dependent stacks. For the most accurate view of a Terragrunt monorepo, concatenate the HCL files or use <code>terragrunt run-all plan --terragrunt-json-out-dir ./plans</code> to generate plan JSON for each stack.</p>
+
+        <h3>Do diagrams go stale?</h3>
+        <p>They do if you generate them manually. The solution is the GitHub Action — it regenerates the diagram on every PR push, so the diagram in the PR comment always matches the current branch. For documentation, regenerate the diagram when you make infrastructure changes, the same way you'd update any other technical doc.</p>
+
         <div class="cta-box">
             <h3>Visualize your Terraform instantly</h3>
             <p>Paste your Terraform HCL and see the architecture diagram in seconds. Now with an <a href="/blog/whats-new-april-2026.html">interactive drag-and-drop editor</a>, GCP support, and more.</p>

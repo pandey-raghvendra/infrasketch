@@ -106,6 +106,40 @@
         <p>Lucidchart is Draw.io with collaboration features. Multiple people can edit the same diagram simultaneously, there are better templates and auto-alignment tools, and it integrates with more business tools (Slack, Teams, Jira).</p>
         <p>It's worth the money for teams that need to collaborate on diagrams in real-time — for example, during architecture review meetings where multiple engineers need to draw on the same canvas. For solo work, Draw.io does the same thing for free.</p>
 
+        <h2>The hidden costs nobody talks about</h2>
+
+        <p>The sticker price is only part of the story. Every diagram tool has hidden costs that only become apparent once you're using it in production.</p>
+
+        <p><strong>Draw.io maintenance cost:</strong> A diagram you draw manually in 45 minutes needs to be updated every time infrastructure changes. On a team that ships daily, that's a significant time sink — and it almost never happens. Most Draw.io diagrams I've encountered in the wild are 6-18 months out of date. Stale diagrams aren't just useless; they're actively dangerous during incident response when someone trusts an outdated topology map.</p>
+
+        <p><strong>Cloudcraft credential risk:</strong> Cloudcraft requires read access to your AWS account to scan live infrastructure. That means you're trusting a third-party SaaS with cloud credentials. Even with read-only IAM roles, you're exposing your resource inventory to an external service. For organizations with strict security postures, this is sometimes a non-starter. Make sure you review their security certifications (SOC 2) and understand their data retention policies before handing over cloud access.</p>
+
+        <p><strong>Hava learning curve:</strong> Hava's UI is more complex than competing tools. First-time users typically spend 30-60 minutes figuring out how accounts, environments, and views map to their actual cloud organization. Their customer support is responsive, but there's a real onboarding cost that isn't reflected in the monthly price.</p>
+
+        <p><strong>Lucidchart export lock-in:</strong> Lucidchart's native format is proprietary. Exporting to draw.io XML is possible but lossy — complex diagrams don't always translate cleanly. If you ever decide to cancel, migrating your diagram library is painful. This matters more for organizations that accumulate hundreds of diagrams over years.</p>
+
+        <h2>How diagrams fit into CI/CD and code review workflows</h2>
+
+        <p>One dimension that comparison articles rarely cover: how does the tool integrate with your development workflow? Do diagrams live in pull requests, or are they off to the side in a SaaS dashboard somewhere?</p>
+
+        <p>With Draw.io, Cloudcraft, and Lucidchart, diagrams exist independently of your code. They're in a separate tool, updated manually (or on a schedule). When a developer opens a pull request changing the VPC CIDR range or adding a new EKS node group, there's no automatic connection between the code change and the diagram.</p>
+
+        <p>InfraSketch takes a different approach through its GitHub Action. When a pull request modifies <code>.tf</code>, <code>.yaml</code>, or other IaC files, the action automatically generates a diagram from the changed code and posts it as a PR comment. Reviewers see the architecture without leaving GitHub. This closes the gap between code review and architecture review — which is where most infrastructure mistakes are caught.</p>
+
+        <p>For Terraform specifically, the plan JSON workflow is particularly useful. Running <code>terraform plan -out=tfplan && terraform show -json tfplan</code> before opening a PR gives you a complete picture of what will change. Paste that JSON into InfraSketch and you get a diagram where each resource is annotated with its planned action — green for create, amber for update, red for delete. This makes the blast radius of a change immediately visible without reading hundreds of lines of plan output.</p>
+
+        <p>No paid tool currently offers this kind of code-integrated workflow out of the box. Cloudcraft's GitHub integration is limited to linking diagram snapshots to commits, not generating diagrams from code changes automatically.</p>
+
+        <h2>Security and data privacy considerations</h2>
+
+        <p>When evaluating diagram tools for a professional environment, data privacy deserves serious attention. Your infrastructure diagrams reveal the architecture of systems your business depends on. That's sensitive information.</p>
+
+        <p>Tools that scan your cloud accounts (Cloudcraft, Hava, Lucidscale) necessarily have access to your complete infrastructure inventory — instance types, network topology, database configurations, everything. Review their terms of service to understand who can access that data and under what circumstances. Most have enterprise agreements with stronger data isolation, but the standard tiers typically share infrastructure on multi-tenant systems.</p>
+
+        <p>Manual tools like Draw.io keep your data in your browser or in the storage system you configure (Google Drive, OneDrive). You control the data entirely, which is why Draw.io is popular in regulated industries like healthcare and finance.</p>
+
+        <p>InfraSketch is fully client-side. Your Terraform code is parsed in the browser using a JavaScript parser — nothing leaves your machine. There's no account, no API calls with your code, no server. This makes it suitable for environments where you can't share infrastructure code externally, including government contractors, defense organizations, and healthcare companies subject to HIPAA.</p>
+
         <h2>The real question: do you need a diagram tool at all?</h2>
 
         <p>Here's the uncomfortable truth: if you're writing infrastructure as code (Terraform, CloudFormation, Pulumi), your code IS your architecture documentation. The question is whether you need a visual representation on top of it.</p>
@@ -123,6 +157,20 @@
         <p>For large organizations (50+ engineers): invest in Cloudcraft or Hava for automated, always-current diagrams of production infrastructure. Use InfraSketch for development-time visualization. Total cost: $49-100/month.</p>
 
         <p>The key principle: don't pay for features you won't use. If you're a solo developer paying $49/month for Cloudcraft to generate one diagram, you're wasting money. Start free, upgrade when you hit actual limitations.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>Can InfraSketch replace Cloudcraft entirely?</h3>
+        <p>For most engineering teams, yes — with one caveat. InfraSketch generates diagrams from your infrastructure code, which means it only shows what your code defines. If your actual cloud environment has drifted from your Terraform state (resources created manually, old resources not cleaned up), InfraSketch won't know about them. Cloudcraft scans live infrastructure and catches that drift. If code-reality drift is a concern, you need Cloudcraft or a similar live-scan tool.</p>
+
+        <h3>Is Draw.io good enough for production documentation?</h3>
+        <p>Draw.io is excellent for static documentation that doesn't need to track infrastructure changes — conceptual architecture diagrams, network topology overviews, decision records. It's not suitable as the primary reference for operational teams who need current topology during incidents, because it goes stale the moment infrastructure changes.</p>
+
+        <h3>Which tool is best for a SOC 2 audit?</h3>
+        <p>For SOC 2 Type II audits, you need diagrams that can be versioned, dated, and shown to reflect your infrastructure at a specific point in time. Hava's change history makes this straightforward. If budget is a constraint, a combination of InfraSketch (generating diagrams from tagged Terraform commits) plus screenshot archiving can work, but it requires more manual process.</p>
+
+        <h3>Do any of these tools support multi-cloud diagrams?</h3>
+        <p>InfraSketch and Lucidchart both support multiple cloud providers in a single diagram. InfraSketch handles AWS, Azure, and GCP resources and can display mixed-provider architectures when your Terraform uses multiple provider blocks. Cloudcraft is AWS-only. Hava supports AWS, Azure, and GCP but in separate views, not combined.</p>
 
         <div class="cta-box">
             <h3>Start with InfraSketch — it's free</h3>

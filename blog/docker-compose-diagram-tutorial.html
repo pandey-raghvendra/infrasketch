@@ -177,6 +177,95 @@ graph TB
 
         <p>Fourth, label the connections. Don't just draw arrows — label them with protocol and port. "HTTP :8000" is more useful than a plain line between two boxes.</p>
 
+        <h2>Advanced Docker Compose patterns that trip up visualizers</h2>
+
+        <p>Real-world compose files have patterns beyond simple <code>depends_on</code> chains. Here's how to handle the common ones:</p>
+
+        <p><strong>Multi-file compose.</strong> Production deployments often use multiple compose files — a base <code>docker-compose.yml</code> and an override file for environment-specific settings. <code>docker compose -f docker-compose.yml -f docker-compose.prod.yml config</code> merges them and outputs the combined YAML. Pipe that merged output into InfraSketch for a complete picture of what actually runs in production.</p>
+
+        <p><strong>Profiles.</strong> Docker Compose supports profiles to activate optional services. Your monitoring stack (Prometheus, Grafana, cAdvisor) might be behind a <code>monitoring</code> profile that doesn't start by default. When diagramming, run <code>docker compose --profile monitoring config</code> to include profiled services in the output, then paste the full config.</p>
+
+        <p><strong>Extend and merge.</strong> Services using <code>extends</code> inherit from a base service definition. Auto-generated diagrams may not resolve these correctly. The safest approach is again to use <code>docker compose config</code> to get the fully resolved YAML before pasting it into any visualization tool.</p>
+
+<pre># Get fully resolved compose config (merges files, resolves extends, applies env)
+docker compose config
+
+# With profiles
+docker compose --profile monitoring --profile debug config
+
+# Pipe to clipboard (macOS)
+docker compose config | pbcopy</pre>
+
+        <h2>Network topology: what diagrams often miss</h2>
+
+        <p>The most important thing a Docker Compose diagram can show — and the thing most tools skip — is network isolation. Docker creates separate virtual networks, and containers on different networks can't communicate by default. Getting this right matters for security.</p>
+
+        <p>Consider a three-tier architecture:</p>
+
+<pre>services:
+  nginx:
+    networks: [frontend]
+    ports: ["80:80"]
+
+  api:
+    networks: [frontend, backend]
+
+  postgres:
+    networks: [backend]
+
+  redis:
+    networks: [backend]
+
+networks:
+  frontend:
+  backend:
+    internal: true  # cannot reach the internet</pre>
+
+        <p>The <code>backend</code> network here is marked <code>internal: true</code>, which means containers on it have no internet access — they can only communicate with each other. Nginx lives only on the frontend network so it can't reach the database directly. The API bridges both networks and is the only path between them. This is a meaningful security boundary that a flat box-and-arrow diagram won't show unless it groups containers by network.</p>
+
+        <p>When diagramming this kind of setup, represent each network as a distinct zone and place containers inside the zones they belong to. Services on multiple networks should visually span zones or appear in a "bridging" position between them.</p>
+
+        <h2>From Docker Compose to Kubernetes: how diagrams help migration</h2>
+
+        <p>Many teams start with Docker Compose for local development and smaller deployments, then migrate to Kubernetes as they scale. Diagrams are genuinely useful during this transition because they help you map Compose concepts to Kubernetes equivalents.</p>
+
+        <p>In a Compose-to-Kubernetes migration, each service typically becomes a Kubernetes Deployment (or StatefulSet for databases). Each network becomes a Kubernetes Namespace or a set of NetworkPolicy rules. Ports exposed to the host become Services of type NodePort or LoadBalancer. Volumes become PersistentVolumeClaims.</p>
+
+        <p>Having a clear diagram of your Compose architecture before starting migration helps you ask the right questions: Which services need persistent storage? Which need public internet access? Which should be isolated from others? Which have hard startup dependencies that need <code>initContainers</code> in Kubernetes?</p>
+
+        <p>InfraSketch supports both Docker Compose and Kubernetes YAML. You can diagram your existing Compose setup, plan the migration on paper, then diagram the resulting Kubernetes manifests to verify the topology is equivalent.</p>
+
+        <h2>Keeping diagrams in sync with your compose file</h2>
+
+        <p>The biggest problem with any infrastructure diagram is drift. You update the compose file, forget to update the diagram, and two months later the documentation is wrong. Here are three approaches to keeping them synchronized:</p>
+
+        <p><strong>Commit-time generation.</strong> Add diagram generation to your pre-commit hook or CI pipeline. When any <code>docker-compose*.yml</code> file changes, re-generate the diagram automatically. The InfraSketch CLI (<code>npx infrasketch docker-compose.yml</code>) generates a shareable URL in CI without opening a browser — you can post this link to a PR comment or Slack channel.</p>
+
+        <p><strong>Embed in README.</strong> Use the InfraSketch <code>&lt;infra-sketch&gt;</code> web component to embed a live diagram in your documentation site. Point it at the raw GitHub URL of your <code>docker-compose.yml</code>. The diagram re-renders from the latest file on every page load — no manual updates needed.</p>
+
+<pre>&lt;!-- Embed a live diagram that always reflects the current compose file --&gt;
+&lt;script src="https://infrasketch.cloud/embed.js"&gt;&lt;/script&gt;
+&lt;infra-sketch
+  src="https://raw.githubusercontent.com/myorg/myrepo/main/docker-compose.yml"
+  height="480"
+&gt;&lt;/infra-sketch&gt;</pre>
+
+        <p><strong>PR-level diagrams.</strong> If you use GitHub, the InfraSketch GitHub Action automatically posts a diagram comment on any PR that modifies a compose file. Reviewers see the architecture diagram inline without needing to run anything.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>Does InfraSketch support docker-compose.override.yml?</h3>
+        <p>Paste the merged output from <code>docker compose config</code> rather than the individual files. That gives InfraSketch the fully resolved service definitions with overrides applied, which produces a more accurate diagram than pasting just the base file.</p>
+
+        <h3>What about Docker Swarm configs?</h3>
+        <p>Docker Swarm <code>deploy</code> keys (replicas, placement, resources) are parsed but not visualized separately — all replicas of a service appear as a single node. For diagrams with replica counts, add those annotations manually to the exported SVG in a drawing tool.</p>
+
+        <h3>Can I diagram a running compose stack instead of the YAML file?</h3>
+        <p><code>docker compose config</code> reflects what's in your files, not what's currently running. If you want a diagram of what's actually running, <code>docker compose ps --format json</code> gives you the current state, but parsing that into a topology diagram requires manual work. The YAML-based approach is faster for most use cases.</p>
+
+        <h3>My compose file uses environment variable substitution — will it work?</h3>
+        <p>Run <code>docker compose config</code> first (with your <code>.env</code> file present) to resolve all substitutions. The output will have concrete values. Paste that resolved output into InfraSketch for accurate results.</p>
+
         <h2>Keep it simple</h2>
 
         <p>The best Docker Compose diagram is one that actually gets created and maintained. A rough auto-generated diagram that you update by re-running a tool is infinitely more valuable than a beautiful hand-drawn diagram from three months ago that no longer reflects reality.</p>

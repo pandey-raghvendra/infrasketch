@@ -204,6 +204,120 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
             <li><strong>Architecture reviews</strong> — generate a diagram for an ARB submission without opening Visio</li>
         </ul>
 
+        <h2>Bicep modules and how they diagram</h2>
+
+        <p>Production Bicep code is rarely a single file. Most teams split resources into reusable modules — a <code>networking.bicep</code> module for VNet and subnets, an <code>aks.bicep</code> module for cluster and node pools, a <code>databases.bicep</code> module for SQL and Redis. The main template calls them with <code>module</code> blocks:</p>
+
+<pre>// main.bicep
+module network './modules/networking.bicep' = {
+  name: 'networkDeployment'
+  params: {
+    vnetName: 'prod-vnet'
+    location: location
+  }
+}
+
+module cluster './modules/aks.bicep' = {
+  name: 'aksDeployment'
+  params: {
+    clusterName: 'prod-aks'
+    subnetId: network.outputs.appSubnetId
+    location: location
+  }
+  dependsOn: [network]
+}
+
+module data './modules/databases.bicep' = {
+  name: 'dataDeployment'
+  params: {
+    sqlServerName: 'prod-sql'
+    location: location
+  }
+}</pre>
+
+        <p>When you paste a modular Bicep setup into InfraSketch, the tool reads what's directly in the pasted code. For best results with modular Bicep, paste the content of each module file concatenated together — the combined resource set gives InfraSketch the full topology to diagram. Alternatively, compile to ARM JSON first (<code>az bicep build --file main.bicep</code>) and paste the resulting ARM template, which contains all resources fully expanded.</p>
+
+        <h2>Understanding dependsOn vs implicit dependencies</h2>
+
+        <p>One of the more subtle aspects of Bicep architecture is the difference between implicit and explicit dependencies. Bicep resolves dependencies automatically when you reference a symbolic name:</p>
+
+<pre>// Implicit dependency — Bicep knows aks depends on appSubnet
+resource aks 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
+  properties: {
+    agentPoolProfiles: [{
+      vnetSubnetID: appSubnet.id  // implicit dependency via .id reference
+    }]
+  }
+}
+
+// Explicit dependency — needed when there's no direct property reference
+resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  scope: aks
+  dependsOn: [logAnalyticsWorkspace]  // explicit: must exist before this
+  ...
+}</pre>
+
+        <p>InfraSketch detects both. Implicit <code>.id</code> and <code>.name</code> references become connection arrows on the diagram. Explicit <code>dependsOn</code> also generates arrows. When reviewing a Bicep architecture diagram, arrows represent real deployment order constraints — if you see a long chain of arrows, that's a signal that changes to early resources have a large blast radius affecting everything downstream.</p>
+
+        <h2>ARM template patterns: nested vs linked deployments</h2>
+
+        <p>ARM JSON templates have two ways to compose multiple templates: nested deployments (inline within a single file) and linked deployments (separate files referenced by URL). Both patterns appear in enterprise Azure templates, especially in Azure landing zone frameworks.</p>
+
+        <p>A nested deployment embeds a child template inside the parent's <code>resources</code> array with <code>"type": "Microsoft.Resources/deployments"</code>. InfraSketch parses the top-level resources but doesn't descend into nested template objects — pasting a template with nested deployments gives you a partial view. For full visibility, paste the inner template content separately or use Bicep modules instead, which are cleaner to parse.</p>
+
+        <p>Linked deployments reference external template URLs. Since InfraSketch runs in the browser and doesn't fetch external URLs from private storage, linked templates require manual concatenation. If you use the Azure landing zone accelerator, run <code>az deployment sub what-if --template-file main.bicep</code> to see the full resolved resource list, then diagram from that output.</p>
+
+        <h2>Integrating Bicep diagrams into Azure DevOps CI/CD</h2>
+
+        <p>Azure teams often use Azure DevOps Pipelines rather than GitHub Actions. While the InfraSketch GitHub Action targets GitHub Pull Requests, the CLI works in any CI environment — including Azure DevOps.</p>
+
+<pre># azure-pipelines.yml — add diagram step to your Bicep pipeline
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    # Install InfraSketch CLI
+    npm install -g infrasketch
+
+    # Generate diagram URL from the Bicep file
+    DIAGRAM_URL=$(infrasketch main.bicep --no-open 2>&1 | grep 'https://')
+    echo "##vso[task.setvariable variable=DiagramUrl]$DIAGRAM_URL"
+    echo "Diagram: $DIAGRAM_URL"
+  displayName: 'Generate architecture diagram'
+
+- task: CreateWorkItem@1
+  inputs:
+    workItemType: 'Task'
+    title: 'Review architecture diagram: $(Build.SourceBranchName)'
+    description: 'Diagram URL: $(DiagramUrl)'</pre>
+
+        <p>The <code>--no-open</code> flag tells the CLI to print the URL to stdout instead of opening a browser — suitable for CI environments. Capture the URL and embed it in a PR comment, a work item, or a pipeline summary artifact.</p>
+
+        <h2>Security considerations when diagramming Azure infrastructure</h2>
+
+        <p>Bicep and ARM templates often contain references to Key Vault secrets, subscription IDs, tenant IDs, and resource group names. Before sharing a diagram (or sharing the source code used to generate it), review what's exposed.</p>
+
+        <p>InfraSketch processes everything in the browser — your template is never transmitted to any server. The shareable diagram URL encodes the resource structure (not the raw template text) as a compressed URL parameter. If your template contains subscription IDs or tenant IDs in resource property values, those specific values don't appear in the diagram nodes — only the resource type and name are used for diagram rendering.</p>
+
+        <p>Still, treat the shareable URL as you would any link containing architectural information — internal architecture reveals attack surface. Share within your organization rather than posting publicly unless the architecture is already documented publicly.</p>
+
+        <h2>Frequently asked questions</h2>
+
+        <h3>Does InfraSketch support Bicep parameter files?</h3>
+        <p>Bicep parameter files (<code>main.bicepparam</code>) aren't parsed separately. For visualization, the resource structure matters more than specific parameter values. Paste the <code>.bicep</code> file directly — the diagram shows resource types and connections regardless of parameter values.</p>
+
+        <h3>Can I diagram Azure Policy definitions or RBAC assignments?</h3>
+        <p>Policy definitions and RBAC assignments aren't visualized as architecture nodes — they're governance constructs rather than infrastructure resources. InfraSketch focuses on infrastructure topology: networks, compute, data, messaging, and security resources.</p>
+
+        <h3>What's the difference between the Bicep and Terraform parsers in InfraSketch?</h3>
+        <p>Both parse resource definitions and extract connections, but the connection detection differs. Bicep uses <code>symbolicName.id</code> references and <code>parent</code> relationships. Terraform uses HCL attribute references like <code>aws_subnet.main.id</code> and <code>module.vpc.subnet_id</code>. The Terraform parser also reads plan JSON for fully resolved dependency graphs. The underlying diagram renderer is the same for both.</p>
+
+        <h3>How do I diagram an Azure Verified Module (AVM)?</h3>
+        <p>Azure Verified Modules are Bicep registry modules. To diagram one, use the AVM module's Bicep source code if it's public (download from the registry and paste). Or deploy a test instance and run <code>az deployment group what-if</code> to see what resources it creates, then use that as the basis for your diagram.</p>
+
         <h2>Bicep vs Terraform diagrams</h2>
 
         <p>If your team uses both Terraform (for AWS/GCP) and Bicep (for Azure), InfraSketch handles both in the same tool. Switch between the <strong>Terraform</strong> and <strong>Bicep / ARM</strong> tabs to diagram each side of a multi-cloud deployment. The layout zones — Internet, Ingress, Compute, Data, Messaging, Security — are consistent across providers, so diagrams from both tools are comparable at a glance.</p>
