@@ -14,7 +14,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InfraSketch — IaC Architecture Diagram Generator</title>
     <meta name="description" content="Instant architecture diagrams from Terraform, Bicep, Pulumi, Kubernetes, CloudFormation &amp; Docker Compose. Free, no signup, 100% browser-based.">
-    <meta name="keywords" content="terraform diagram, cloudformation diagram, cdk diagram, pulumi diagram, kubernetes diagram, bicep diagram, arm template diagram, terraform visualizer, aws architecture diagram generator, terraform to diagram, cloudformation visualizer, cdk synth diagram, docker compose diagram, infrastructure diagram, IaC visualizer, azure bicep diagram, azure arm diagram">
     <link rel="canonical" href="https://infrasketch.cloud/">
 
     <!-- Open Graph -->
@@ -34,16 +33,40 @@
 
     <!-- Schema -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "InfraSketch",
-      "url": "https://infrasketch.cloud/",
-      "description": "Paste Terraform, Bicep, Pulumi, Kubernetes, CloudFormation, CDK, or Docker Compose. Get instant AWS, Azure & GCP architecture diagrams. Free, no signup, 100% browser-based.",
-      "applicationCategory": "DeveloperApplication",
-      "operatingSystem": "Any",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-    }
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud/",
+        "description": "Paste Terraform, Bicep, Pulumi, Kubernetes, CloudFormation, CDK, or Docker Compose. Get instant AWS, Azure & GCP architecture diagrams. Free, no signup, 100% browser-based.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud/",
+        "logo": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg",
+        "sameAs": [
+          "https://github.com/pandey-raghvendra/infrasketch",
+          "https://www.npmjs.com/package/infrasketch"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://infrasketch.cloud/blog/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
     </script>
 
     <!-- Favicons -->
