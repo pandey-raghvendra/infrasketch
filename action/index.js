@@ -22,6 +22,11 @@ function encodeState(type, code) {
   return Buffer.from(json, 'utf8').toString('base64');
 }
 
+function encodeDiffState(type, v1, v2) {
+  const json = JSON.stringify({ type, v1, v2 });
+  return Buffer.from(json, 'utf8').toString('base64');
+}
+
 function detectFormat(filename, content) {
   const base = filename.split('/').pop().toLowerCase();
 
@@ -35,7 +40,6 @@ function detectFormat(filename, content) {
   if (content.includes('schema.management.azure.com') || content.includes('deploymentTemplate.json')) return 'bicep';
 
   if (content.includes('AWSTemplateFormatVersion') || content.includes('"AWSTemplateFormatVersion"')) {
-    // CDK synth JSON has Resources but no template-level description
     if (content.trimStart().startsWith('{') && content.includes('"Resources"')) return 'cdk';
     return 'cloudformation';
   }
@@ -45,6 +49,50 @@ function detectFormat(filename, content) {
   if (content.includes('resource "aws_') || content.includes('resource "azurerm_') || content.includes('resource "google_')) return 'terraform';
 
   return null;
+}
+
+// Extract named resource identifiers per format — best-effort, no full parser needed
+function extractResources(type, content) {
+  if (!content) return new Set();
+  const ids = new Set();
+
+  if (type === 'terraform' || type === 'terragrunt') {
+    for (const m of content.matchAll(/^resource\s+"([^"]+)"\s+"([^"]+)"/gm))
+      ids.add(`${m[1]}.${m[2]}`);
+    for (const m of content.matchAll(/^module\s+"([^"]+)"/gm))
+      ids.add(`module.${m[1]}`);
+  } else if (type === 'cloudformation' || type === 'cdk') {
+    // JSON: "LogicalId": { "Type": "AWS::..." }
+    for (const m of content.matchAll(/"([A-Za-z0-9]+)"\s*:\s*\{\s*"Type"\s*:\s*"([^"]+)"/g))
+      ids.add(`${m[2]} (${m[1]})`);
+    // YAML: LogicalId:\n  Type: AWS::...
+    for (const m of content.matchAll(/^([A-Za-z][A-Za-z0-9]*):\s*\n\s+Type:\s*(AWS::[^\s]+)/gm))
+      ids.add(`${m[2]} (${m[1]})`);
+  } else if (type === 'kubernetes') {
+    for (const m of content.matchAll(/^kind:\s*(\S+)/gm)) {
+      const kindMatch = m[1];
+      const nameMatch = content.slice(m.index).match(/name:\s*(\S+)/);
+      ids.add(nameMatch ? `${kindMatch}/${nameMatch[1]}` : kindMatch);
+    }
+  } else if (type === 'bicep') {
+    for (const m of content.matchAll(/^resource\s+(\w+)\s+'([^']+)'/gm))
+      ids.add(`${m[2]} (${m[1]})`);
+  } else if (type === 'docker') {
+    for (const m of content.matchAll(/^  ([a-zA-Z][a-zA-Z0-9_-]*):\s*$/gm))
+      ids.add(`service: ${m[1]}`);
+  } else if (type === 'pulumi') {
+    for (const m of content.matchAll(/new\s+\w+\.([A-Z][A-Za-z]+)\s*\(\s*"([^"]+)"/g))
+      ids.add(`${m[1]}/${m[2]}`);
+  }
+
+  return ids;
+}
+
+function diffSets(before, after) {
+  const added   = [...after].filter(r => !before.has(r));
+  const removed = [...before].filter(r => !after.has(r));
+  const kept    = [...before].filter(r => after.has(r));
+  return { added, removed, kept };
 }
 
 async function githubApi(path, method = 'GET', body = null) {
@@ -67,6 +115,18 @@ async function githubApi(path, method = 'GET', body = null) {
   return res.json();
 }
 
+async function fetchBaseContent(repo, filename, baseSha) {
+  try {
+    const data = await githubApi(`/repos/${repo}/contents/${encodeURIComponent(filename)}?ref=${baseSha}`);
+    if (data.encoding === 'base64' && data.content) {
+      return Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8');
+    }
+  } catch {
+    // file didn't exist at base — that's fine (newly added)
+  }
+  return null;
+}
+
 async function run() {
   const repo = process.env.REPO;
   const prNumber = process.env.PR_NUMBER;
@@ -76,10 +136,13 @@ async function run() {
     return;
   }
 
+  // Fetch PR metadata for base SHA
+  const pr = await githubApi(`/repos/${repo}/pulls/${prNumber}`);
+  const baseSha = pr.base.sha;
+
   // Fetch changed files from GitHub API
   const files = await githubApi(`/repos/${repo}/pulls/${prNumber}/files?per_page=100`);
 
-  // Filter: skip removed files, check if file exists in workspace
   const candidates = files.filter(f => f.status !== 'removed');
 
   const diagrams = [];
@@ -94,13 +157,39 @@ async function run() {
       continue;
     }
 
-    const content = raw.toString('utf8');
-    const type = detectFormat(file.filename, content);
+    const headContent = raw.toString('utf8');
+    const type = detectFormat(file.filename, headContent);
     if (!type) continue;
 
-    const hash = encodeState(type, content);
-    const url = `${INFRASKETCH}/#${hash}`;
-    diagrams.push({ filename: file.filename, type, url, status: file.status });
+    // For modified/renamed files, fetch base version for diff
+    let baseContent = null;
+    if (file.status === 'modified' || file.status === 'renamed') {
+      const basePath = file.status === 'renamed' ? file.previous_filename : file.filename;
+      baseContent = await fetchBaseContent(repo, basePath, baseSha);
+    }
+
+    const headResources = extractResources(type, headContent);
+    const baseResources = extractResources(type, baseContent);
+    const { added, removed } = diffSets(baseResources, headResources);
+
+    let url;
+    if (baseContent && (added.length > 0 || removed.length > 0)) {
+      const hash = encodeDiffState(type, baseContent, headContent);
+      url = `${INFRASKETCH}/#${hash}`;
+    } else {
+      const hash = encodeState(type, headContent);
+      url = `${INFRASKETCH}/#${hash}`;
+    }
+
+    diagrams.push({
+      filename: file.filename,
+      type,
+      url,
+      status: file.status,
+      added,
+      removed,
+      isDiff: baseContent != null && (added.length > 0 || removed.length > 0),
+    });
   }
 
   if (diagrams.length === 0 && skipped.length === 0) {
@@ -109,35 +198,50 @@ async function run() {
   }
 
   // Build comment markdown
-  const count = diagrams.length;
   const lines = [
-    `## 🗺️ InfraSketch — Architecture Diagrams`,
+    `## 🗺️ InfraSketch — Infrastructure Changes`,
     ``,
   ];
 
-  if (count > 0) {
-    lines.push(`Found **${count} infrastructure file${count !== 1 ? 's' : ''}** in this PR. Click a link to see the architecture diagram instantly — no login required.`);
+  for (const d of diagrams) {
+    const label = FORMAT_LABELS[d.type] || d.type;
+    const statusIcon = d.status === 'added' ? '🆕 added' : d.status === 'modified' ? '✏️ modified' : '🔄 renamed';
+
+    lines.push(`**\`${d.filename}\`** · ${label} · ${statusIcon}`);
     lines.push(``);
-    lines.push(`| File | Format | Status | Diagram |`);
-    lines.push(`|------|--------|--------|---------|`);
-    for (const d of diagrams) {
-      const statusIcon = d.status === 'added' ? '🆕 added' : d.status === 'modified' ? '✏️ modified' : '🔄 renamed';
-      const label = FORMAT_LABELS[d.type] || d.type;
-      lines.push(`| \`${d.filename}\` | ${label} | ${statusIcon} | [**View diagram →**](${d.url}) |`);
+
+    if (d.isDiff && (d.added.length > 0 || d.removed.length > 0)) {
+      if (d.added.length > 0) {
+        for (const r of d.added.slice(0, 10))
+          lines.push(`- ➕ \`${r}\``);
+        if (d.added.length > 10)
+          lines.push(`- ➕ _…and ${d.added.length - 10} more added_`);
+      }
+      if (d.removed.length > 0) {
+        for (const r of d.removed.slice(0, 10))
+          lines.push(`- ➖ \`${r}\``);
+        if (d.removed.length > 10)
+          lines.push(`- ➖ _…and ${d.removed.length - 10} more removed_`);
+      }
+      lines.push(``);
+      lines.push(`[**🔍 View visual diff →**](${d.url})`);
+    } else if (d.status === 'added') {
+      lines.push(`[**🗺️ View diagram →**](${d.url})`);
+    } else {
+      lines.push(`[**🗺️ View diagram →**](${d.url})`);
     }
-  } else {
-    lines.push(`Infrastructure files detected but no diagrams could be generated.`);
+
+    lines.push(``);
+    lines.push(`---`);
+    lines.push(``);
   }
 
   if (skipped.length > 0) {
-    lines.push(``);
-    for (const s of skipped) {
+    for (const s of skipped)
       lines.push(`> ⚠️ \`${s.filename}\` skipped: ${s.reason}`);
-    }
+    lines.push(``);
   }
 
-  lines.push(``);
-  lines.push(`---`);
   lines.push(`<sub>🔍 [InfraSketch](${INFRASKETCH}) — free browser-based architecture diagrams from Terraform, Bicep, Pulumi, Kubernetes, CloudFormation, CDK & Docker Compose. Nothing leaves your browser.</sub>`);
   lines.push(`<!-- infrasketch-action -->`);
 

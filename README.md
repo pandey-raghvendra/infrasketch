@@ -58,6 +58,7 @@ resource "aws_vpc" "main" { cidr_block = "10.0.0.0/16" }
 | **Connection arrows** | Inferred from HCL references, `dependsOn`, `!Ref`, Pulumi variable refs |
 | **⚡ Blast radius** | Click any node → direct downstream (red), indirect downstream (orange), upstream deps (blue); everything else dims; side panel lists every affected service with counts |
 | **📦 Module grouping** | Terraform plan JSON auto-detects `module.X.*` addresses → labeled bounding boxes per module; click `[−]` to collapse a group to a single summary card |
+| **⟷ PR diff visualization** | GitHub Action fetches base + head IaC, diffs resource sets (added/removed), posts a summary comment with a visual diff deep-link that opens Diff mode pre-loaded |
 | **Plan change badges** | TF plan JSON annotates each node with `+` (create), `~` (update), `↺` (replace), `×` (delete) badges |
 | **Module expansion** | ZIP upload expands local modules inline; registry auto-fetch for public TF modules |
 | **Interactive editor** | Drag nodes to reposition; arrows update live; Reset Layout restores auto-layout |
@@ -69,11 +70,11 @@ resource "aws_vpc" "main" { cidr_block = "10.0.0.0/16" }
 
 ---
 
-## GitHub Action
+## GitHub Action — PR Diff Visualization
 
 [![Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-InfraSketch%20Architecture%20Diagram-blue?logo=github)](https://github.com/marketplace/actions/infrasketch-architecture-diagram)
 
-Post architecture diagram links on every IaC PR automatically — free, no secrets needed.
+Automatically comments on every IaC PR with a resource-level diff summary and a link to a visual diff — no secrets needed, no login required.
 
 ```yaml
 # .github/workflows/infrasketch.yml
@@ -94,7 +95,22 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Detects changed IaC files, identifies format, generates shareable diagram URLs, posts (or updates) a PR comment.
+**What the PR comment looks like:**
+
+```
+## 🗺️ InfraSketch — Infrastructure Changes
+
+**`environments/prod/main.tf`** · Terraform · ✏️ modified
+
+- ➕ `aws_lb.app`
+- ➕ `aws_subnet.private_b`
+- ➕ `aws_subnet.private_c`
+- ➖ `aws_nat_gateway.main`
+
+🔍 View visual diff →
+```
+
+For modified files, the action fetches both the base and head versions, diffs the resource sets, and generates a deep link that opens the Diff mode pre-loaded with both versions.
 
 ---
 

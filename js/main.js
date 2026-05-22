@@ -2045,7 +2045,7 @@ function decodeState(hash) {
 
 function loadFromHash() {
     const state = decodeState(location.hash);
-    if (!state || !state.code || !state.type) return false;
+    if (!state || !state.type) return false;
 
     const tab = document.querySelector(`.input-tab[data-type="${state.type}"]`);
     if (!tab) return false;
@@ -2053,6 +2053,17 @@ function loadFromHash() {
     document.querySelectorAll('.input-tab').forEach((t) => t.classList.remove('active'));
     tab.classList.add('active');
     updateEditorForType(state.type);
+
+    // Diff mode: {type, v1, v2}
+    if (state.v1 != null && state.v2 != null) {
+        if (!diffMode) diffBtn?.click(); // enter diff mode
+        diffV1.value = state.v1;
+        diffV2.value = state.v2;
+        generateButton.click();
+        return true;
+    }
+
+    if (!state.code) return false;
     codeInput.value = state.code;
     generateButton.click();
     return true;
