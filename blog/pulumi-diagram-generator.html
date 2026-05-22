@@ -227,6 +227,27 @@ const cluster = new gcp.container.Cluster("gke", {
         <h3>Can I paste multiple Pulumi files?</h3>
         <p>Yes — paste the contents of multiple files concatenated together. InfraSketch scans the entire input for resource constructors. If two files reference the same variable name for different resources, connections may link incorrectly, so it's best to paste one file at a time for large stacks.</p>
 
+        <h2>Pulumi stacks and environments</h2>
+
+        <p>Pulumi uses stacks to manage different deployments of the same program — typically <code>dev</code>, <code>staging</code>, and <code>prod</code>. Each stack has its own config values and state. From a diagramming perspective, stacks matter because the topology may differ between environments: production might have three availability zones and a read replica, while dev has a single AZ and no replica.</p>
+
+        <p>Since InfraSketch parses source code statically, it can't resolve stack-specific config values (those are only known at runtime). The diagram reflects the code structure, not a specific stack's resolved values. For environment-accurate diagrams, consider using Pulumi's preview output — <code>pulumi preview --json</code> outputs a JSON representation of what will be created for a specific stack, similar to Terraform plan JSON. Paste that output into InfraSketch for a stack-accurate diagram.</p>
+
+        <h2>Using InfraSketch in Pulumi CI/CD pipelines</h2>
+
+        <p>Pulumi programs run in CI via Pulumi Automation API or the standard CLI. You can integrate diagram generation into your pipeline at the preview stage — before resources are deployed.</p>
+
+<pre># In your GitHub Actions Pulumi workflow, add a diagram step after checkout:
+- name: Generate architecture diagram
+  run: |
+    # Install InfraSketch CLI
+    npx infrasketch index.ts --no-open 2>&1
+  working-directory: ./infrastructure</pre>
+
+        <p>The InfraSketch CLI encodes the source file as a URL and prints it to stdout. Capture this URL and post it as a PR comment or pipeline artifact. Reviewers can open the diagram before the <code>pulumi up</code> runs — catching topology issues before deployment rather than after.</p>
+
+        <p>For teams using the Pulumi GitHub Action, you can add the InfraSketch action as a parallel step in the same PR workflow. The Pulumi action handles <code>pulumi preview</code> output (cost and diff); InfraSketch handles the visual architecture diagram. Both post separate comments on the same PR.</p>
+
         <h2>Pulumi vs Terraform diagrams</h2>
 
         <p>If you're migrating from Terraform to Pulumi (or evaluating it), InfraSketch lets you diagram both. Paste your Terraform HCL in the Terraform tab and your equivalent Pulumi code in the Pulumi tab — the diagrams should look identical if the migration is complete. Differences become immediately visible.</p>

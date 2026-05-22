@@ -246,6 +246,20 @@ jobs:
           directory: .
           output_format: cli</pre>
 
+        <h2>What reviewers actually do with the diagram</h2>
+
+        <p>A diagram link in a PR comment is only useful if reviewers actually open it. Here's what effective IaC code review looks like when diagrams are part of the workflow:</p>
+
+        <p><strong>Before looking at the diff.</strong> Open the diagram first. Get a mental model of what the PR is adding or changing architecturally. A PR that "adds a caching layer" means something very different if the cache sits in the same subnet as the database versus in a separate isolated subnet. The diagram makes that clear at a glance.</p>
+
+        <p><strong>Check VPC and subnet placement.</strong> New resources inside a VPC should be in the right subnet tier — public vs private, and whether they're in the correct availability zones. This is easy to miss in a raw HCL diff but obvious in a diagram.</p>
+
+        <p><strong>Follow the connection arrows.</strong> New connection arrows represent new network paths or IAM dependencies. A new arrow from a Lambda function to an RDS instance means you need to check the security group rules and whether the function is in the right subnet to reach the database. Diagrams surface these new paths before the code ships.</p>
+
+        <p><strong>Check blast radius before approving changes to shared resources.</strong> If the PR modifies a VPC, a security group, or an EKS cluster that many services share, click that resource in the InfraSketch diagram to see the blast radius — which other resources are downstream and would be affected if this change behaves unexpectedly.</p>
+
+        <p>Teams that build this review pattern see fewer "I didn't realize that resource was shared" incidents in production.</p>
+
         <h2>Frequently asked questions</h2>
 
         <div class="faq-item">

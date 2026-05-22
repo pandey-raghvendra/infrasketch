@@ -207,6 +207,26 @@ const vpc = new ec2.Vpc(this, 'Vpc', {
         <h3>Can I diagram a CDK Stage or Environment?</h3>
         <p>Yes — <code>cdk synth</code> on a Stage produces one CloudFormation template per stack in the Stage. Diagram each stack's JSON separately to compare environments.</p>
 
+        <h2>CDK constructs and the L1/L2/L3 distinction</h2>
+
+        <p>CDK has three levels of constructs, and they diagram differently:</p>
+
+        <p><strong>L1 constructs (Cfn*).</strong> These are direct CloudFormation resource wrappers — <code>CfnVpc</code>, <code>CfnSubnet</code>, <code>CfnSecurityGroup</code>. They synthesize to single CloudFormation resources and appear as individual nodes on the diagram. Using L1 constructs gives you the most predictable and readable diagrams.</p>
+
+        <p><strong>L2 constructs.</strong> Higher-level abstractions like <code>ec2.Vpc</code>, <code>eks.Cluster</code>, <code>rds.DatabaseInstance</code>. A single L2 construct creates multiple CloudFormation resources — <code>ec2.Vpc</code> creates a VPC, subnets, route tables, internet gateway, and NAT gateways. All of these appear as separate nodes on the synthesized diagram. The diagram is more detailed than you might expect from reading the CDK source, which is actually useful — it shows you what the construct is really deploying.</p>
+
+        <p><strong>L3 constructs (Patterns).</strong> High-level patterns like <code>ecs_patterns.ApplicationLoadBalancedFargateService</code> create dozens of resources. The synthesized diagram from an L3 construct can have 20-30 nodes from a single CDK line. This is fine for documentation but can be visually noisy. If readability matters, consider synthesizing individual stacks rather than the entire application at once.</p>
+
+        <h2>CDK bootstrapping resources</h2>
+
+        <p>CDK bootstrap (<code>cdk bootstrap</code>) creates a set of supporting resources in your account: an S3 bucket for assets, ECR repositories for container images, and IAM roles for deployment. These appear in <code>cdk synth</code> output as a separate bootstrap stack. When diagramming your application, exclude the bootstrap stack — diagram only your application stacks to avoid noise from infrastructure-management plumbing.</p>
+
+        <pre># Synth only your app stack, not the bootstrap stack
+cdk synth MyAppStack | pbcopy
+
+# Or if you have multiple app stacks
+cdk synth MyNetworkStack MyComputeStack MyDataStack</pre>
+
         <h2>CDK vs CloudFormation diagrams</h2>
 
         <p>The CDK and CloudFormation tabs in InfraSketch use the same underlying parser — CDK synthesizes to CloudFormation, so the input format is identical. The practical difference is how you get the input: CDK requires a <code>cdk synth</code> step; CloudFormation templates are static files you already have. If you write CDK, always diagram from synthesized output (not hand-written CloudFormation) to make sure you're seeing exactly what gets deployed.</p>

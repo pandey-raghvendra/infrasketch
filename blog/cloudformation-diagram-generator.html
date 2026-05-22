@@ -245,6 +245,23 @@ sam package --output-template-file packaged.yaml
         <h3>Event-driven pipeline</h3>
         <p>SNS → SQS → Lambda → DynamoDB pipelines produce clean left-to-right flow diagrams, with SNS in the Messaging zone, SQS as the buffer, Lambda in Compute, and DynamoDB in Data. <code>!Ref</code> references between them create the arrows automatically.</p>
 
+        <h2>Migrating from CloudFormation to Terraform</h2>
+
+        <p>Teams migrating from CloudFormation to Terraform often use InfraSketch at both ends of the migration to verify equivalence. The process works like this: diagram your existing CloudFormation template, then diagram the equivalent Terraform HCL once it's written. Side-by-side comparison makes it immediately obvious if a resource was missed or if the network topology changed inadvertently during the rewrite.</p>
+
+        <p>A few things to watch for during CloudFormation-to-Terraform migration:</p>
+        <ul>
+            <li><strong>Implicit resources.</strong> CloudFormation creates some resources automatically (IAM execution roles, CloudWatch log groups) that you must explicitly define in Terraform. The diagram comparison reveals these gaps — the CloudFormation diagram may show a Lambda function with an implied execution role, while the Terraform diagram shows it without one.</li>
+            <li><strong>DependsOn ordering.</strong> CloudFormation's <code>DependsOn</code> becomes Terraform <code>depends_on</code> meta-argument. Both appear as arrows on InfraSketch diagrams. Missing an explicit dependency during migration can cause race conditions in Terraform that CloudFormation handled automatically.</li>
+            <li><strong>Physical resource names.</strong> CloudFormation can auto-generate resource names; Terraform requires explicit names for most resources. The migration is an opportunity to standardize naming — the diagram helps you see all resources that will be affected.</li>
+        </ul>
+
+        <h2>CloudFormation drift detection and diagrams</h2>
+
+        <p>AWS CloudFormation drift detection identifies resources that have been modified outside of CloudFormation (via the console, CLI, or other tools). When drift is detected, the actual infrastructure no longer matches the template. Diagrams from the template represent the intended state; diagrams from actual AWS resources (via Cloudcraft or Hava) represent the current state. The gap between the two is the drift.</p>
+
+        <p>InfraSketch diagrams the template (intended state). If your team suspects drift, you can export the current state from AWS Config or use <code>aws cloudformation describe-stack-resources</code> combined with <code>aws ec2 describe-vpcs</code> etc. to reconstruct a "current state" picture. Comparing the two diagrams visually is faster than reading drift detection reports line by line.</p>
+
         <h2>Frequently asked questions</h2>
 
         <h3>My template uses Parameters — will it still parse?</h3>
