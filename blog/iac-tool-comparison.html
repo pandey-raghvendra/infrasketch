@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Terraform vs CDK vs Pulumi: Choosing Your Infrastructure-as-Code Tool — InfraSketch</title>
+    <meta name="description" content="An honest comparison of Terraform, AWS CDK, and Pulumi for infrastructure-as-code. Covers state, language, ecosystem, and team-fit trade-offs so you can choose the right tool.">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/iac-tool-comparison.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/iac-tool-comparison.html">
+    <meta property="og:title" content="Terraform vs CDK vs Pulumi: Choosing Your Infrastructure-as-Code Tool">
+    <meta property="og:description" content="An honest comparison of Terraform, AWS CDK, and Pulumi for infrastructure-as-code. Covers state, language, ecosystem, and team-fit trade-offs so you can choose the right tool.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Terraform vs CDK vs Pulumi: Choosing Your Infrastructure-as-Code Tool">
+    <meta name="twitter:description" content="An honest comparison of Terraform, AWS CDK, and Pulumi for infrastructure-as-code. Covers state, language, ecosystem, and team-fit trade-offs so you can choose the right tool.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Terraform vs CDK vs Pulumi: Choosing Your Infrastructure-as-Code Tool",
+      "description": "An honest comparison of Terraform, AWS CDK, and Pulumi for infrastructure-as-code. Covers state, language, ecosystem, and team-fit trade-offs so you can choose the right tool.",
+      "url": "https://infrasketch.cloud/blog/iac-tool-comparison.html",
+      "datePublished": "2026-06-07",
+      "dateModified": "2026-06-07",
+      "author": {
+        "@type": "Person",
+        "name": "Raghvendra Pandey",
+        "url": "https://github.com/pandey-raghvendra"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"
+        }
+      },
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}table{width:100%;border-collapse:collapse;margin:24px 0;font-size:14px}th{background:var(--bg-surface);color:var(--accent);text-align:left;padding:10px 14px;border:1px solid var(--border);font-family:var(--mono);font-weight:500}td{padding:10px 14px;border:1px solid var(--border);color:#b0b8d1;vertical-align:top}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">IaC</span>
+        <h1>Terraform vs CDK vs Pulumi: Choosing Your Infrastructure-as-Code Tool</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 10 min read</div>
+    </div>
+    <article>
+        <p>The IaC landscape split into two philosophies about a decade ago and hasn't fully resolved the argument since. On one side: declarative configuration languages designed specifically for infrastructure (Terraform HCL, CloudFormation YAML, Bicep). On the other: general-purpose programming languages brought to infrastructure (AWS CDK, Pulumi). Both approaches have won in production at major organizations. Neither is clearly superior.</p>
+
+        <p>This comparison covers Terraform, AWS CDK, and Pulumi in depth — how they work, where they excel, where they struggle, and which makes sense for different team situations. It isn't a beginner introduction to any of these tools; if you're choosing between them for a real project, this assumes you've at least skimmed each one.</p>
+
+        <h2>The core philosophical difference</h2>
+
+        <p>Terraform's HCL is a purpose-built configuration language. It's not Turing-complete (no arbitrary loops, no recursion, limited conditionals). This is by design: HashiCorp's position is that infrastructure definitions should be readable, predictable, and safe to generate tooling around. When you read a <code>.tf</code> file, you can understand what it creates without executing anything.</p>
+
+        <p>CDK and Pulumi take the opposite position: the limitations of configuration languages are a tax on productive engineers. Why invent a domain-specific language when TypeScript already exists? Real programming languages have proper abstractions, test frameworks, package managers, IDE support, and a billion engineers who already know them. Infrastructure should be no different from application code.</p>
+
+        <p>Both positions have merit. The choice between them often comes down to who's writing the infrastructure more than which approach is technically superior.</p>
+
+        <h2>Terraform</h2>
+
+        <p>Terraform is the default choice for infrastructure-as-code in 2026. It works with every major cloud provider and hundreds of minor ones. The Terraform Registry has thousands of modules — reusable packages for common patterns like VPCs, EKS clusters, and RDS databases. That ecosystem is its most durable advantage.</p>
+
+        <p>HCL syntax is approachable. You describe what you want to exist:</p>
+
+<pre>resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+}
+
+resource "aws_subnet" "private" {
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(var.cidr_block, 4, count.index)
+  availability_zone = var.availability_zones[count.index]
+}</pre>
+
+        <p>Terraform figures out the execution order based on the references between resources. You don't specify steps — you specify the end state.</p>
+
+        <p><strong>Where Terraform struggles:</strong></p>
+        <ul>
+            <li><strong>Dynamic resource generation</strong>: <code>count</code> and <code>for_each</code> are usable but awkward. Generating 20 similar resources with slight variations requires careful HCL gymnastics. CDK and Pulumi can use a <code>for</code> loop.</li>
+            <li><strong>Abstraction limitations</strong>: You can create modules, but you can't do real object-oriented composition. CDK constructs and Pulumi component resources are substantially more powerful for building internal platforms.</li>
+            <li><strong>Testing</strong>: Testing Terraform is harder than it should be. <code>terraform validate</code> checks syntax; <code>terratest</code> (Go) or <code>pytest-terraform</code> can do integration tests, but unit testing logic is awkward because HCL isn't executable without a provider.</li>
+            <li><strong>State management complexity</strong>: As covered in depth in the <a href="/blog/terraform-state-explained.html">Terraform state guide</a>, managing state at scale requires careful structure and tooling.</li>
+        </ul>
+
+        <p><strong>When to choose Terraform:</strong> You need multi-cloud support, your team is a mix of application and platform engineers (not all software engineers), or you're inheriting existing Terraform infrastructure. Also: when you want the broadest hiring pool and the most community resources.</p>
+
+        <h2>AWS CDK</h2>
+
+        <p>CDK (Cloud Development Kit) is AWS's answer to the "write real code" camp. You write TypeScript, Python, Java, Go, or C# that constructs a tree of CDK constructs. When you run <code>cdk synth</code>, it compiles to CloudFormation JSON or YAML, which AWS then deploys.</p>
+
+        <p>The synthesis step is important: CDK is an abstraction on top of CloudFormation, not a deployment tool in itself. Under the hood, your resources become CloudFormation stacks with CloudFormation change sets. This means CDK inherits CloudFormation's deployment semantics, including its quirks — stack drift, resource replacement behavior, and the 500-resource-per-stack limit.</p>
+
+<pre>import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+
+const vpc = new ec2.Vpc(this, 'AppVpc', {
+  maxAzs: 3,
+  natGateways: 1
+});
+
+const cluster = new ecs.Cluster(this, 'AppCluster', {
+  vpc,
+  containerInsights: true
+});
+
+// L2 constructs handle security groups, IAM roles,
+// log groups, and other boilerplate automatically
+const service = new ecs.FargateService(this, 'AppService', {
+  cluster,
+  taskDefinition: taskDef,
+  desiredCount: 3
+});</pre>
+
+        <p>CDK's L2 constructs are its killer feature. An L2 construct is an opinionated abstraction over one or more CloudFormation resources that handles the boilerplate. <code>ecs.FargateService</code> doesn't just create a <code>AWS::ECS::Service</code> — it creates the service, the task definition's execution role with the right policies, the security group, and the CloudWatch log group. Getting the same result in raw CloudFormation or Terraform requires 4–6 separate resources and knowing which policies to attach.</p>
+
+        <p><strong>Where CDK struggles:</strong></p>
+        <ul>
+            <li><strong>AWS-only</strong>: CDK is designed for AWS CloudFormation. Using non-AWS resources requires CDK for Terraform (CDKTF), which is a separate project with its own quirks, or mixing in other tools.</li>
+            <li><strong>CloudFormation limits</strong>: That 500-resource limit per stack bites real production systems. Large applications need careful stack decomposition. CloudFormation deployments also tend to be slower than Terraform — change sets take time.</li>
+            <li><strong>Synthesis surprises</strong>: A single CDK construct can expand to dozens of CloudFormation resources. If you're used to explicit resource definitions, the synthesized output can be surprising — and the diff on a CDK update is sometimes much larger than expected.</li>
+            <li><strong>CDK versioning pain</strong>: CDK 1.x to 2.x was a painful migration. The framework moves fast and breaking changes happen.</li>
+        </ul>
+
+        <p><strong>When to choose CDK:</strong> Your team is primarily software engineers who find HCL limiting, you're AWS-only, and you want L2 construct abstractions to reduce boilerplate. Also: when you're building an internal infrastructure platform that other teams consume as a library — CDK constructs compose like packages.</p>
+
+        <h2>Pulumi</h2>
+
+        <p>Pulumi is similar in philosophy to CDK (real programming languages for infrastructure) but different in execution. Pulumi doesn't compile to CloudFormation — it has its own deployment engine that calls provider APIs directly, similar to Terraform. It supports TypeScript, Python, Go, C#, Java, and YAML.</p>
+
+<pre>import * as aws from "@pulumi/aws";
+
+const vpc = new aws.ec2.Vpc("main", {
+  cidrBlock: "10.0.0.0/16",
+  enableDnsHostnames: true,
+});
+
+const privateSubnets = availabilityZones.map((az, i) =>
+  new aws.ec2.Subnet(`private-${az}`, {
+    vpcId: vpc.id,
+    cidrBlock: `10.0.${i}.0/24`,
+    availabilityZone: az,
+  })
+);</pre>
+
+        <p>This is the key difference from CDK: <code>new aws.ec2.Vpc(...)</code> isn't creating a CloudFormation resource. It's registering a resource with the Pulumi engine, which maintains its own state (either in Pulumi Cloud or in a self-managed backend like S3). The deployment runs directly against the AWS API, like Terraform.</p>
+
+        <p>Pulumi's multi-cloud support is genuine — it has providers for AWS, Azure, GCP, Kubernetes, and many others, all within the same program. You can write a TypeScript program that creates an AWS VPC, deploys an Azure SQL database, and configures a Cloudflare DNS record, all in a single Pulumi stack.</p>
+
+        <p><strong>Where Pulumi struggles:</strong></p>
+        <ul>
+            <li><strong>Community and ecosystem size</strong>: Pulumi's ecosystem is smaller than Terraform's. The Registry has fewer published modules. When you hit an edge case, there are fewer Stack Overflow answers and community resources.</li>
+            <li><strong>Language complexity can become a liability</strong>: The same expressiveness that makes Pulumi powerful also means infrastructure code can become complex. A Pulumi program that makes API calls, fetches secrets, and uses complex TypeScript generics is harder to review than equivalent Terraform HCL.</li>
+            <li><strong>State backend choices</strong>: Pulumi's hosted backend (Pulumi Cloud) is polished but adds a vendor dependency. The self-managed S3 backend works but lacks features like the run history and policy-as-code that Pulumi Cloud provides.</li>
+        </ul>
+
+        <p><strong>When to choose Pulumi:</strong> Your team writes TypeScript or Python daily and finds HCL genuinely limiting. You need multi-cloud in a single program. You're building Kubernetes-native infrastructure where the Pulumi Kubernetes provider is a natural fit alongside AWS/GCP resources.</p>
+
+        <h2>Side-by-side comparison</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Dimension</th>
+                    <th>Terraform</th>
+                    <th>AWS CDK</th>
+                    <th>Pulumi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Language</td>
+                    <td>HCL (DSL)</td>
+                    <td>TS, Python, Java, Go, C#</td>
+                    <td>TS, Python, Go, C#, Java, YAML</td>
+                </tr>
+                <tr>
+                    <td>Deployment engine</td>
+                    <td>Direct provider API</td>
+                    <td>CloudFormation</td>
+                    <td>Direct provider API</td>
+                </tr>
+                <tr>
+                    <td>Multi-cloud</td>
+                    <td>Yes (native)</td>
+                    <td>AWS only (CDKTF for others)</td>
+                    <td>Yes (native)</td>
+                </tr>
+                <tr>
+                    <td>State management</td>
+                    <td>Self-managed or Terraform Cloud</td>
+                    <td>CloudFormation (AWS-managed)</td>
+                    <td>Self-managed or Pulumi Cloud</td>
+                </tr>
+                <tr>
+                    <td>Abstractions</td>
+                    <td>Modules</td>
+                    <td>Constructs (L1/L2/L3)</td>
+                    <td>Component resources</td>
+                </tr>
+                <tr>
+                    <td>Testing</td>
+                    <td>Limited unit testing</td>
+                    <td>Jest + CDK assertions</td>
+                    <td>Jest/pytest + Pulumi mocking</td>
+                </tr>
+                <tr>
+                    <td>Ecosystem</td>
+                    <td>Largest</td>
+                    <td>Large (AWS-focused)</td>
+                    <td>Growing</td>
+                </tr>
+                <tr>
+                    <td>Learning curve</td>
+                    <td>Low (for HCL)</td>
+                    <td>Medium (requires knowing CDK patterns)</td>
+                    <td>Low (if already know the language)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Hybrid approaches</h2>
+
+        <p>Real production environments often use more than one tool. Some common combinations:</p>
+
+        <p><strong>Terraform for infrastructure, CDK for application stacks.</strong> Platform teams manage VPCs, RDS clusters, and shared IAM with Terraform. Application teams deploy their ECS services and Lambda functions with CDK. The CDK stacks reference Terraform outputs via SSM parameters or remote state. This splits ownership cleanly and lets each team use the tool that fits their skillset.</p>
+
+        <p><strong>Terraform for everything except Kubernetes.</strong> Terraform creates the EKS cluster. Pulumi or Helm manages Kubernetes resources. Terraform's Kubernetes provider exists but is awkward for complex K8s workloads — the HCL representation of a Kubernetes deployment is verbose and hard to read. Pulumi's Kubernetes provider or plain Helm charts are usually a better fit for the K8s layer.</p>
+
+        <p><strong>CDK for core AWS, Terraform for third-party services.</strong> CDK shines for AWS resources with its L2 constructs. Terraform shines for the 1000+ non-AWS providers (Datadog, PagerDuty, Cloudflare, GitHub, Vault). Many teams use CDK for their AWS infrastructure and Terraform for everything else.</p>
+
+        <h2>Migration considerations</h2>
+
+        <p>If you're migrating existing infrastructure to a different IaC tool, the transition cost is often higher than it looks. Consider:</p>
+
+        <p><strong>State migration</strong>: Moving from Terraform to Pulumi or CDK means re-importing every resource or doing a careful blue-green migration. There are tools to convert Terraform state to Pulumi (<code>pulumi convert --from terraform</code>) but they require significant manual cleanup.</p>
+
+        <p><strong>Team knowledge</strong>: If your team knows Terraform, migrating to CDK doesn't make everyone immediately productive. The learning curve is real, especially the CDK mental model (constructs, stacks, apps, environments).</p>
+
+        <p><strong>Partial migrations are valid</strong>: You don't have to pick one tool for everything. New projects can use the new tool. Existing infrastructure can stay where it is. The overhead of two tools is often less than the disruption of a full migration.</p>
+
+        <h2>The version that no one talks about: OpenTofu</h2>
+
+        <p>In 2023, HashiCorp changed Terraform's license from MPL to BSL — a non-open-source license that restricts commercial use by competing products. The community responded by forking Terraform at the last open-source version (1.5.x) to create OpenTofu, now maintained by the Linux Foundation.</p>
+
+        <p>OpenTofu is a drop-in replacement for Terraform with the same HCL syntax, provider compatibility, and state format. It diverges from Terraform where HashiCorp has added BSL-licensed features. For most users, OpenTofu and Terraform are functionally identical today. OpenTofu is the right choice if the license change concerns you or if you're vendor-averse; Terraform is the right choice if you want the closest alignment with the HashiCorp ecosystem and Terraform Cloud.</p>
+
+        <p>Whichever IaC tool you use, visualizing what it actually creates helps during both development and review. <a href="/">InfraSketch</a> supports Terraform HCL, CDK synthesized JSON, and Pulumi TypeScript/Python — paste your code to see the architecture diagram without deploying anything.</p>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/terraform-state-explained.html">Terraform State Explained: What It Is, How It Works, and Why It Breaks</a></li>
+            <li><a href="/blog/terraform-diagram-generator.html">Terraform Architecture Diagram Generator</a></li>
+            <li><a href="/blog/pulumi-diagram-generator.html">Pulumi Architecture Diagram Generator</a></li>
+            <li><a href="/blog/cdk-architecture-diagram-generator.html">CDK Architecture Diagram Generator</a></li>
+        </ul>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

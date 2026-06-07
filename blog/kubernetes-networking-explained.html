@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies — InfraSketch</title>
+    <meta name="description" content="A practical guide to how Kubernetes networking works — pod-to-pod communication, ClusterIP vs NodePort vs LoadBalancer, Ingress controllers, and NetworkPolicy rules.">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/kubernetes-networking-explained.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/kubernetes-networking-explained.html">
+    <meta property="og:title" content="Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies">
+    <meta property="og:description" content="A practical guide to how Kubernetes networking works — pod-to-pod communication, ClusterIP vs NodePort vs LoadBalancer, Ingress controllers, and NetworkPolicy rules.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies">
+    <meta name="twitter:description" content="A practical guide to how Kubernetes networking works — pod-to-pod communication, ClusterIP vs NodePort vs LoadBalancer, Ingress controllers, and NetworkPolicy rules.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies",
+      "description": "A practical guide to how Kubernetes networking works — pod-to-pod communication, ClusterIP vs NodePort vs LoadBalancer, Ingress controllers, and NetworkPolicy rules.",
+      "url": "https://infrasketch.cloud/blog/kubernetes-networking-explained.html",
+      "datePublished": "2026-06-07",
+      "dateModified": "2026-06-07",
+      "author": {
+        "@type": "Person",
+        "name": "Raghvendra Pandey",
+        "url": "https://github.com/pandey-raghvendra"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "InfraSketch",
+        "url": "https://infrasketch.cloud",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"
+        }
+      },
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Kubernetes</span>
+        <h1>Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 11 min read</div>
+    </div>
+    <article>
+        <p>Kubernetes networking is one of the most misunderstood parts of running containerized workloads. A pod can reach another pod by IP — but why does that stop working after a deployment? A service exists and resolves in DNS — but traffic isn't arriving at the application. An Ingress resource is configured — but requests return 502. These puzzles are common and they stem from the same root: Kubernetes networking has several distinct layers, each solving a different problem, and it's easy to conflate them.</p>
+
+        <p>This article walks through how Kubernetes networking actually works at each layer — from pod networking to services to Ingress to network policy — so the next time something breaks, you have a mental model to reason from.</p>
+
+        <h2>The fundamental promise: flat pod networking</h2>
+
+        <p>Kubernetes makes one core promise about networking: every pod can communicate directly with every other pod in the cluster without NAT. Every pod gets a real IP address from the cluster's pod CIDR range, and those IPs are routable between pods regardless of which node they're running on.</p>
+
+        <p>This is not something Kubernetes itself implements. It's a contract that every Kubernetes-conformant CNI (Container Network Interface) plugin must fulfill. When you install Calico, Cilium, Flannel, Weave, or any other CNI, you're installing the component that actually creates this flat network. The mechanism varies — Flannel uses VXLAN overlays, Calico can use BGP for direct routing, Cilium uses eBPF — but the result is the same: pod-to-pod communication without NAT.</p>
+
+        <p>Here's what a pod's network namespace looks like:</p>
+
+<pre>$ kubectl exec -it my-pod -- ip addr
+1: lo: &lt;LOOPBACK&gt; ...
+3: eth0@if12: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; ...
+    inet 10.244.1.15/24 brd 10.244.1.255 scope global eth0
+
+$ kubectl exec -it my-pod -- ip route
+default via 10.244.1.1 dev eth0
+10.244.0.0/16 via 10.244.1.1 dev eth0</pre>
+
+        <p>The pod has an IP (<code>10.244.1.15</code>) on a /24 subnet. The node this pod runs on has an IP from the same range — or a different /24 within the same /16. Traffic from this pod to <code>10.244.2.8</code> (a pod on another node) goes through the CNI-managed overlay or routed network.</p>
+
+        <h2>Why you shouldn't use pod IPs directly</h2>
+
+        <p>If pods can communicate directly, why not just use pod IPs? Two reasons.</p>
+
+        <p>First, pod IPs are ephemeral. When a pod is killed and rescheduled — whether from a node failure, a rolling deployment, or the scheduler moving it — it gets a new IP. Any hardcoded reference to the old IP breaks immediately.</p>
+
+        <p>Second, horizontal scaling creates multiple pod instances. If you have three replicas of your API service, you need something that routes traffic across all three, not just the first one.</p>
+
+        <p>Services solve both problems.</p>
+
+        <h2>Services: stable DNS names and load balancing</h2>
+
+        <p>A Kubernetes Service is a stable virtual endpoint that fronts a set of pods. It has a cluster-scoped DNS name (<code>my-service.my-namespace.svc.cluster.local</code>) and a virtual IP (ClusterIP) that doesn't change. The Service uses a label selector to determine which pods are in its backend pool:</p>
+
+<pre>apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: backend
+spec:
+  selector:
+    app: api
+    tier: backend
+  ports:
+    - port: 80
+      targetPort: 8080</pre>
+
+        <p>Kubernetes continuously watches pods with labels <code>app=api, tier=backend</code>. When pods matching the selector are created, their IP:port is added to an Endpoints object. When they're deleted, they're removed. The Service IP stays the same; the backing Endpoints change as pods come and go.</p>
+
+        <p>Traffic routing to services is handled by kube-proxy (or Cilium/eBPF in modern clusters). kube-proxy watches for Endpoints changes and programs iptables rules (or IPVS rules) that intercept traffic to the ClusterIP and distribute it across the current pod set.</p>
+
+        <h3>ClusterIP, NodePort, and LoadBalancer</h3>
+
+        <p>Services have a <code>type</code> field that controls how they're exposed:</p>
+
+        <p><strong>ClusterIP</strong> (default): The service is accessible only within the cluster. Other pods can reach it at <code>api.backend.svc.cluster.local:80</code>. External traffic cannot reach it. This is the right type for internal services — databases, caches, backend APIs called only by other services.</p>
+
+        <p><strong>NodePort</strong>: Opens a port on every node (in the 30000–32767 range by default) and routes traffic to the service. You can reach the service at <code>&lt;any-node-ip&gt;:&lt;node-port&gt;</code>. NodePort services are rarely used in production for external traffic because they require knowing node IPs and using non-standard ports. They're sometimes used for development or for specific cases where an external load balancer handles the stable IP layer.</p>
+
+        <p><strong>LoadBalancer</strong>: Provisions an external load balancer from the cloud provider (an AWS ALB/NLB, a GCP load balancer, an Azure LB). The load balancer gets a stable external IP and routes to the NodePort service underneath. This is the straightforward way to expose a single service externally, but it creates one load balancer per service — expensive at scale.</p>
+
+        <h3>ExternalName and headless services</h3>
+
+        <p>Two less-common service types worth knowing:</p>
+
+        <p><strong>ExternalName</strong>: Returns a CNAME record to an external DNS name. Useful for giving a cluster-internal alias to an external database or API: <code>db.backend.svc.cluster.local</code> resolves to <code>my-db.rds.amazonaws.com</code>. Services can reference external dependencies by internal name without embedding external DNS names in application code.</p>
+
+        <p><strong>Headless services</strong> (<code>clusterIP: None</code>): Instead of returning the virtual ClusterIP, DNS returns the actual pod IPs. Each DNS query returns the IPs of all pods matching the selector. This is used for stateful applications (StatefulSets) where clients need to connect to specific pod instances, not a load-balanced virtual IP. MongoDB, Cassandra, and other distributed databases use headless services so each pod is individually addressable.</p>
+
+        <h2>DNS in Kubernetes</h2>
+
+        <p>Kubernetes runs CoreDNS (or kube-dns in older clusters) as a cluster DNS resolver. Every pod is configured with a <code>resolv.conf</code> that points to CoreDNS:</p>
+
+<pre>$ kubectl exec -it my-pod -- cat /etc/resolv.conf
+nameserver 10.96.0.10
+search backend.svc.cluster.local svc.cluster.local cluster.local
+options ndots:5</pre>
+
+        <p>The <code>search</code> entries mean that short service names like <code>api</code> are automatically expanded. A lookup for <code>api</code> from within the <code>backend</code> namespace first tries <code>api.backend.svc.cluster.local</code>, finds the service, and returns. A lookup from a different namespace would need <code>api.backend</code> or the full FQDN.</p>
+
+        <p>The <code>ndots:5</code> setting means names with fewer than 5 dots are treated as relative and go through the search path before being treated as absolute. This can cause unexpected DNS latency if every external hostname lookup triggers multiple failed cluster-internal lookups first. Setting <code>ndots: 2</code> or using fully-qualified hostnames (with a trailing dot) for external lookups can reduce DNS lookup latency in high-throughput services.</p>
+
+        <h2>Ingress: HTTP routing at the cluster edge</h2>
+
+        <p>LoadBalancer services expose one service per load balancer. In practice, a production cluster might have 20 HTTP services that should all be accessible under a single external IP. Ingress handles this with HTTP-level routing — one external load balancer, multiple services, routing by hostname and path.</p>
+
+<pre>apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.mycompany.com
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: api-v1
+                port:
+                  number: 80
+          - path: /v2
+            pathType: Prefix
+            backend:
+              service:
+                name: api-v2
+                port:
+                  number: 80
+    - host: admin.mycompany.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: 80</pre>
+
+        <p>An Ingress object is just configuration. The actual traffic routing is done by an Ingress controller — a deployment running in your cluster that watches Ingress resources and programs an actual reverse proxy accordingly. Common controllers:</p>
+
+        <ul>
+            <li><strong>nginx-ingress-controller</strong>: The most widely deployed. Configures nginx based on Ingress resources. Mature, well-documented, broad feature support via annotations.</li>
+            <li><strong>AWS Load Balancer Controller</strong>: For EKS, provisions AWS ALBs instead of nginx. Routes HTTP/HTTPS at the ALB layer, with support for target groups, WAF integration, and certificate management via ACM.</li>
+            <li><strong>Traefik</strong>: Auto-discovers Kubernetes services, has a dashboard, good support for middleware (rate limiting, auth, header rewriting).</li>
+            <li><strong>Istio Gateway</strong>: Part of the Istio service mesh. More complex but enables traffic management, mTLS, and observability beyond what a simple Ingress controller provides.</li>
+        </ul>
+
+        <p>The Ingress spec is intentionally minimal — just host/path rules and backend services. Advanced features (SSL termination, authentication, rate limiting, sticky sessions) are handled via controller-specific annotations. This means Ingress resources are somewhat controller-specific despite being a standard API object.</p>
+
+        <p>For clusters on Kubernetes 1.19+, <code>ingressClassName</code> replaces the older <code>kubernetes.io/ingress.class</code> annotation and allows multiple Ingress controllers to coexist in the same cluster, each handling different Ingress objects.</p>
+
+        <h2>Network Policies: restricting traffic between pods</h2>
+
+        <p>By default, Kubernetes networking is fully permissive. Any pod can reach any other pod, any service, and any external IP. In a shared cluster, this means a compromised pod can attempt to reach databases, other teams' services, or cluster control plane components.</p>
+
+        <p>NetworkPolicy resources define firewall rules for pod-to-pod and pod-to-external traffic:</p>
+
+<pre>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-network-policy
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: database
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:  # allow DNS
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53</pre>
+
+        <p>This policy says: pods labeled <code>app=api</code> in the <code>backend</code> namespace accept ingress on port 8080 only from pods labeled <code>app=frontend</code> or from any pod in namespaces labeled <code>name=monitoring</code>. They can only egress to pods labeled <code>app=database</code> on port 5432, plus DNS (port 53 UDP to any namespace).</p>
+
+        <p>Two things to know about NetworkPolicy:</p>
+
+        <p><strong>NetworkPolicy requires a compatible CNI.</strong> Not every CNI plugin enforces NetworkPolicy rules. Flannel does not enforce NetworkPolicy without a companion policy controller. Calico, Cilium, and Weave enforce NetworkPolicy natively. If your cluster's CNI doesn't support it, NetworkPolicy objects exist in the API but have no effect — silently.</p>
+
+        <p><strong>Default-deny is not automatic.</strong> A NetworkPolicy that selects a pod switches that pod from the default-allow to the deny-unless-explicitly-allowed model. But you have to write the NetworkPolicy for it to apply. A common pattern is a default-deny policy that selects all pods in a namespace, then explicit allow policies for specific traffic:</p>
+
+<pre># Default deny all ingress and egress for all pods in namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: backend
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress</pre>
+
+        <h2>Common networking problems and how to debug them</h2>
+
+        <p><strong>Pod can't reach a service by DNS name.</strong> Check that CoreDNS is running: <code>kubectl get pods -n kube-system -l k8s-app=kube-dns</code>. Check the service exists: <code>kubectl get svc</code>. Check the Endpoints object has pods: <code>kubectl get endpoints my-service</code>. If Endpoints is empty, the service's selector isn't matching any pods — check pod labels match the service selector exactly.</p>
+
+        <p><strong>Service exists but traffic isn't reaching pods.</strong> Check the Endpoints: <code>kubectl describe endpoints my-service</code>. If there are endpoints, the problem is between kube-proxy and the pods. Run <code>kubectl exec -it debug-pod -- curl http://&lt;pod-ip&gt;:&lt;port&gt;</code> to check direct pod connectivity. Also check that the pod's <code>containerPort</code> matches the service's <code>targetPort</code>.</p>
+
+        <p><strong>Ingress returns 502.</strong> The Ingress controller reached the backend service, but the service is returning an error or not listening. Check that the backend service exists and its Endpoints are populated. Check pod logs for errors. A 502 at the Ingress layer almost always means the backend is reachable but failing, not an Ingress configuration problem.</p>
+
+        <p><strong>NetworkPolicy broke everything.</strong> If you applied a NetworkPolicy and traffic stopped working, check what DNS looks like — often the first symptom is DNS failures because the default-deny policy blocks UDP/53 egress. Make sure your network policy allows egress to the DNS port, or tests will fail mysteriously on service name resolution before you get to the actual policy issue you were trying to configure.</p>
+
+        <p>Kubernetes manifests describe all of these components — pods, services, Ingress, NetworkPolicy — in text form. Visualizing how they connect can be useful when debugging or reviewing changes to a cluster's configuration. <a href="/">InfraSketch</a> parses Kubernetes YAML and generates diagrams that show which services expose which pods and how Ingress rules route between them.</p>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/kubernetes-diagram-generator.html">Kubernetes Architecture Diagram Generator</a></li>
+            <li><a href="/blog/iac-tool-comparison.html">Terraform vs CDK vs Pulumi: Choosing Your IaC Tool</a></li>
+            <li><a href="/blog/aws-vpc-architecture-explained.html">AWS VPC Architecture Explained</a></li>
+        </ul>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>
