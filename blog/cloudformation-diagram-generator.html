@@ -72,13 +72,7 @@
 
     <article>
 
-        <p>InfraSketch now supports CloudFormation. Paste a CloudFormation YAML or JSON template — including all the <code>!Ref</code>, <code>!GetAtt</code>, and <code>!Sub</code> shorthand you're used to writing — and get a clean architecture diagram in seconds. No login, no backend, everything runs in your browser.</p>
-
-        <div class="cta-box">
-            <h3>Try it now</h3>
-            <p>Paste your CloudFormation template and see the diagram instantly.</p>
-            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
-        </div>
+        <p>CloudFormation templates are verbose by design. A production stack runs to thousands of lines of YAML or JSON, and the architecture is encoded in intrinsic functions — <code>!Ref</code>, <code>!GetAtt</code>, <code>!Sub</code> — scattered across resource properties rather than laid out visually. Understanding what a template actually deploys means tracing those references by hand. This article covers how a CloudFormation template maps to an architecture diagram, which intrinsic functions reveal dependencies, and how SAM and nested stacks fit in.</p>
 
         <h2>Why CloudFormation support matters</h2>
 

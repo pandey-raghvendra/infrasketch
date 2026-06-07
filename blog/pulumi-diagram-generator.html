@@ -72,15 +72,9 @@
 
     <article>
 
-        <p>InfraSketch now supports Pulumi. Paste your Pulumi TypeScript or Python code into the Pulumi tab and get a full architecture diagram in seconds — VPC containment, subnet grouping, resource connections, official AWS, GCP, and Azure icons. No login, no credentials, everything runs in your browser.</p>
+        <p>Pulumi is unusual among infrastructure-as-code tools: you describe cloud resources in real TypeScript or Python rather than a declarative DSL. That flexibility has a readability cost — a single function can conditionally create a dozen resources, loops fan out into many, and <code>ComponentResource</code> abstractions nest infrastructure several layers deep. Reading the program tells you the control flow; it doesn't tell you the resulting topology. This article walks through how to derive an architecture diagram from Pulumi source, what a static parser can and cannot infer when it doesn't execute the code, and where TypeScript and Python stacks differ.</p>
 
-        <div class="cta-box">
-            <h3>Try it now</h3>
-            <p>Paste your Pulumi TypeScript or Python code and see the diagram instantly.</p>
-            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
-        </div>
-
-        <h2>Why Pulumi needs a diagram tool</h2>
+        <h2>The cost of infrastructure-as-real-code</h2>
 
         <p>Pulumi lets you write infrastructure in real programming languages — TypeScript, Python, Go, C#. That's great for developer productivity, but it creates the same visibility problem every IaC tool has: your infrastructure lives in code, not in a picture. When a new engineer joins the team, or when you're reviewing a PR that adds a VPC and six new resources, reading TypeScript is not the fastest way to understand what gets built.</p>
 

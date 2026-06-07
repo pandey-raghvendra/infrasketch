@@ -68,6 +68,39 @@
       }
     ]
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is an infrastructure-as-code diagram?",
+          "acceptedAnswer": { "@type": "Answer", "text": "An infrastructure-as-code (IaC) diagram is an architecture diagram generated directly from the source files that define your cloud infrastructure — Terraform, CloudFormation, Bicep, Pulumi, or Kubernetes manifests. Instead of drawing boxes by hand, the diagram is derived from the code itself, so it reflects what is actually defined and stays accurate as the infrastructure evolves." }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do architecture diagrams go out of date?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Hand-drawn diagrams are a snapshot in time. Every later change has to be manually reflected, which rarely happens, so the diagram and the deployed reality drift apart within weeks. Generating the diagram from code closes that gap because it can be refreshed in a pull request or CI pipeline rather than relying on someone updating a drawing." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is it safe to paste infrastructure code into a browser tool?",
+          "acceptedAnswer": { "@type": "Answer", "text": "It depends on whether the tool sends your code to a server. A purely client-side tool parses code in the browser and never transmits it. InfraSketch works this way — parsing, layout, and export all run locally. You should still strip any hardcoded credentials before sharing infrastructure code with any tool." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between Terraform HCL and plan JSON for diagrams?",
+          "acceptedAnswer": { "@type": "Answer", "text": "HCL is the source you write; plan JSON is the resolved output of terraform plan. A static parser cannot evaluate variables, count, or for_each from HCL, so a block creating ten subnets shows as one node. Plan JSON contains every resolved resource address plus the dependency graph and change actions, making it the more accurate input for an exact diagram." }
+        },
+        {
+          "@type": "Question",
+          "name": "How are connections between resources determined?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Connections come from references in the code, not runtime inspection. When one resource refers to another — a Terraform attribute, a CloudFormation !Ref, a Kubernetes label selector, or a Bicep symbolic reference — that reference becomes an edge. Containment works the same way: a resource referencing a VPC or VNet is drawn inside that boundary." }
+        }
+      ]
+    }
+    </script>
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
@@ -2951,6 +2984,29 @@ resource &quot;aws_instance&quot; &quot;web&quot; {
             <h3 style="font-size:18px;font-weight:600;margin:0 0 12px;color:var(--accent-text,#e4e6ef)">Export formats</h3>
             <p style="color:var(--text-secondary,#8b949e);line-height:1.8;margin-bottom:20px;font-size:15px">Diagrams can be exported as PNG (2× retina resolution), SVG (with icons inlined as base64 data URIs, fully self-contained), draw.io XML (opens directly in draw.io with all elements editable), or Mermaid code (for embedding in GitHub READMEs, Notion, GitLab, or any Mermaid-compatible renderer).</p>
             <p style="color:var(--text-secondary,#8b949e);line-height:1.8;margin-bottom:0;font-size:15px">The Share button generates a URL that encodes the diagram state. The URL contains the compressed IaC input and all layout positions — no server required. Anyone with the link can open the exact diagram in their browser. For teams, paste the share link into a Jira ticket, Confluence page, or Slack message and colleagues can view and interact with the full diagram without any account or installation.</p>
+        </div>
+    </section>
+
+    <!-- FAQ — standalone educational content -->
+    <section class="faq" id="faq" style="padding:60px 0;border-top:1px solid var(--border)">
+        <div style="max-width:860px;margin:0 auto;padding:0 24px">
+            <h2 style="font-size:28px;font-weight:700;margin-bottom:8px;letter-spacing:-0.5px">Frequently asked questions</h2>
+            <p style="color:var(--text-muted);line-height:1.7;margin-bottom:32px;font-size:15px">Common questions about generating architecture diagrams from infrastructure-as-code.</p>
+
+            <h3 style="font-size:18px;font-weight:600;margin:0 0 10px">What is an infrastructure-as-code diagram?</h3>
+            <p style="color:var(--text-muted);line-height:1.8;margin-bottom:28px;font-size:15px">An infrastructure-as-code (IaC) diagram is an architecture diagram generated directly from the source files that define your cloud infrastructure — Terraform, CloudFormation, Bicep, Pulumi, Kubernetes manifests, and similar. Instead of drawing boxes by hand in a tool like Lucidchart or draw.io, the diagram is derived from the code itself, so it reflects what is actually defined rather than someone's memory of it. Because the code is the single source of truth, the diagram stays accurate as the infrastructure evolves, provided you regenerate it when the code changes.</p>
+
+            <h3 style="font-size:18px;font-weight:600;margin:0 0 10px">Why do architecture diagrams go out of date?</h3>
+            <p style="color:var(--text-muted);line-height:1.8;margin-bottom:28px;font-size:15px">Hand-drawn diagrams are a snapshot of the infrastructure at the moment they were created. Every subsequent change — a new subnet, a removed NAT gateway, an added queue — has to be manually reflected in the diagram, and in practice this rarely happens. The diagram and the deployed reality drift apart within weeks. Generating the diagram from code closes that gap: the diagram is recreated from the same files that provision the infrastructure, so it can be refreshed as part of a pull request or a CI pipeline rather than relying on someone remembering to update a drawing.</p>
+
+            <h3 style="font-size:18px;font-weight:600;margin:0 0 10px">Is it safe to paste infrastructure code into a browser tool?</h3>
+            <p style="color:var(--text-muted);line-height:1.8;margin-bottom:28px;font-size:15px">It depends entirely on whether the tool sends your code to a server. A purely client-side tool parses the code in your browser's JavaScript runtime and never transmits it anywhere — no upload, no storage, no logging. InfraSketch works this way: the parser, layout engine, and exporters all run locally, and the only network requests are for static assets like fonts and icons. That said, you should still avoid pasting secrets. Infrastructure code occasionally contains hardcoded credentials or connection strings; strip those before sharing code with any tool, browser-based or not.</p>
+
+            <h3 style="font-size:18px;font-weight:600;margin:0 0 10px">What is the difference between Terraform HCL and plan JSON for diagrams?</h3>
+            <p style="color:var(--text-muted);line-height:1.8;margin-bottom:28px;font-size:15px">HCL is the source code you write; plan JSON is the fully resolved output of <code style="font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-dim);padding:2px 5px;border-radius:3px">terraform plan</code>. Diagramming from HCL is convenient — paste and go — but a static parser cannot evaluate variables, <code style="font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-dim);padding:2px 5px;border-radius:3px">count</code>, or <code style="font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-dim);padding:2px 5px;border-radius:3px">for_each</code>, so a block that creates ten subnets appears as one node. Plan JSON contains every resolved resource address plus the dependency graph Terraform computed and the change action (create, update, replace, delete) for each resource. If you need an exact diagram of what will be deployed, plan JSON is the more accurate input.</p>
+
+            <h3 style="font-size:18px;font-weight:600;margin:0 0 10px">How are connections between resources determined?</h3>
+            <p style="color:var(--text-muted);line-height:1.8;margin-bottom:0;font-size:15px">Connections come from references in the code, not from any runtime inspection. When one resource refers to another — a Terraform attribute like <code style="font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-dim);padding:2px 5px;border-radius:3px">subnet_id = aws_subnet.private.id</code>, a CloudFormation <code style="font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-dim);padding:2px 5px;border-radius:3px">!Ref</code>, a Kubernetes label selector, or a Bicep symbolic reference — that reference becomes an edge in the diagram. Containment works the same way: a resource that references a VPC or VNet is drawn inside that boundary. This is why diagrams generated from code are structural rather than decorative; every line corresponds to a real dependency expressed somewhere in the source.</p>
         </div>
     </section>
 

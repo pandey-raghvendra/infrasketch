@@ -71,15 +71,9 @@
 
     <article>
 
-        <p>InfraSketch supports Azure Bicep and ARM JSON templates. Paste your <code>.bicep</code> file or ARM <code>azuredeploy.json</code> into the <strong>Bicep / ARM</strong> tab and get a full architecture diagram in seconds — VNet containment, subnet placement, resource connections, and official Azure icons. No login, no credentials, everything runs in your browser.</p>
+        <p>Bicep is Azure's answer to readable infrastructure code — a domain-specific language that compiles to ARM JSON. It's far cleaner than the ARM templates it replaces, but it still describes resources as a flat list of declarations linked by symbolic references and <code>dependsOn</code> chains. The Azure portal shows you deployed resources grouped by resource group, not how they connect. Neither view gives you the topology at a glance. This article covers how Bicep and ARM templates map to an architecture diagram, how implicit and explicit dependencies are detected, and how Bicep modules appear.</p>
 
-        <div class="cta-box">
-            <h3>Try it now</h3>
-            <p>Paste your Bicep or ARM JSON template and see the diagram instantly.</p>
-            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
-        </div>
-
-        <h2>Why Azure Bicep needs a diagram tool</h2>
+        <h2>What the Azure portal doesn't show you</h2>
 
         <p>Bicep is Microsoft's domain-specific language for Azure infrastructure. It compiles to ARM JSON and deploys via Azure Resource Manager. A production Bicep template can define dozens of resources — virtual networks, subnets, AKS clusters, API Management gateways, SQL servers, Key Vaults, Service Bus namespaces, and more. Reading that code to understand the topology is slow and error-prone.</p>
 

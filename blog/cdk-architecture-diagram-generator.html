@@ -72,15 +72,9 @@
 
     <article>
 
-        <p>InfraSketch now supports AWS CDK. Run <code>cdk synth</code>, paste the JSON output into the CDK tab, and get a full architecture diagram in seconds — VPC containment, subnet lanes, resource connections, official AWS icons. No login, no credentials, everything in your browser.</p>
+        <p>AWS CDK lets you define infrastructure in TypeScript, Python, Java, or C#, then synthesizes it down to a CloudFormation template. That synthesis step is what makes CDK both powerful and opaque: a few lines of high-level construct code can expand into dozens of resources — IAM roles, security groups, log groups — that you never wrote explicitly. The diagram you carry in your head rarely matches what CDK actually emits. This article explains how to turn <code>cdk synth</code> output into an architecture diagram, why synthesized JSON is more complete than the source, and how the L1/L2/L3 construct levels affect what you see.</p>
 
-        <div class="cta-box">
-            <h3>Try it now</h3>
-            <p>Paste your <code>cdk synth</code> output and see the diagram instantly.</p>
-            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
-        </div>
-
-        <h2>Why CDK needs a diagram tool</h2>
+        <h2>Why synthesized output is hard to picture</h2>
 
         <p>CDK is increasingly the default way teams write AWS infrastructure — TypeScript, Python, or Go code that compiles down to CloudFormation. The abstractions are great for development velocity, but they create a visibility problem: when something goes wrong, or when you need to explain the architecture to someone outside your team, the source code is not the right artifact to share.</p>
 

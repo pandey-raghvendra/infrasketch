@@ -72,15 +72,9 @@
 
     <article>
 
-        <p>Paste your Terraform HCL into <a href="https://infrasketch.cloud">InfraSketch</a> and get a full architecture diagram in seconds — AWS, GCP, and Azure resources auto-detected, grouped by layer, with official cloud provider icons. No CLI, no credentials, no signup. Everything runs in your browser.</p>
+        <p>Terraform describes infrastructure declaratively, which is excellent for machines and awkward for humans trying to picture the result. Resources are spread across files, module calls hide what actually gets deployed, and <code>count</code> and <code>for_each</code> mean one block can become ten resources. The HCL tells you the inputs; it doesn't draw you the architecture. This article looks at why Terraform is hard to read as a topology, how HCL references translate into a diagram, three common AWS and GCP patterns, and the limits of static analysis versus working from plan output.</p>
 
-        <div class="cta-box">
-            <h3>Try it now — free</h3>
-            <p>Paste your <code>.tf</code> files and see the architecture diagram instantly.</p>
-            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
-        </div>
-
-        <h2>Why Terraform needs a diagram tool</h2>
+        <h2>Why HCL is hard to read as architecture</h2>
 
         <p>A real-world Terraform codebase is hard to read as architecture. Resources live across dozens of files, module calls hide what actually gets deployed, and <code>count</code> / <code>for_each</code> meta-arguments mean one block can create ten resources. Reviewing a PR with 500 lines of HCL changes requires mental simulation to understand what the resulting infrastructure looks like.</p>
 

@@ -4,7 +4,7 @@
   <!-- Homepage -->
   <url>
     <loc>https://infrasketch.cloud/</loc>
-    <lastmod>2026-05-23</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -84,7 +84,7 @@
 
   <url>
     <loc>https://infrasketch.cloud/blog/bicep-diagram-generator.html</loc>
-    <lastmod>2026-05-23</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -98,35 +98,35 @@
 
   <url>
     <loc>https://infrasketch.cloud/blog/terraform-diagram-generator.html</loc>
-    <lastmod>2026-05-05</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://infrasketch.cloud/blog/pulumi-diagram-generator.html</loc>
-    <lastmod>2026-05-23</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://infrasketch.cloud/blog/kubernetes-diagram-generator.html</loc>
-    <lastmod>2026-05-23</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://infrasketch.cloud/blog/cdk-architecture-diagram-generator.html</loc>
-    <lastmod>2026-05-23</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://infrasketch.cloud/blog/cloudformation-diagram-generator.html</loc>
-    <lastmod>2026-05-23</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
