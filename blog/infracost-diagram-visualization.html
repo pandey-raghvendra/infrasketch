@@ -7,31 +7,31 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
-    <title>Visualize Infracost on Your Architecture Diagram | InfraSketch</title>
-    <meta name="description" content="See monthly cloud costs per resource directly on your architecture diagram. Paste infracost breakdown JSON output for instant colour-coded cost overlays. Free, no login.">
+    <title>Cloud Cost Estimation with Infracost: How It Works and What It Covers — InfraSketch</title>
+    <meta name="description" content="A practical guide to Infracost — how cloud cost estimation works for Terraform, how to run it, integrate it into CI/CD, and use it to reduce your AWS/GCP/Azure spend before deploying.">
     <link rel="canonical" href="https://infrasketch.cloud/blog/infracost-diagram-visualization.html">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://infrasketch.cloud/blog/infracost-diagram-visualization.html">
-    <meta property="og:title" content="Visualize Infracost on Your Architecture Diagram">
-    <meta property="og:description" content="See monthly cloud costs per resource directly on your architecture diagram. Paste infracost breakdown JSON for instant cost overlays.">
+    <meta property="og:title" content="Cloud Cost Estimation with Infracost: How It Works and What It Covers">
+    <meta property="og:description" content="How Infracost works, what it estimates, CI/CD integration, and patterns for reducing cloud spend before you deploy.">
     <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
     <meta property="og:image:width" content="800">
     <meta property="og:image:height" content="457">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Visualize Infracost on Your Architecture Diagram">
-    <meta name="twitter:description" content="Paste infracost breakdown --format json output and see monthly costs colour-coded on every resource in your diagram. Free.">
+    <meta name="twitter:title" content="Cloud Cost Estimation with Infracost: How It Works and What It Covers">
+    <meta name="twitter:description" content="How Infracost estimates cloud costs from Terraform, CI integration, and cost optimization patterns.">
     <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Article",
-      "headline": "Visualize Infracost on Your Architecture Diagram",
-      "description": "See monthly cloud costs per resource directly on your architecture diagram. Paste infracost breakdown JSON output for instant colour-coded cost overlays.",
+      "headline": "Cloud Cost Estimation with Infracost: How It Works and What It Covers",
+      "description": "A practical guide to Infracost — how cloud cost estimation works for Terraform, how to run it, integrate it into CI/CD, and use it to reduce your AWS/GCP/Azure spend before deploying.",
       "url": "https://infrasketch.cloud/blog/infracost-diagram-visualization.html",
-      "datePublished": "2026-05-12",
-      "dateModified": "2026-05-23",
-      "author": { "@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra" },
-      "publisher": { "@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": { "@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg" } },
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "author": {"@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra"},
+      "publisher": {"@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": {"@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"}},
       "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
     }
     </script>
@@ -39,265 +39,302 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
-        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:100px;color:#f59e0b;font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
-        .callout{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.callout p{margin:0;font-size:14px;color:var(--text-muted)}
-        .step-list{counter-reset:steps;list-style:none;margin-left:0}.step-list li{counter-increment:steps;padding:16px 16px 16px 56px;position:relative;border-left:2px solid var(--border);margin-bottom:12px}.step-list li::before{content:counter(steps);position:absolute;left:-14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
-        .faq-item{border-bottom:1px solid var(--border);padding:20px 0}.faq-item:last-child{border-bottom:none}.faq-item h3{font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text)}.faq-item p{font-size:15px;color:var(--text-muted);margin:0}
-        .cost-legend{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.cost-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:600;border:1px solid}.cost-pill.grey{background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.3);color:#9ca3af}.cost-pill.green{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#10b981}.cost-pill.amber{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);color:#f59e0b}.cost-pill.orange{background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.3);color:#f97316}.cost-pill.red{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#ef4444}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
     </style>
 </head>
 <body>
 <nav>
     <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
-    <ul class="nav-links">
-        <li><a href="/">Tool</a></li>
-        <li><a href="/blog/">Blog</a></li>
-        <li><a href="/about.html">About</a></li>
-        <li><a href="/contact.html">Contact</a></li>
-    </ul>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
 </nav>
 <div class="container">
     <div class="article-header">
-        <span class="tag">💰 Cost</span>
-        <h1>Visualize Infracost on Your Architecture Diagram</h1>
-        <div class="meta">May 12, 2026 &middot; 8 min read &middot; InfraSketch Blog</div>
+        <span class="tag">Cost Management</span>
+        <h1>Cloud Cost Estimation with Infracost: How It Works and What It Covers</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 10 min read</div>
     </div>
     <article>
+        <p>Cloud infrastructure bills are notoriously hard to predict. A Terraform change that looks like a small configuration tweak — upgrading an RDS instance class, enabling Multi-AZ, adding a NAT gateway — can add hundreds of dollars per month. Without tooling, engineers discover the cost impact after the change is deployed and the first bill arrives.</p>
 
-        <p>Infracost estimates your monthly cloud bill from Terraform code before you deploy. But its output — a long table of resource costs in the terminal — makes it hard to see which part of your architecture is driving spend. Is it the database? The NAT gateway? The EC2 fleet?</p>
+        <p>Infracost bridges the gap between infrastructure code and cost. It reads your Terraform (or Terragrunt) and queries cloud provider pricing APIs to generate a cost breakdown before anything is deployed. This guide covers how Infracost works, what it can and can't estimate, how to run it, and how to wire it into a CI/CD pipeline so cost changes appear on every pull request.</p>
 
-        <p>InfraSketch's cost overlay answers this visually. Run <code>infracost breakdown --format json</code>, paste the output, and every resource node in your architecture diagram gets a colour-coded cost pill showing its monthly cost. Green for cheap, red for expensive. See your cloud bill spatially, in context.</p>
+        <h2>How Infracost works</h2>
 
-        <div class="callout">
-            <p><strong>TL;DR:</strong> Generate your diagram → click <strong>💰 Cost</strong> → paste <code>infracost breakdown --path . --format json</code> output → colour-coded cost badges appear on every resource. Free, no login, stays in your browser.</p>
-        </div>
+        <p>Infracost has three main phases:</p>
 
-        <h2>The problem with cost tables</h2>
+        <p><strong>1. Parse the Terraform project.</strong> Infracost runs <code>terraform init</code> and <code>terraform plan</code> internally, generating a plan JSON file. It reads resource types, instance types, storage sizes, replication settings, and other cost-relevant attributes from the plan output.</p>
 
-        <p>Here's a typical Infracost breakdown summary:</p>
+        <p><strong>2. Look up pricing.</strong> Infracost maintains a pricing database synced from AWS, GCP, and Azure price lists. It queries this database to find the on-demand price for each resource configuration. For usage-based resources (data transfer, Lambda invocations, DynamoDB read/write units), it applies usage estimates from a <code>infracost-usage.yml</code> file or uses zero as a baseline.</p>
 
-        <pre>Name                                         Monthly Qty  Unit   Monthly Cost
-aws_instance.web_server                               730  hours        $73.00
-aws_db_instance.postgres                              730  hours       $185.10
-aws_nat_gateway.main                                    1  months        $32.40
-aws_elasticache_cluster.sessions                      730  hours        $25.55
-...
-TOTAL                                                                   $316.05</pre>
+        <p><strong>3. Generate the output.</strong> The result is a breakdown of monthly costs per resource, organized by module and resource type, plus a diff view when comparing two Terraform states.</p>
 
-        <p>You can see the numbers, but not the relationships. The NAT gateway costs $32/month — but is it serving one subnet or eight? The RDS instance at $185/month — what's connected to it, and could you downsize it without breaking the data pipeline? The table doesn't tell you.</p>
+<pre>$ infracost breakdown --path .
 
-        <p>A visual overlay does. You see the RDS instance sitting inside its private subnet, connected to the application servers and the analytics Lambda. You see the NAT gateway at the boundary of the public subnet serving the entire private tier. Cost becomes architectural context, not just numbers.</p>
+Name                                      Monthly Qty  Unit          Monthly Cost
 
-        <h2>Step-by-step: generate and overlay</h2>
+aws_instance.web
+  Instance usage (Linux/UNIX, on-demand)          730  hours              $29.20
+  root_block_device
+    Storage (general purpose SSD, gp3)             50  GB                  $4.00
 
-        <ol class="step-list">
-            <li>
-                <strong>Install Infracost</strong>
-                <pre>brew install infracost      # macOS
-# or
-curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+aws_db_instance.main
+  Database instance (db.t3.medium, Multi-AZ)      730  hours             $118.26
+  Storage (general purpose SSD, gp2)              100  GB                 $23.00
 
-infracost auth login       # free account needed for cost data</pre>
-            </li>
-            <li>
-                <strong>Run the breakdown and save JSON</strong>
-                <pre>infracost breakdown --path . --format json > infracost.json</pre>
-                <p>For a specific Terraform module: <code>infracost breakdown --path ./modules/networking --format json > infracost.json</code></p>
-                <p>For Terragrunt: <code>infracost breakdown --path . --terragrunt-flags="--terragrunt-working-dir ." --format json > infracost.json</code></p>
-            </li>
-            <li>
-                <strong>Generate your architecture diagram</strong>
-                <p>Open <a href="https://infrasketch.cloud">infrasketch.cloud</a>, paste your Terraform HCL (or plan JSON for the most accurate results), and click <strong>Generate Diagram</strong>.</p>
-            </li>
-            <li>
-                <strong>Open the Cost overlay</strong>
-                <p>In the export bar at the bottom of the page, click the <strong>💰 Cost</strong> button. A modal opens with a textarea.</p>
-            </li>
-            <li>
-                <strong>Paste the Infracost JSON and apply</strong>
-                <p>Copy the contents of <code>infracost.json</code>, paste into the textarea, and click <strong>Apply</strong>. Cost pills appear on every resource that Infracost priced.</p>
-            </li>
-        </ol>
+aws_nat_gateway.main
+  NAT gateway                                      730  hours              $32.85
+  Data processed                                     0  GB                  $0.00
 
-        <h2>Reading the cost colour scale</h2>
+OVERALL TOTAL                                                             $207.31</pre>
 
-        <p>Each node gets a pill badge at its bottom centre showing the monthly cost estimate. The colour indicates cost tier:</p>
+        <h2>What Infracost can estimate</h2>
 
-        <div class="cost-legend">
-            <div class="cost-pill grey">Free / $0</div>
-            <div class="cost-pill green">&lt;$10/mo</div>
-            <div class="cost-pill amber">$10–$100/mo</div>
-            <div class="cost-pill orange">$100–$500/mo</div>
-            <div class="cost-pill red">&gt;$500/mo</div>
-        </div>
+        <p>Infracost covers most compute, storage, and database resources where pricing is instance-type or size based:</p>
 
-        <p>Resources with no cost data (e.g., IAM roles, security groups, Route 53 records) don't get a badge. Resources Infracost estimates as free (Lambda free tier, CloudWatch basic metrics) get a grey "Free" pill.</p>
-
-        <p>Hover over any pill to see the cost breakdown by component. For example, an RDS instance might show:</p>
-
-        <pre>aws_db_instance.postgres
-Database instance (db.t3.medium): $60.74/mo
-Storage (gp2, 100GB): $11.50/mo
-Backup storage: $0.00/mo</pre>
-
-        <p>This tells you exactly which component is driving cost — useful when deciding between instance types or storage tiers.</p>
-
-        <h2>Common cost patterns to spot in the diagram</h2>
-
-        <h3>The hidden NAT gateway cost</h3>
-        <p>NAT gateways often appear as a single small node in the architecture but carry significant cost: $0.045/GB data processed plus the hourly charge. In the diagram, a yellow/orange NAT gateway node connected to dozens of private resources immediately flags a potential optimization — could some of those services use VPC endpoints (free) instead?</p>
-
-        <h3>Idle or over-provisioned compute</h3>
-        <p>An EC2 cluster with red-tier cost badges ($500+/mo) that's only connected to a dev database and a single Lambda is a red flag. The spatial context makes over-provisioning obvious in a way that the cost table alone doesn't.</p>
-
-        <h3>Cascading storage costs</h3>
-        <p>S3 buckets, EBS volumes attached to EC2 instances, and RDS storage often combine to form a significant portion of the bill. When you see multiple amber/orange storage nodes grouped in the same subnet, you can immediately identify candidates for lifecycle policies or right-sizing.</p>
-
-        <h3>Multi-AZ vs single-AZ databases</h3>
-        <p>A Multi-AZ RDS setup doubles the instance cost. In the diagram, both the primary and standby show up as nodes. If the standby has a red cost badge and your app is internal-only, that's a candidate for a discussion about RTO/RPO tradeoffs vs. cost.</p>
-
-        <h2>Combining with the security overlay</h2>
-
-        <p>InfraSketch supports both the Checkov security overlay (🛡) and the Infracost cost overlay (💰) simultaneously. Security badges appear top-right, cost pills appear bottom-centre — no overlap.</p>
-
-        <p>The most actionable pattern is a resource that's both expensive and misconfigured: orange/red cost pill plus a red security border. That's a double priority — it's costing you money <em>and</em> creating compliance risk.</p>
-
-        <p>Conversely, a resource with many security failures but a "Free" cost pill might be lower priority to fix urgently — though you should still fix it. The combined view helps teams triage when they have limited sprint capacity.</p>
-
-        <h2>Using Infracost in CI for cost-aware PR reviews</h2>
-
-        <p>Infracost has a native GitHub Action that posts cost diffs on pull requests. Combine it with the InfraSketch GitHub Action for full cost-and-architecture visibility on every IaC PR:</p>
-
-        <pre># .github/workflows/iac-review.yml
-name: IaC Review
-on:
-  pull_request:
-    paths: ['**/*.tf']
-
-jobs:
-  diagram:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pandey-raghvendra/infrasketch@v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  cost:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: infracost/actions/setup@v3
-        with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
-      - run: infracost diff --path . --format json --out-file infracost.json
-      - uses: infracost/actions/comment@v3
-        with:
-          path: infracost.json
-          behavior: update</pre>
-
-        <p>The InfraSketch job posts diagram links for changed files. The Infracost job posts a cost diff table showing exactly how much the PR changes the monthly bill. Reviewers see both — architecture impact and cost impact — without leaving the PR page.</p>
-
-        <p>Note: the Infracost GitHub Action requires an <code>INFRACOST_API_KEY</code> secret (free account at infracost.io). The InfraSketch Action requires only the built-in <code>GITHUB_TOKEN</code>.</p>
-
-        <h2>Supported Terraform patterns</h2>
-
-        <h3>HCL files</h3>
-        <p>The simplest case: paste one or more <code>.tf</code> files into InfraSketch, run Infracost against the same directory, and overlay. Resource names match directly since both tools read the same HCL.</p>
-
-        <h3>Terraform plan JSON (most accurate)</h3>
-        <p>For accurate cost estimates — especially when your code uses <code>count</code>, <code>for_each</code>, or variable values — use plan JSON for both tools:</p>
-        <pre># Generate plan JSON
-terraform plan -out=tfplan
-terraform show -json tfplan > tfplan.json
-
-# Diagram: paste tfplan.json into InfraSketch
-# Cost: point Infracost at the plan
-infracost breakdown --path tfplan.json --format json > infracost.json</pre>
-        <p>This gives Infracost the resolved resource counts (e.g., 3 EC2 instances from a <code>count = 3</code> expression) and gives InfraSketch the same expanded resource list. Matching is more accurate.</p>
-
-        <h3>Terragrunt</h3>
-        <pre>infracost breakdown --path . --format json > infracost.json</pre>
-        <p>Infracost detects Terragrunt automatically. For the diagram, paste the underlying <code>.tf</code> files (not <code>terragrunt.hcl</code>) or use plan JSON.</p>
-
-        <h2>Troubleshooting</h2>
-
-        <h3>No cost pills appear</h3>
-        <p>Check that you pasted the full JSON (starting with <code>{"version":</code>). Infracost's JSON format starts with a <code>version</code> field and a <code>projects</code> array. If you pasted the summary output instead of the JSON, it won't parse.</p>
-
-        <p>Also verify: run <code>cat infracost.json | python3 -m json.tool</code> to confirm it's valid JSON. If Infracost errored silently, it may have written an empty or partial file.</p>
-
-        <h3>Some resources have pills, others don't</h3>
-        <p>Infracost only prices resources with a known pricing model. IAM roles, security groups, VPCs, subnets, route tables, and many other resources are free in AWS and won't appear in Infracost's output — so they won't get a pill. This is expected behaviour.</p>
-
-        <h3>Resource names don't match</h3>
-        <p>If you generated the diagram from plan JSON but ran Infracost on raw HCL (or vice versa), resource names may differ. Plan JSON includes module paths in resource names. Run both tools on the same input format for best matching.</p>
-
-        <h3>Costs look wrong</h3>
-        <p>Infracost estimates are based on on-demand pricing in the region detected from your Terraform config. Reserved instance pricing, Savings Plans, enterprise discounts, and free tier credits are not included by default. The estimates are a useful relative comparison between resources, not an exact billing forecast.</p>
-
-        <h2>Frequently asked questions</h2>
-
-        <div class="faq-item">
-            <h3>Does InfraSketch send my cost data to any server?</h3>
-            <p>No. The Infracost JSON is parsed entirely in your browser in JavaScript. No data is transmitted anywhere. Your infrastructure cost breakdown stays private.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Do I need an Infracost account to use the overlay?</h3>
-            <p>You need an Infracost account (free) to run <code>infracost breakdown</code> — it calls the Infracost API to fetch cloud pricing data. You don't need any account to use InfraSketch or its cost overlay. Just paste the JSON output InfraSketch generates.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Can the overlay show hourly costs instead of monthly?</h3>
-            <p>Not currently. The pill shows monthly cost, which is the standard unit for comparing infrastructure spend. Hover on the pill to see the components breakdown, which is also monthly.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Does it work with AWS CDK, CloudFormation, or Bicep?</h3>
-            <p>Infracost natively supports Terraform and Terragrunt. For CDK and CloudFormation, Infracost has experimental support via the <code>--format=cloudformation</code> flag. For Bicep (Azure), there's no native Infracost support yet — the <code>azure-cost</code> CLI or Azure Cost Management export can serve a similar purpose, but InfraSketch's overlay only parses Infracost's JSON schema.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>What if my infrastructure spans multiple Terraform workspaces or accounts?</h3>
-            <p>Run Infracost separately for each workspace and merge the outputs using <code>infracost output --path infra1.json --path infra2.json --format json > merged.json</code>. Paste the merged JSON into InfraSketch for a combined overlay.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Can I keep the cost overlay when exporting to PNG or SVG?</h3>
-            <p>Yes. Export PNG or SVG with the overlay active — cost pills are rendered into the export. This is useful for attaching to Confluence pages, architecture review docs, or FinOps reports. The share link encodes the diagram structure but not the overlay state.</p>
-        </div>
-
-        <div class="cta-box">
-            <h3>Try the cost overlay now</h3>
-            <p>Generate your architecture diagram and see monthly costs per resource — free, no login, nothing leaves your browser.</p>
-            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
-        </div>
-
-        <h2>Related guides</h2>
         <ul>
-            <li><a href="/blog/checkov-diagram-visualization.html">Visualize Checkov security results on your architecture diagram</a></li>
-            <li><a href="/blog/github-action-terraform-diagram.html">Auto-post architecture diagrams on IaC PRs with GitHub Actions</a></li>
-            <li><a href="/blog/terraform-diagram-generator.html">Terraform diagram generator — visualize HCL instantly</a></li>
+            <li><strong>EC2 instances</strong> — all instance families, Linux/Windows pricing, on-demand rates</li>
+            <li><strong>RDS instances</strong> — all DB engines and instance classes, Multi-AZ, storage, IOPS</li>
+            <li><strong>EKS</strong> — cluster cost, node group EC2 instances, Fargate task pricing</li>
+            <li><strong>S3</strong> — standard storage pricing (per GB), request costs with usage estimates</li>
+            <li><strong>CloudFront</strong> — data transfer with usage estimates</li>
+            <li><strong>ElastiCache</strong> — Redis/Memcached node pricing</li>
+            <li><strong>OpenSearch</strong> — instance pricing, storage</li>
+            <li><strong>NAT Gateway</strong> — hourly cost, data processing with usage estimates</li>
+            <li><strong>Load balancers</strong> — ALB/NLB hourly cost, LCU usage</li>
+            <li><strong>Lambda</strong> — requires usage estimates for invocation count and duration</li>
+            <li><strong>DynamoDB</strong> — on-demand vs provisioned capacity, requires usage estimates for on-demand</li>
         </ul>
 
+        <h3>What Infracost cannot estimate</h3>
+
+        <p>Some costs are unknowable from Terraform configuration alone because they depend entirely on runtime behavior:</p>
+
+        <ul>
+            <li>Data transfer between regions or to the internet (volume varies with traffic)</li>
+            <li>CloudWatch log storage and ingestion (volume depends on application log verbosity)</li>
+            <li>API Gateway invocations (depends on request volume)</li>
+            <li>Spot instance interruption rates</li>
+            <li>Reserved instance or Savings Plans discounts (Infracost uses on-demand rates)</li>
+        </ul>
+
+        <p>Infracost marks these as <code>$0.00</code> with a note that usage estimates are needed, which is accurate — zero is the floor, not the expected cost.</p>
+
+        <h2>Usage estimates</h2>
+
+        <p>For usage-based resources, Infracost reads a <code>infracost-usage.yml</code> file where you specify expected usage:</p>
+
+<pre># infracost-usage.yml
+version: 0.1
+
+resource_usage:
+  aws_lambda_function.api:
+    monthly_requests: 5000000       # 5M invocations/month
+    request_duration_ms: 200        # average 200ms per invocation
+    memory_mb: 512
+
+  aws_cloudfront_distribution.cdn:
+    monthly_data_transfer_to_internet_gb: 500
+
+  aws_nat_gateway.main:
+    monthly_data_processed_gb: 100
+
+  aws_dynamodb_table.sessions:
+    monthly_read_request_units: 1000000
+    monthly_write_request_units: 200000</pre>
+
+<pre>infracost breakdown --path . --usage-file infracost-usage.yml</pre>
+
+        <p>Usage estimates are approximate by definition, but even rough estimates make cost modeling far more useful than showing $0.00 for all usage-based resources. Teams often store a shared <code>infracost-usage.yml</code> alongside production usage metrics, updated quarterly.</p>
+
+        <h2>Running Infracost</h2>
+
+        <h3>Install</h3>
+
+<pre># macOS
+brew install infracost
+
+# Linux
+curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+
+# Register for a free API key (rate limiting, no data stored)
+infracost auth login</pre>
+
+        <h3>Basic cost breakdown</h3>
+
+<pre># Show costs for current Terraform directory
+infracost breakdown --path .
+
+# Output JSON for programmatic use
+infracost breakdown --path . --format json --out-file infracost.json
+
+# Show a diff between two Terraform states
+infracost diff --path . --compare-to infracost-base.json</pre>
+
+        <h3>Cost diff between branches</h3>
+
+        <p>The diff workflow is the most useful for pull request review: compare the base branch cost against the PR branch cost and surface only the delta.</p>
+
+<pre># On the base branch, generate baseline
+git checkout main
+infracost breakdown --path . --format json --out-file infracost-base.json
+
+# On the PR branch, generate diff
+git checkout feature/upgrade-rds
+infracost diff --path . --compare-to infracost-base.json</pre>
+
+<pre>Project: my-infrastructure
+
++ aws_db_instance.main
+  + Database instance class changed: db.t3.medium to db.r6g.large
+    +$168.44 (+142%)
+
+~ aws_instance.web (no change)
+~ aws_nat_gateway.main (no change)
+
+Monthly cost change: +$168.44 (from $207.31 to $375.75)</pre>
+
+        <h2>CI/CD integration</h2>
+
+        <p>Infracost's most valuable feature is the PR comment: on every pull request that changes Terraform, Infracost posts a cost diff directly in the PR. Engineers see the impact before merging.</p>
+
+<pre># .github/workflows/infracost.yml
+name: Infracost Cost Estimate
+on: [pull_request]
+
+jobs:
+  infracost:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate cost estimate for base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git checkout origin/${{ github.base_ref }}
+          infracost breakdown --path . \
+            --format json \
+            --out-file /tmp/infracost-base.json
+
+      - name: Generate cost diff for PR branch
+        run: |
+          git checkout ${{ github.sha }}
+          infracost diff --path . \
+            --format json \
+            --compare-to /tmp/infracost-base.json \
+            --out-file /tmp/infracost-diff.json
+
+      - name: Post PR comment
+        run: |
+          infracost comment github \
+            --path /tmp/infracost-diff.json \
+            --repo $GITHUB_REPOSITORY \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --pull-request ${{ github.event.pull_request.number }} \
+            --behavior update</pre>
+
+        <p>The <code>--behavior update</code> flag updates the existing Infracost comment rather than creating a new one on each commit — keeps the PR clean.</p>
+
+        <h3>Failing CI on large cost increases</h3>
+
+        <p>You can configure Infracost to fail CI when a PR increases costs beyond a threshold. This works well as a guardrail for staging environments or cost-sensitive teams:</p>
+
+<pre>infracost comment github \
+  --path /tmp/infracost-diff.json \
+  --github-token ${{ secrets.GITHUB_TOKEN }} \
+  --pull-request ${{ github.event.pull_request.number }} \
+  --behavior update \
+  --policy-path infracost-policy.rego</pre>
+
+<pre># infracost-policy.rego — fail CI if monthly cost increase > $100
+package infracost
+
+deny[msg] {
+  maxDiff := 100.0
+  input.diffTotalMonthlyCost > maxDiff
+  msg := sprintf(
+    "Monthly cost increase ($%.2f) exceeds threshold ($%.2f)",
+    [input.diffTotalMonthlyCost, maxDiff]
+  )
+}</pre>
+
+        <h2>Cost optimization patterns</h2>
+
+        <p>Infracost makes cost tradeoffs explicit, which is most useful when evaluating architectural decisions. Common patterns where it helps:</p>
+
+        <h3>Right-sizing instances</h3>
+
+        <p>Oversized instances are one of the most common sources of waste. Infracost makes the cost difference between instance types visible before deployment:</p>
+
+        <ul>
+            <li><code>db.r6g.xlarge</code> (~$480/month) vs <code>db.r6g.large</code> (~$240/month) — if workload fits, this is pure savings</li>
+            <li>Multi-AZ doubles RDS cost — necessary for production, wasteful for staging</li>
+            <li>gp3 storage is consistently cheaper than gp2 for equivalent IOPS</li>
+        </ul>
+
+        <h3>NAT Gateway costs</h3>
+
+        <p>NAT Gateway charges both per-hour ($0.045/hour = ~$33/month) and per-GB processed. For high-throughput workloads, data processing costs dominate. Common mitigation: VPC endpoints for S3 and DynamoDB bypass the NAT Gateway entirely, eliminating data processing charges for traffic to those services.</p>
+
+<pre>resource "aws_vpc_endpoint" "s3" {
+  vpc_id          = aws_vpc.main.id
+  service_name    = "com.amazonaws.${var.region}.s3"
+  route_table_ids = [aws_route_table.private.id]
+}</pre>
+
+        <h3>Environment-specific sizing</h3>
+
+        <p>Using production instance sizes in staging and dev environments is a common source of unnecessary spend. Infracost makes the cost difference concrete:</p>
+
+<pre>variable "instance_class" {
+  default = "db.t3.micro"  # $13/month in dev
+}
+
+# Production tfvars: instance_class = "db.r6g.large"  # $240/month</pre>
+
+        <h3>Storage class selection</h3>
+
+        <p>S3 Intelligent-Tiering automatically moves objects to cheaper storage tiers based on access frequency. For large buckets with unpredictable access patterns, the monitoring fee ($0.0025/1000 objects) is typically far less than the savings from automatic tiering. Infracost can model this with usage estimates for access frequency.</p>
+
+        <h2>Multi-project and monorepo setups</h2>
+
+        <p>For repos with multiple Terraform projects, Infracost can aggregate costs across all of them:</p>
+
+<pre># infracost.yml — project configuration
+version: 0.1
+
+projects:
+  - path: ./environments/production
+    name: Production
+  - path: ./environments/staging
+    name: Staging
+  - path: ./modules/shared-networking
+    name: Shared Networking</pre>
+
+<pre>infracost breakdown --config-file infracost.yml --format table</pre>
+
+        <p>The output shows each project's costs separately and a combined total — useful for understanding the cost split across environments or teams.</p>
+
+        <h2>Reading Infracost output alongside your architecture</h2>
+
+        <p>Cost numbers are more actionable when connected to the architecture they describe. When working with Terraform that has both a Checkov security scan and an Infracost estimate, <a href="/">InfraSketch</a> lets you visualize the infrastructure from the same Terraform source: paste your configuration to generate an architecture diagram, then overlay the Infracost JSON output to see per-resource cost annotations directly on the diagram. This makes it easier to communicate cost breakdowns to stakeholders who aren't reading raw JSON.</p>
 
         <h2>Related articles</h2>
         <ul>
-            <li><a href="/blog/checkov-diagram-visualization.html">Visualize Checkov Security Findings on Your Architecture Diagram</a></li>
-            <li><a href="/blog/github-action-terraform-diagram.html">Auto-Post Architecture Diagrams on Every IaC Pull Request</a></li>
-            <li><a href="/blog/terraform-diagram-generator.html">Terraform Diagram Generator — Visualize HCL Architecture Instantly</a></li>
+            <li><a href="/blog/terraform-modules-guide.html">Terraform Modules: Writing, Testing, and Reusing Infrastructure Code</a></li>
+            <li><a href="/blog/terraform-state-explained.html">Terraform State Explained: Backends, Locking, and Remote State</a></li>
+            <li><a href="/blog/checkov-diagram-visualization.html">Infrastructure Security Scanning with Checkov: How It Works and What It Checks</a></li>
         </ul>
     </article>
 </div>
-<footer>
-    <div class="container">
-        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra">Raghvendra Pandey</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p>
-    </div>
-</footer>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
 </body>
 </html>

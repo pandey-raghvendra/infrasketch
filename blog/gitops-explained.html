@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>GitOps Explained: How It Works, ArgoCD vs Flux, and When to Use It — InfraSketch</title>
+    <meta name="description" content="GitOps uses Git as the single source of truth for infrastructure and application state. This guide covers the four core principles, how ArgoCD and Flux differ, and when GitOps makes sense.">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/gitops-explained.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/gitops-explained.html">
+    <meta property="og:title" content="GitOps Explained: How It Works, ArgoCD vs Flux, and When to Use It">
+    <meta property="og:description" content="GitOps uses Git as the single source of truth for infrastructure and application state. Covers the four principles, ArgoCD vs Flux, and when GitOps makes sense.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GitOps Explained: How It Works, ArgoCD vs Flux, and When to Use It">
+    <meta name="twitter:description" content="How GitOps works, ArgoCD vs Flux comparison, and when GitOps is and isn't the right choice.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "GitOps Explained: How It Works, ArgoCD vs Flux, and When to Use It",
+      "description": "GitOps uses Git as the single source of truth for infrastructure and application state. This guide covers the four core principles, how ArgoCD and Flux differ, and when GitOps makes sense.",
+      "url": "https://infrasketch.cloud/blog/gitops-explained.html",
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "author": {"@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra"},
+      "publisher": {"@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": {"@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"}},
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">DevOps</span>
+        <h1>GitOps Explained: How It Works, ArgoCD vs Flux, and When to Use It</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 10 min read</div>
+    </div>
+    <article>
+        <p>GitOps is a way of operating infrastructure and applications where Git is the single source of truth for what should be running, and an automated agent continuously reconciles the actual state of the system to match it. The term was coined by Weaveworks in 2017, but the underlying idea — declarative desired state, version control, automated reconciliation — predates it. What GitOps added was a specific set of practices and a set of tools that made the pattern practical for Kubernetes.</p>
+
+        <p>This guide covers what GitOps actually means (not just the marketing definition), how the reconciliation loop works, how ArgoCD and Flux compare, and where GitOps genuinely helps versus where it adds unnecessary complexity.</p>
+
+        <h2>The four GitOps principles</h2>
+
+        <p>The OpenGitOps project (a CNCF working group) defines GitOps around four principles:</p>
+
+        <p><strong>1. Declarative.</strong> The desired state of the entire system is expressed declaratively. This means Kubernetes YAML manifests, Helm chart values, Kustomize overlays — not imperative scripts. "Apply these manifests" rather than "run these commands." The advantage: the desired state can be stored, diffed, and audited.</p>
+
+        <p><strong>2. Versioned and immutable.</strong> The desired state is stored in a versioning system (Git) that enforces immutability of history. Every change has a timestamp, an author, and a hash. Rollback means reverting a commit. Audit means reading the commit log. You always know what changed, when, and who approved it.</p>
+
+        <p><strong>3. Pulled automatically.</strong> Approved changes are automatically applied to the system. The GitOps agent inside the cluster watches the Git repository and pulls changes — the cluster initiates the connection, not external systems. This is a security advantage: you don't need to give CI/CD systems credentials to access the cluster. The cluster's outbound network needs to reach Git; nothing external needs inbound access to the API server.</p>
+
+        <p><strong>4. Continuously reconciled.</strong> Software agents continuously compare actual state with desired state and automatically correct any divergence. If someone manually changes a Kubernetes resource (kubectl edit), the GitOps agent detects the drift and reverts it. This is the enforcement mechanism.</p>
+
+        <h2>How the reconciliation loop works</h2>
+
+        <p>A GitOps controller runs inside the cluster. It watches one or more Git repositories (or OCI registries) and continuously runs a control loop:</p>
+
+        <ol>
+            <li>Fetch the latest desired state from the Git repository</li>
+            <li>Read the actual state of the cluster from the Kubernetes API</li>
+            <li>Compute the diff</li>
+            <li>Apply changes to make actual state match desired state</li>
+            <li>Wait for the reconciliation interval (typically 1–5 minutes) and repeat</li>
+        </ol>
+
+        <p>This pull-based model contrasts with the push-based model used by traditional CI/CD pipelines. In push-based deployments, a pipeline runs after a merge and pushes changes to the cluster via <code>kubectl apply</code> or Helm. In pull-based GitOps, the cluster continuously checks whether it matches Git and corrects itself.</p>
+
+<pre># Push-based CI/CD (traditional)
+# Pipeline runs:
+kubectl apply -f manifests/
+# Cluster state = whatever kubectl apply did
+
+# GitOps (pull-based)
+# GitOps controller runs in cluster, continuously:
+# 1. Reads desired state from git
+# 2. Compares to actual cluster state
+# 3. Applies the diff
+# Cluster state = what's in Git (enforced, not just applied once)</pre>
+
+        <h2>The Git repository structure</h2>
+
+        <p>GitOps works best when the application code repository and the deployment configuration repository are separate. This "app repo + config repo" pattern is the most common structure:</p>
+
+        <ul>
+            <li><strong>App repo</strong>: source code, Dockerfile, application tests. CI pipeline builds images, tags them with the git commit SHA, pushes to a registry, then opens a PR against the config repo to update the image tag.</li>
+            <li><strong>Config repo</strong>: Kubernetes manifests, Helm values, Kustomize overlays. This is what the GitOps controller watches. Changes here trigger deployments; changes to the app repo trigger a CI pipeline that eventually updates the config repo.</li>
+        </ul>
+
+<pre># Config repo structure (example)
+clusters/
+  production/
+    namespaces/
+      api/
+        deployment.yaml
+        service.yaml
+        hpa.yaml
+      database/
+        statefulset.yaml
+        service.yaml
+  staging/
+    namespaces/
+      api/
+        deployment.yaml  # different image tag, lower resource requests
+      database/
+        statefulset.yaml</pre>
+
+        <p>Some teams keep everything in one repo using directory structure or branch strategy to separate environments. Others use separate repos per environment or per cluster. There's no single right structure — the key is that everything that defines cluster state lives in version control.</p>
+
+        <h2>ArgoCD</h2>
+
+        <p>ArgoCD is the most widely adopted GitOps tool. It runs as a set of controllers in the cluster and exposes a web UI and CLI. The core concept is an <strong>Application</strong> resource that maps a Git repository path to a Kubernetes namespace:</p>
+
+<pre>apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: api-production
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/mycompany/config-repo
+    targetRevision: main
+    path: clusters/production/namespaces/api
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: api
+  syncPolicy:
+    automated:
+      prune: true      # delete resources removed from git
+      selfHeal: true   # revert manual changes
+    syncOptions:
+      - CreateNamespace=true</pre>
+
+        <p>ArgoCD's web UI shows the sync status of every Application — green (in sync), yellow (out of sync), red (degraded). Out-of-sync resources show exactly what differs between the cluster and Git. This visual diff is one of ArgoCD's most valued features for operators who want to understand deployment state at a glance.</p>
+
+        <p>ArgoCD uses an <strong>app of apps</strong> pattern for managing many Applications: a root Application points to a directory of Application manifests, which ArgoCD then deploys. This bootstraps an entire cluster from a single ArgoCD Application.</p>
+
+        <h3>ArgoCD's approach to Helm and Kustomize</h3>
+
+        <p>ArgoCD natively supports Helm charts and Kustomize overlays. You can point an Application at a Helm chart in a Git repo or a remote Helm repository, and specify values files or inline value overrides. Kustomize overlays let you maintain a base configuration and layer environment-specific patches on top.</p>
+
+        <h2>Flux</h2>
+
+        <p>Flux takes a more composable, Kubernetes-native approach. Instead of a single Application CRD, Flux uses several specialized CRDs that each handle a specific concern:</p>
+
+        <ul>
+            <li><strong>GitRepository</strong>: defines a Git source (URL, branch, interval, credentials)</li>
+            <li><strong>HelmRepository</strong>: defines a Helm chart source</li>
+            <li><strong>OCIRepository</strong>: defines an OCI registry source</li>
+            <li><strong>Kustomization</strong>: applies Kustomize overlays from a source</li>
+            <li><strong>HelmRelease</strong>: deploys a Helm chart from a source with specified values</li>
+            <li><strong>ImageRepository</strong>: watches a container registry for new image tags</li>
+            <li><strong>ImageUpdateAutomation</strong>: automatically updates image tags in Git when new images are pushed</li>
+        </ul>
+
+<pre># Flux GitRepository
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: config-repo
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/mycompany/config-repo
+  ref:
+    branch: main
+
+# Flux Kustomization
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: api-production
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: config-repo
+  path: ./clusters/production/namespaces/api
+  prune: true
+  targetNamespace: api</pre>
+
+        <p>Flux doesn't have a built-in web UI in the same way ArgoCD does. It's managed primarily via CLI (<code>flux</code>) and manifests. This makes it feel more "GitOps-native" to some practitioners — Flux's own configuration lives entirely in Git, managed by Flux itself.</p>
+
+        <h2>ArgoCD vs Flux: which to choose</h2>
+
+        <p>Both tools are mature, widely used, and maintained by strong communities. The choice usually comes down to UI preferences and composition model:</p>
+
+        <p><strong>Choose ArgoCD if</strong>: your team values a visual dashboard for deployment status, you want a unified view across many clusters, or you're adopting GitOps for the first time and want a guided UI to understand what's happening.</p>
+
+        <p><strong>Choose Flux if</strong>: you prefer a Kubernetes-native composable model, you want to manage Flux's own configuration via GitOps, or you need the image automation features (automatic image tag updates) that Flux provides out of the box.</p>
+
+        <p>Both support multi-cluster deployments, RBAC, SSO integration, Helm, and Kustomize. Both are CNCF graduated projects. Switching between them is possible but non-trivial — once a team is invested in ArgoCD's Application CRDs or Flux's source controller patterns, migrating means rewriting deployment configuration.</p>
+
+        <h2>When GitOps makes sense</h2>
+
+        <p>GitOps genuinely helps in these situations:</p>
+
+        <p><strong>Multi-environment management.</strong> When you have dev, staging, and production environments and want changes to flow through them consistently. GitOps makes the progression explicit — a PR to update staging, review, then a PR to update production.</p>
+
+        <p><strong>Regulatory compliance and audit requirements.</strong> Every change is a Git commit with an author and timestamp. Audit trails are the commit log. Change approval is the PR review process. This maps naturally to SOC 2, ISO 27001, and similar requirements.</p>
+
+        <p><strong>Preventing configuration drift.</strong> Without GitOps, someone inevitably makes a kubectl change that isn't reflected anywhere, and six months later nobody knows why that resource is configured differently from what the manifests say. Continuous reconciliation closes this gap.</p>
+
+        <p><strong>Large teams.</strong> When multiple teams deploy to shared clusters, GitOps provides a structured review process via PRs rather than direct cluster access. Cluster operators review and merge config changes; they don't need to trust every team to run kubectl correctly.</p>
+
+        <h2>When GitOps adds overhead without value</h2>
+
+        <p>GitOps isn't always the right choice:</p>
+
+        <p><strong>Small teams or solo projects.</strong> A two-person team doesn't need the overhead of maintaining separate config repos and GitOps controllers. A simple CI pipeline that runs <code>helm upgrade</code> after merge is easier to understand and maintain.</p>
+
+        <p><strong>Stateful workloads with complex upgrade procedures.</strong> Database migrations, multi-step upgrades, or operations that require ordering guarantees don't fit well into declarative reconciliation. GitOps handles stateless workloads well; it's awkward for operations that need imperative steps.</p>
+
+        <p><strong>Early-stage applications with rapidly changing infrastructure.</strong> If your deployment configuration changes multiple times per day, the PR review process becomes a bottleneck. GitOps adds value when the review gate is valuable; it adds friction when fast iteration matters more.</p>
+
+        <h2>Bootstrapping a cluster with GitOps</h2>
+
+        <p>A common pattern: use Terraform to provision the cluster (EKS, GKE, AKS), then bootstrap GitOps with a single apply command that hands off further configuration to the GitOps controller.</p>
+
+<pre># Bootstrap Flux onto a new cluster
+flux bootstrap github \
+  --owner=mycompany \
+  --repository=config-repo \
+  --branch=main \
+  --path=clusters/production \
+  --personal=false
+
+# After this, everything in clusters/production/ is managed by Flux
+# Including Flux's own configuration</pre>
+
+        <p>After bootstrap, even adding new namespaces, installing cluster addons (cert-manager, external-dns, ingress-nginx), or configuring RBAC happens through Git commits rather than direct cluster commands.</p>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/kubernetes-networking-explained.html">Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies</a></li>
+            <li><a href="/blog/kubernetes-resource-management.html">Kubernetes Resource Management: Requests, Limits, and QoS Classes</a></li>
+            <li><a href="/blog/iac-tool-comparison.html">Terraform vs CDK vs Pulumi: Choosing Your IaC Tool</a></li>
+        </ul>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

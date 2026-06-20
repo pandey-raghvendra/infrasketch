@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Docker Networking Explained: Bridge, Host, Overlay, and DNS — InfraSketch</title>
+    <meta name="description" content="How Docker networking works — bridge networks, host networking, overlay networks for multi-host setups, container DNS, port publishing, and how Docker Compose handles service discovery.">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/docker-networking-explained.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/docker-networking-explained.html">
+    <meta property="og:title" content="Docker Networking Explained: Bridge, Host, Overlay, and DNS">
+    <meta property="og:description" content="How Docker networking works — bridge networks, host networking, overlay networks for multi-host setups, container DNS, port publishing, and Docker Compose service discovery.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Docker Networking Explained: Bridge, Host, Overlay, and DNS">
+    <meta name="twitter:description" content="How Docker networking works — bridge networks, host networking, overlay, DNS, and Docker Compose service discovery.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Docker Networking Explained: Bridge, Host, Overlay, and DNS",
+      "description": "How Docker networking works — bridge networks, host networking, overlay networks for multi-host setups, container DNS, port publishing, and how Docker Compose handles service discovery.",
+      "url": "https://infrasketch.cloud/blog/docker-networking-explained.html",
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "author": {"@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra"},
+      "publisher": {"@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": {"@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"}},
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Docker</span>
+        <h1>Docker Networking Explained: Bridge, Host, Overlay, and DNS</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 9 min read</div>
+    </div>
+    <article>
+        <p>Docker networking confuses people because the defaults are unintuitive and the mental model isn't obvious from the CLI. A container can reach the internet by default, but two containers on the same host can't reach each other unless they're on the same network. Port publishing doesn't work the way most people expect on Linux hosts. Container-to-container DNS just works in Docker Compose but not when you run containers manually. Understanding why requires knowing a bit about how Docker uses Linux networking primitives.</p>
+
+        <p>This guide covers each Docker network driver, how DNS works inside containers, port publishing mechanics, and how Docker Compose handles multi-container networking.</p>
+
+        <h2>Network drivers overview</h2>
+
+        <p>Docker's networking system is pluggable — different drivers implement different networking behaviors. The built-in drivers are:</p>
+
+        <ul>
+            <li><strong>bridge</strong> — the default for containers on a single host</li>
+            <li><strong>host</strong> — container shares the host's network namespace</li>
+            <li><strong>overlay</strong> — multi-host networking for Docker Swarm or Compose with multiple hosts</li>
+            <li><strong>macvlan</strong> — assigns a MAC address to each container so it appears as a physical device on the network</li>
+            <li><strong>none</strong> — disables networking entirely</li>
+            <li><strong>ipvlan</strong> — similar to macvlan but operates at Layer 3</li>
+        </ul>
+
+        <h2>Bridge networking: the default</h2>
+
+        <p>When you run a container without specifying a network, Docker attaches it to the <code>docker0</code> bridge network. This is a virtual Ethernet bridge — a software switch that forwards packets between container network interfaces and the host's physical interface.</p>
+
+        <p>Each container gets a virtual Ethernet pair (<code>veth</code>): one end is placed inside the container's network namespace as <code>eth0</code>, the other end is attached to <code>docker0</code> on the host. The container gets an IP from Docker's private subnet (typically <code>172.17.0.0/16</code>).</p>
+
+<pre># View the default bridge network
+docker network inspect bridge
+
+# Containers on the default bridge can reach the internet
+# via NAT rules that docker manages in iptables/nftables
+
+# But they CANNOT reach each other by name — only by IP
+docker run -d --name app1 nginx
+docker run -it --rm busybox ping app1  # This FAILS
+docker run -it --rm busybox ping 172.17.0.2  # This works</pre>
+
+        <p>The default bridge network has two important limitations: containers can't resolve each other by name, and all containers on it can communicate with each other by IP (no isolation). Both problems are solved by user-defined bridge networks.</p>
+
+        <h3>User-defined bridge networks</h3>
+
+        <p>Creating a custom bridge network gives you DNS-based service discovery and network isolation:</p>
+
+<pre># Create a custom bridge network
+docker network create my-app-network
+
+# Containers on the same user-defined network can resolve each other by name
+docker run -d --name database --network my-app-network postgres
+docker run -d --name api --network my-app-network my-api-image
+
+# From inside the api container:
+# ping database   ← works
+# curl database:5432  ← works</pre>
+
+        <p>Docker's embedded DNS server (at <code>127.0.0.11</code> inside containers) handles name resolution for user-defined networks. It maps container names and network aliases to their current IPs. When a container is restarted and gets a new IP, the DNS entry updates automatically.</p>
+
+        <p>Containers can also be connected to multiple networks simultaneously:</p>
+
+<pre>docker network connect frontend-network api
+docker network connect backend-network api
+# api can now communicate with containers on both networks</pre>
+
+        <h2>Host networking</h2>
+
+        <p>With <code>--network host</code>, the container shares the host's network namespace. It doesn't get its own IP — it uses the host's IP directly. Port bindings are not needed because the container's ports are the host's ports.</p>
+
+<pre>docker run --network host nginx
+# nginx is now listening on the HOST's port 80, not a container port</pre>
+
+        <p>This eliminates the overhead of network address translation and can provide meaningfully better throughput for high-performance networking workloads. However, it also means:</p>
+
+        <ul>
+            <li>No port isolation — if two containers try to bind the same port, one fails</li>
+            <li>No network namespace isolation — the container can see all host interfaces</li>
+            <li>Port publishing (<code>-p</code>) flags are ignored; they have no effect with host networking</li>
+        </ul>
+
+        <p>Host networking is useful for monitoring agents (that need to see all network traffic on the host), high-performance proxies, and cases where the NAT overhead of bridge networking is measurably impactful. It doesn't work on macOS or Windows Docker Desktop because those run Docker inside a Linux VM — the "host" network is the VM's network, not your Mac's.</p>
+
+        <h2>Port publishing</h2>
+
+        <p>Port publishing (<code>-p host_port:container_port</code>) maps a port on the host to a port in the container's network namespace. Docker does this by adding iptables rules that DNAT (Destination NAT) incoming traffic on the host port to the container's IP and port.</p>
+
+<pre>docker run -p 8080:80 nginx
+# Traffic arriving at host:8080 is forwarded to the container's port 80
+
+docker run -p 127.0.0.1:8080:80 nginx
+# Bind only to localhost — not accessible from other hosts
+
+docker run -p 80 nginx
+# Docker picks a random ephemeral host port; docker port <container> 80 shows it</pre>
+
+        <p>A subtle point: <code>-p 8080:80</code> binds on all interfaces (<code>0.0.0.0:8080</code>) by default. This means if your firewall is open, the port is accessible from outside the host. Always specify the bind address for sensitive ports: <code>-p 127.0.0.1:8080:80</code>.</p>
+
+        <p>Docker's iptables rules can interact unexpectedly with firewall software like ufw. Docker modifies iptables directly, and ufw's FORWARD chain rules don't apply to Docker's DOCKER-USER chain. A container with a published port may be accessible from outside the host even if ufw blocks that port. The fix is to add rules to the DOCKER-USER chain, not to ufw's INPUT or FORWARD chains.</p>
+
+        <h2>Overlay networking for multi-host setups</h2>
+
+        <p>Overlay networks span multiple Docker hosts. They're the networking layer for Docker Swarm services and can also be used standalone with Docker Compose when running across multiple hosts.</p>
+
+        <p>An overlay network uses VXLAN encapsulation: packets between containers on different hosts are wrapped in UDP packets and sent over the physical network. From the container's perspective, other containers are on the same flat network regardless of which host they're running on.</p>
+
+<pre># Overlay networks require Swarm mode to be initialized
+docker swarm init
+
+docker network create \
+  --driver overlay \
+  --attachable \
+  my-overlay-network
+
+# Services on this network can reach each other by service name
+# regardless of which Swarm node they're running on</pre>
+
+        <p>Each overlay network gets a private subnet (default /24). Docker maintains a distributed key-value store (using Raft consensus within Swarm) to coordinate IP assignments and routing across nodes.</p>
+
+        <p>The <code>--attachable</code> flag allows standalone containers (not Swarm services) to be connected to the overlay network. Without it, only Swarm services can join.</p>
+
+        <h2>DNS inside containers</h2>
+
+        <p>Every container has <code>/etc/resolv.conf</code> with a nameserver entry. For user-defined networks, this points to Docker's embedded DNS at <code>127.0.0.11</code>. For the default bridge network or host networking, it points to the host's DNS resolver.</p>
+
+<pre># Inside a container on a user-defined network:
+cat /etc/resolv.conf
+# nameserver 127.0.0.11
+# options ndots:0
+
+# Verify DNS is working
+nslookup database    # resolves to the database container's IP
+nslookup google.com  # external DNS also resolves via 127.0.0.11 → forwarded to host resolver</pre>
+
+        <p>Docker's embedded DNS serves several record types:</p>
+        <ul>
+            <li>A records for container names and network aliases</li>
+            <li>A records for service names in Swarm (round-robin across all task IPs)</li>
+            <li>SRV records for Swarm services (used by DNS-based load balancers)</li>
+        </ul>
+
+        <p>Network aliases allow multiple containers to share the same DNS name, creating a simple round-robin load balancer:</p>
+
+<pre>docker run -d --network my-net --network-alias web nginx
+docker run -d --network my-net --network-alias web nginx
+# DNS for "web" now round-robins between both containers</pre>
+
+        <h2>Docker Compose networking</h2>
+
+        <p>Docker Compose automatically creates a user-defined bridge network for each project and connects all services to it. Services can reach each other by service name.</p>
+
+<pre>services:
+  api:
+    image: my-api
+    # No port publishing needed for internal communication
+    depends_on:
+      - database
+
+  database:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: secret
+
+  nginx:
+    image: nginx
+    ports:
+      - "80:80"  # Only nginx needs to publish to the host
+    depends_on:
+      - api</pre>
+
+        <p>In this setup: <code>api</code> reaches <code>database</code> at hostname <code>database:5432</code>. <code>nginx</code> reaches <code>api</code> at <code>api:8080</code>. Only <code>nginx</code> is accessible from outside Docker.</p>
+
+        <p>Compose also supports multiple networks for isolation:</p>
+
+<pre>services:
+  frontend:
+    networks: [frontend]
+
+  api:
+    networks: [frontend, backend]  # bridge between networks
+
+  database:
+    networks: [backend]
+
+networks:
+  frontend:
+  backend:</pre>
+
+        <p><code>frontend</code> can reach <code>api</code>. <code>api</code> can reach <code>database</code>. <code>frontend</code> cannot reach <code>database</code> directly — it has no network in common.</p>
+
+        <h3>External networks</h3>
+
+        <p>Compose can connect services to a network created outside the Compose project:</p>
+
+<pre>networks:
+  shared-monitoring:
+    external: true
+    name: monitoring-network</pre>
+
+        <p>This is useful for a monitoring stack (Prometheus, Grafana) in one Compose project that needs to scrape targets from other projects.</p>
+
+        <h2>Macvlan and ipvlan</h2>
+
+        <p>Macvlan assigns each container a unique MAC address and connects it directly to a physical network interface. The container appears as a separate physical device on the network and can get an IP from a DHCP server or a static assignment within the physical subnet.</p>
+
+<pre>docker network create \
+  --driver macvlan \
+  --subnet 192.168.1.0/24 \
+  --gateway 192.168.1.1 \
+  --opt parent=eth0 \
+  my-macvlan-network
+
+docker run --network my-macvlan-network --ip 192.168.1.10 nginx</pre>
+
+        <p>Macvlan is useful for containers that need to be reachable at a fixed IP on the physical network without port publishing — legacy applications that require specific IP addresses, network monitoring tools, or applications that need to be accessible from VLAN-isolated segments.</p>
+
+        <p>The limitation: macvlan interfaces can't communicate with their parent interface by default. A container on a macvlan network can talk to other hosts on the physical network, but not to the Docker host itself. This is a Linux kernel limitation with macvlan.</p>
+
+        <h2>Debugging container networking</h2>
+
+        <p><strong>Container can't reach external hosts.</strong> Check that IP forwarding is enabled on the host (<code>sysctl net.ipv4.ip_forward</code> should be 1). Check iptables for a MASQUERADE rule in the POSTROUTING chain: <code>iptables -t nat -L POSTROUTING</code>. If Docker was recently reinstalled, iptables rules may have been lost.</p>
+
+        <p><strong>Two containers can't reach each other.</strong> Check they're on the same user-defined network. The default bridge network doesn't do DNS. Run <code>docker network inspect &lt;network&gt;</code> to see which containers are connected.</p>
+
+        <p><strong>Published port isn't accessible from outside the host.</strong> Check the host firewall. Note that Docker may have bypassed ufw by writing directly to iptables — check <code>iptables -L DOCKER</code>. Also verify the container is actually listening on the port: <code>docker exec &lt;container&gt; ss -tlnp</code>.</p>
+
+        <p><strong>DNS resolution fails inside container.</strong> Verify you're on a user-defined network (not the default bridge). Check <code>/etc/resolv.conf</code> inside the container. Try <code>nslookup 127.0.0.11</code> to test if Docker's DNS is reachable. Also check that the <code>--dns</code> flag isn't overriding the default nameserver.</p>
+
+        <p>Visualizing how Docker Compose services connect to each other — which services share networks and which are isolated — helps catch misconfigured networking before deploying. <a href="/">InfraSketch</a> parses Docker Compose files and maps services and their network relationships as a diagram.</p>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/kubernetes-networking-explained.html">Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies</a></li>
+            <li><a href="/blog/docker-compose-diagram-tutorial.html">Docker Compose Architecture Diagrams</a></li>
+            <li><a href="/blog/aws-vpc-architecture-explained.html">AWS VPC Architecture Explained: From Simple to Production</a></li>
+        </ul>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

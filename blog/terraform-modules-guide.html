@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Terraform Modules: Writing, Testing, and Reusing Infrastructure Code — InfraSketch</title>
+    <meta name="description" content="A practical guide to Terraform modules — module structure, inputs and outputs, version pinning, local vs registry modules, testing with Terratest, and when to extract a module.">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/terraform-modules-guide.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/terraform-modules-guide.html">
+    <meta property="og:title" content="Terraform Modules: Writing, Testing, and Reusing Infrastructure Code">
+    <meta property="og:description" content="A practical guide to Terraform modules — module structure, inputs and outputs, version pinning, local vs registry modules, testing with Terratest, and when to extract a module.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Terraform Modules: Writing, Testing, and Reusing Infrastructure Code">
+    <meta name="twitter:description" content="Terraform modules — structure, inputs/outputs, version pinning, Terratest, and when to extract a module.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Terraform Modules: Writing, Testing, and Reusing Infrastructure Code",
+      "description": "A practical guide to Terraform modules — module structure, inputs and outputs, version pinning, local vs registry modules, testing with Terratest, and when to extract a module.",
+      "url": "https://infrasketch.cloud/blog/terraform-modules-guide.html",
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "author": {"@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra"},
+      "publisher": {"@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": {"@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"}},
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Terraform</span>
+        <h1>Terraform Modules: Writing, Testing, and Reusing Infrastructure Code</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 10 min read</div>
+    </div>
+    <article>
+        <p>Every Terraform codebase eventually hits the same inflection point: the root module grows unwieldy, the same patterns repeat across environments, and someone asks "can we just reuse the VPC setup from the payment team?" Modules are Terraform's answer to reuse and encapsulation. Done well, they let you compose infrastructure from tested, versioned building blocks. Done poorly, they create abstraction layers that hide problems, make debugging harder, and need to be broken apart six months later.</p>
+
+        <p>This guide covers what modules actually are, how to structure them, the patterns that work at scale, and how to test them — including when you probably shouldn't extract a module at all.</p>
+
+        <h2>What a module is</h2>
+
+        <p>In Terraform, every directory of <code>.tf</code> files is a module. The directory you run <code>terraform apply</code> from is the <em>root module</em>. Any other directory of <code>.tf</code> files that you reference with a <code>module</code> block is a <em>child module</em>.</p>
+
+        <p>That's it. There's no special module declaration or module keyword inside the module directory. A module is just a collection of Terraform resources that accepts inputs via <code>variable</code> blocks and exposes outputs via <code>output</code> blocks.</p>
+
+<pre># Calling a module from a root module
+module "vpc" {
+  source  = "./modules/vpc"      # local path
+  # or:
+  source  = "terraform-aws-modules/vpc/aws"  # Terraform Registry
+  version = "~> 5.0"
+
+  name             = "production"
+  cidr             = "10.0.0.0/16"
+  azs              = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  private_subnets  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets   = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+}</pre>
+
+        <h2>Module structure</h2>
+
+        <p>A well-structured module has four files at minimum:</p>
+
+<pre>modules/vpc/
+├── main.tf       # resource definitions
+├── variables.tf  # input variable declarations
+├── outputs.tf    # output value declarations
+└── versions.tf   # required_providers and terraform version constraint</pre>
+
+        <p>Optional but common additions:</p>
+
+<pre>modules/vpc/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+├── versions.tf
+├── README.md     # documents inputs, outputs, usage examples
+└── examples/
+    └── complete/ # a working example that calls the module</pre>
+
+        <h3>variables.tf</h3>
+
+        <p>Variables are the public interface of a module. Every variable should have a <code>description</code> and a <code>type</code>. Use <code>default</code> for optional variables; omit it for required ones.</p>
+
+<pre>variable "name" {
+  description = "Name prefix for all resources created by this module."
+  type        = string
+}
+
+variable "cidr_block" {
+  description = "CIDR block for the VPC."
+  type        = string
+  default     = "10.0.0.0/16"
+  validation {
+    condition     = can(cidrhost(var.cidr_block, 0))
+    error_message = "Must be a valid CIDR block."
+  }
+}
+
+variable "enable_nat_gateway" {
+  description = "Whether to create a NAT Gateway in each availability zone."
+  type        = bool
+  default     = true
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources."
+  type        = map(string)
+  default     = {}
+}</pre>
+
+        <p>The <code>validation</code> block runs before any resource creation and gives users a useful error immediately instead of an obscure provider error later.</p>
+
+        <h3>outputs.tf</h3>
+
+        <p>Outputs expose values that callers need. Be generous with outputs — it's easier to add an output than to break consumers who discover they needed one.</p>
+
+<pre>output "vpc_id" {
+  description = "The ID of the VPC."
+  value       = aws_vpc.main.id
+}
+
+output "private_subnet_ids" {
+  description = "List of IDs of private subnets."
+  value       = aws_subnet.private[*].id
+}
+
+output "public_subnet_ids" {
+  description = "List of IDs of public subnets."
+  value       = aws_subnet.public[*].id
+}
+
+output "nat_gateway_ids" {
+  description = "List of NAT Gateway IDs."
+  value       = aws_nat_gateway.main[*].id
+}</pre>
+
+        <h3>versions.tf</h3>
+
+        <p>Constrain the Terraform version and provider versions to prevent incompatible configurations:</p>
+
+<pre>terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.0, < 6.0"
+    }
+  }
+}</pre>
+
+        <p>Using <code>>= 5.0, < 6.0</code> (a pessimistic version constraint) is safer than <code>~> 5.0</code> for modules — it prevents a major version bump from breaking users who haven't explicitly upgraded.</p>
+
+        <h2>Local modules vs registry modules</h2>
+
+        <p>Local modules (relative paths like <code>./modules/vpc</code>) are for internal organizational abstractions. They live in your repo, version-controlled alongside the infrastructure that uses them. Advantages: fast iteration, no publishing step, easy to understand the full codebase as a unit. Disadvantages: can't be shared across repos without copy-pasting.</p>
+
+        <p>Registry modules are published to the Terraform Registry (public) or a private registry (Terraform Cloud, Artifactory, etc.). They're pinned by version and fetched by <code>terraform init</code>. The key attributes of a good registry module:</p>
+
+        <ul>
+            <li>Semantic versioning with a clear changelog</li>
+            <li>Well-documented inputs and outputs</li>
+            <li>Working examples in <code>examples/</code></li>
+            <li>Automated tests</li>
+            <li>Maintained and responding to issues</li>
+        </ul>
+
+        <p>The community modules at <code>terraform-aws-modules</code> on GitHub are the gold standard. The <code>terraform-aws-modules/vpc/aws</code> module, for example, manages hundreds of resource configurations across a very large variable surface. It's an excellent reference for how to structure a complex module.</p>
+
+        <h2>Version pinning</h2>
+
+        <p>Always pin module versions in production. Unpinned modules pull the latest version on <code>terraform init -upgrade</code>, which can introduce breaking changes silently.</p>
+
+<pre># Good — pinned to a specific minor version
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.1"  # allows 5.1.x, not 5.2.x or 6.x
+  # ...
+}
+
+# Bad — no version constraint
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+  # version omitted — gets latest on terraform init -upgrade
+}</pre>
+
+        <p>Use <code>~> X.Y</code> (allows patch updates within the minor version) for registry modules. Only upgrade to a new minor or major version intentionally.</p>
+
+        <h2>Module composition patterns</h2>
+
+        <h3>Flat composition</h3>
+
+        <p>The simplest and most common pattern: the root module calls several child modules, each responsible for one infrastructure concern.</p>
+
+<pre>module "vpc" {
+  source = "./modules/vpc"
+  name   = var.environment
+  cidr   = "10.0.0.0/16"
+}
+
+module "eks" {
+  source          = "./modules/eks"
+  cluster_name    = "${var.environment}-cluster"
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.private_subnet_ids
+}
+
+module "rds" {
+  source     = "./modules/rds"
+  name       = "${var.environment}-db"
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnet_ids
+}</pre>
+
+        <p>Outputs from one module become inputs to another. This dependency chain is explicit — Terraform builds a dependency graph and applies modules in the right order.</p>
+
+        <h3>Wrapper modules</h3>
+
+        <p>A wrapper module adds organizational defaults on top of a community module:</p>
+
+<pre># modules/vpc-standard/main.tf
+# Internal module that wraps the community VPC module
+# with company-standard settings
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.1"
+
+  name = var.name
+  cidr = var.cidr
+
+  # Company standard: always enable DNS, always tag
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  enable_nat_gateway   = true
+  single_nat_gateway   = var.environment != "production"
+
+  tags = merge(
+    var.tags,
+    {
+      ManagedBy   = "terraform"
+      Environment = var.environment
+      Team        = var.team
+    }
+  )
+}</pre>
+
+        <p>Consumers call the wrapper instead of the community module directly. When the company standard changes (add a required tag, change a default), update the wrapper and all users get the change.</p>
+
+        <h2>When to extract a module — and when not to</h2>
+
+        <p>A common mistake: extracting modules too early. If a set of resources is only used once, extracting it to a module adds abstraction overhead without the reuse benefit. The rule of thumb: extract a module when you actually need to reuse it in a second place, not in anticipation of possible reuse.</p>
+
+        <p>Good candidates for extraction:</p>
+        <ul>
+            <li>The same VPC pattern deployed in multiple environments (dev, staging, prod)</li>
+            <li>A standard RDS setup used by multiple application teams</li>
+            <li>A "microservice" pattern (ECS task + ALB target group + CloudWatch alarms) used for every service</li>
+            <li>Anything with complex interdependencies that benefit from hiding implementation details</li>
+        </ul>
+
+        <p>Poor candidates:</p>
+        <ul>
+            <li>A one-off resource with unique configuration (extract is pure overhead)</li>
+            <li>Resources that need to be modified differently in each environment (module abstraction fights the customization)</li>
+            <li>Very small sets of resources (2–3 resources don't need a module)</li>
+        </ul>
+
+        <h2>Testing modules with Terratest</h2>
+
+        <p>Terratest is a Go library for writing automated tests for infrastructure code. A Terratest test deploys real infrastructure, runs assertions against it, and tears it down:</p>
+
+<pre>// modules/vpc/tests/vpc_test.go
+package test
+
+import (
+    "testing"
+    "github.com/gruntwork-io/terratest/modules/terraform"
+    "github.com/gruntwork-io/terratest/modules/aws"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestVpcModule(t *testing.T) {
+    t.Parallel()
+
+    opts := &terraform.Options{
+        TerraformDir: "../examples/complete",
+        Vars: map[string]interface{}{
+            "name":   "test-vpc",
+            "region": "us-east-1",
+        },
+    }
+
+    defer terraform.Destroy(t, opts)
+    terraform.InitAndApply(t, opts)
+
+    vpcId := terraform.Output(t, opts, "vpc_id")
+    assert.NotEmpty(t, vpcId)
+
+    // Verify the VPC actually exists in AWS
+    vpc := aws.GetVpcById(t, vpcId, "us-east-1")
+    assert.Equal(t, "10.0.0.0/16", aws.GetVpcCidrBlock(t, vpcId, "us-east-1"))
+    assert.True(t, *vpc.EnableDnsHostnames)
+}</pre>
+
+        <p>Terratest tests are slow (they deploy real infrastructure) and cost money. Reserve them for modules that will be shared and relied upon by multiple teams. For most internal modules, a combination of <code>terraform validate</code>, <code>terraform plan</code> output review in CI, and manual testing is sufficient.</p>
+
+        <p>For lightweight unit testing without deploying infrastructure, <code>terraform test</code> (built into Terraform 1.6+) lets you write test files that exercise module logic with mock providers:</p>
+
+<pre># modules/vpc/tests/input_validation.tftest.hcl
+run "invalid_cidr_block" {
+  command = plan
+
+  variables {
+    name       = "test"
+    cidr_block = "not-a-cidr"
+  }
+
+  expect_failures = [var.cidr_block]
+}</pre>
+
+        <h2>Module documentation</h2>
+
+        <p><code>terraform-docs</code> is a tool that reads your module's <code>variables.tf</code> and <code>outputs.tf</code> and generates a markdown table of inputs and outputs. Running it in CI keeps documentation in sync with the code:</p>
+
+<pre># Generate docs and update README.md
+terraform-docs markdown table --output-file README.md ./modules/vpc</pre>
+
+        <p>The generated section looks like:</p>
+
+<pre>## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|----------|
+| name | Name prefix for all resources | `string` | n/a | yes |
+| cidr_block | CIDR block for the VPC | `string` | `"10.0.0.0/16"` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| vpc_id | The ID of the VPC |
+| private_subnet_ids | List of private subnet IDs |</pre>
+
+        <p>When a module is consumed by other teams, this documentation is the contract. Good documentation reduces questions and prevents misuse.</p>
+
+        <p>To visualize the resources a Terraform module creates and how they relate — useful during module design or review — paste the module's HCL into <a href="/">InfraSketch</a> to see the architecture diagram. Module calls in a root module appear as labeled groups, with each resource inside the module shown individually.</p>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/terraform-state-explained.html">Terraform State Explained: What It Is, How It Works, and Why It Breaks</a></li>
+            <li><a href="/blog/terraform-visualization-best-practices.html">Terraform Visualization: 5 Ways to See What Your Code Actually Builds</a></li>
+            <li><a href="/blog/iac-tool-comparison.html">Terraform vs CDK vs Pulumi: Choosing Your IaC Tool</a></li>
+        </ul>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

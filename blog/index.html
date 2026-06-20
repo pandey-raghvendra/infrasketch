@@ -58,6 +58,41 @@
     </div>
     <div class="blog-list">
 
+        <a href="/blog/aws-iam-explained.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">AWS</span> June 2026 &middot; 10 min read</div>
+            <h2>AWS IAM Explained: Users, Roles, Policies, and Least Privilege</h2>
+            <p>How AWS IAM actually works — principals, policy types (identity-based, resource-based, SCPs, permission boundaries), evaluation order, trust policies, Terraform patterns for instance profiles and IRSA, and how to debug access denied errors.</p>
+            <span class="read-more">Read more →</span>
+        </a>
+
+        <a href="/blog/docker-networking-explained.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">Docker</span> June 2026 &middot; 9 min read</div>
+            <h2>Docker Networking Explained: Bridge, Host, Overlay, and DNS</h2>
+            <p>How Docker networking works across all four network drivers — bridge vs host vs overlay vs macvlan. Covers user-defined networks, the embedded DNS resolver at 127.0.0.11, port publishing iptables mechanics, Compose multi-network isolation, and debugging tools.</p>
+            <span class="read-more">Read more →</span>
+        </a>
+
+        <a href="/blog/kubernetes-resource-management.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">Kubernetes</span> June 2026 &middot; 9 min read</div>
+            <h2>Kubernetes Resource Management: Requests, Limits, and QoS Classes</h2>
+            <p>The difference between resource requests (scheduling guarantee) and limits (runtime ceiling), why CPU throttles but memory OOM-kills, how QoS classes (Guaranteed/Burstable/BestEffort) affect eviction order, and how to set LimitRange, ResourceQuota, HPA, and VPA.</p>
+            <span class="read-more">Read more →</span>
+        </a>
+
+        <a href="/blog/gitops-explained.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">GitOps</span> June 2026 &middot; 10 min read</div>
+            <h2>GitOps Explained: How It Works, ArgoCD vs Flux, and When to Use It</h2>
+            <p>The four OpenGitOps principles, pull-based vs push-based model, app repo vs config repo pattern, ArgoCD's Application CRD and app-of-apps pattern, Flux's GitRepository/Kustomization/HelmRelease CRDs, and an honest comparison of when GitOps helps vs adds friction.</p>
+            <span class="read-more">Read more →</span>
+        </a>
+
+        <a href="/blog/terraform-modules-guide.html" class="blog-card">
+            <div class="blog-meta"><span class="blog-tag">Terraform</span> June 2026 &middot; 11 min read</div>
+            <h2>Terraform Modules: Writing, Testing, and Reusing Infrastructure Code</h2>
+            <p>How to write a well-structured Terraform module (main.tf/variables.tf/outputs.tf/versions.tf), when to extract a module vs keep code flat, version pinning with ~> X.Y, Terratest Go testing, the built-in terraform test framework (1.6+), and generating docs with terraform-docs.</p>
+            <span class="read-more">Read more →</span>
+        </a>
+
         <a href="/blog/kubernetes-networking-explained.html" class="blog-card">
             <div class="blog-meta"><span class="blog-tag">Kubernetes</span> June 2026 &middot; 11 min read</div>
             <h2>Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies</h2>
@@ -108,16 +143,16 @@
         </a>
 
         <a href="/blog/checkov-diagram-visualization.html" class="blog-card">
-            <div class="blog-meta"><span class="blog-tag">Security</span> May 2026 &middot; 8 min read</div>
-            <h2>Visualize Checkov Results on Your Architecture Diagram</h2>
-            <p>See exactly which Terraform or Kubernetes resources are misconfigured — right on your architecture diagram. Paste checkov -o json output for instant red-border security overlays. Free, no login.</p>
+            <div class="blog-meta"><span class="blog-tag">Security</span> June 2026 &middot; 10 min read</div>
+            <h2>Infrastructure Security Scanning with Checkov: How It Works and What It Checks</h2>
+            <p>How Checkov works, which CIS Benchmarks and security frameworks it covers, how to run it, how to interpret and remediate common findings (S3, EC2, RDS, IAM, Kubernetes), and how to integrate it into a CI/CD pipeline with GitHub Actions and SARIF output.</p>
             <span class="read-more">Read more →</span>
         </a>
 
         <a href="/blog/infracost-diagram-visualization.html" class="blog-card">
-            <div class="blog-meta"><span class="blog-tag">Cost</span> May 2026 &middot; 8 min read</div>
-            <h2>Visualize Infracost on Your Architecture Diagram</h2>
-            <p>See monthly cloud costs per resource directly on your architecture diagram. Paste infracost breakdown JSON output for instant colour-coded cost pills — grey for free, red for expensive. Free, no login.</p>
+            <div class="blog-meta"><span class="blog-tag">Cost Management</span> June 2026 &middot; 10 min read</div>
+            <h2>Cloud Cost Estimation with Infracost: How It Works and What It Covers</h2>
+            <p>How Infracost estimates cloud costs from Terraform before you deploy, what it can and can't estimate, usage files for Lambda and DynamoDB, integrating cost diffs into pull requests with GitHub Actions, and common cost optimization patterns (NAT Gateway, right-sizing, gp3 storage).</p>
             <span class="read-more">Read more →</span>
         </a>
 

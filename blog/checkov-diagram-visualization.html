@@ -7,31 +7,31 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
-    <title>Visualize Checkov Results on Your Architecture Diagram | InfraSketch</title>
-    <meta name="description" content="See exactly which Terraform or Kubernetes resources are misconfigured — right on your architecture diagram. Paste checkov -o json output and get instant red-border overlays. Free, no login.">
+    <title>Infrastructure Security Scanning with Checkov: How It Works and What It Checks — InfraSketch</title>
+    <meta name="description" content="A practical guide to Checkov — how infrastructure security scanning works, what CIS Benchmarks and security frameworks Checkov covers, how to run it, interpret results, and integrate it into CI/CD.">
     <link rel="canonical" href="https://infrasketch.cloud/blog/checkov-diagram-visualization.html">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://infrasketch.cloud/blog/checkov-diagram-visualization.html">
-    <meta property="og:title" content="Visualize Checkov Results on Your Architecture Diagram">
-    <meta property="og:description" content="See exactly which resources are misconfigured — right on your architecture diagram. Paste checkov JSON output for instant security overlays.">
+    <meta property="og:title" content="Infrastructure Security Scanning with Checkov: How It Works and What It Checks">
+    <meta property="og:description" content="A practical guide to Checkov — infrastructure security scanning, CIS Benchmarks, how to run it, interpret results, and integrate into CI/CD.">
     <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
     <meta property="og:image:width" content="800">
     <meta property="og:image:height" content="457">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Visualize Checkov Results on Your Architecture Diagram">
-    <meta name="twitter:description" content="Paste checkov -o json output and see misconfigured resources highlighted directly on your architecture diagram. Free.">
+    <meta name="twitter:title" content="Infrastructure Security Scanning with Checkov: How It Works and What It Checks">
+    <meta name="twitter:description" content="How Checkov works, what it checks, CI integration, and how to remediate common IaC security findings.">
     <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Article",
-      "headline": "Visualize Checkov Results on Your Architecture Diagram",
-      "description": "See exactly which Terraform or Kubernetes resources are misconfigured — right on your architecture diagram. Paste checkov -o json output and get instant red-border overlays.",
+      "headline": "Infrastructure Security Scanning with Checkov: How It Works and What It Checks",
+      "description": "A practical guide to Checkov — how infrastructure security scanning works, what CIS Benchmarks and security frameworks Checkov covers, how to run it, interpret results, and integrate it into CI/CD.",
       "url": "https://infrasketch.cloud/blog/checkov-diagram-visualization.html",
-      "datePublished": "2026-05-12",
-      "dateModified": "2026-05-23",
-      "author": { "@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra" },
-      "publisher": { "@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": { "@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg" } },
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "author": {"@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra"},
+      "publisher": {"@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": {"@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"}},
       "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
     }
     </script>
@@ -39,275 +39,306 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
-        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:100px;color:#ef4444;font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
-        .callout{background:var(--bg-surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0}.callout p{margin:0;font-size:14px;color:var(--text-muted)}
-        .callout.danger{border-left-color:#ef4444}.callout.danger p{color:#fca5a5}
-        .step-list{counter-reset:steps;list-style:none;margin-left:0}.step-list li{counter-increment:steps;padding:16px 16px 16px 56px;position:relative;border-left:2px solid var(--border);margin-bottom:12px}.step-list li::before{content:counter(steps);position:absolute;left:-14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
-        .faq-item{border-bottom:1px solid var(--border);padding:20px 0}.faq-item:last-child{border-bottom:none}.faq-item h3{font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text)}.faq-item p{font-size:15px;color:var(--text-muted);margin:0}
-        .check-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}.check-table th{text-align:left;padding:10px 16px;background:var(--bg-surface);color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border)}.check-table td{padding:10px 16px;border-bottom:1px solid rgba(30,34,64,0.6);color:#b0b8d1}.check-table td:first-child{font-family:var(--mono);color:#ef4444;font-size:12px}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
     </style>
 </head>
 <body>
 <nav>
     <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
-    <ul class="nav-links">
-        <li><a href="/">Tool</a></li>
-        <li><a href="/blog/">Blog</a></li>
-        <li><a href="/about.html">About</a></li>
-        <li><a href="/contact.html">Contact</a></li>
-    </ul>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
 </nav>
 <div class="container">
     <div class="article-header">
-        <span class="tag">🛡 Security</span>
-        <h1>Visualize Checkov Results on Your Architecture Diagram</h1>
-        <div class="meta">May 12, 2026 &middot; 8 min read &middot; InfraSketch Blog</div>
+        <span class="tag">Security</span>
+        <h1>Infrastructure Security Scanning with Checkov: How It Works and What It Checks</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 10 min read</div>
     </div>
     <article>
+        <p>Most infrastructure security problems aren't novel attack vectors — they're misconfigurations that have been understood for years. S3 buckets with public ACLs. Security groups with <code>0.0.0.0/0</code> ingress on port 22. RDS instances without encryption at rest. EKS nodes running as root. These patterns appear in production infrastructure across thousands of organizations, often because the engineer who wrote the Terraform had no way of knowing the configuration was problematic.</p>
 
-        <p>Checkov finds hundreds of misconfigurations in your Terraform, Kubernetes, and CloudFormation code — but its output is a wall of terminal text. Resource names like <code>aws_s3_bucket.data_lake</code> and check IDs like <code>CKV_AWS_18</code> don't tell you much when you're looking at 60 resources across 12 files.</p>
+        <p>Checkov is a static analysis tool for infrastructure-as-code. It reads your Terraform, CloudFormation, Kubernetes YAML, Dockerfile, Bicep, or Helm charts and checks them against a library of security and compliance rules before anything gets deployed. This guide explains how Checkov works, what it actually checks, how to run it effectively, and how to integrate it into a CI/CD pipeline.</p>
 
-        <p>InfraSketch's security overlay fixes this. Run <code>checkov -o json</code>, paste the output, and every failing resource gets a red border directly on your architecture diagram. Hover for the failing check IDs. See at a glance which part of your infrastructure is the riskiest.</p>
+        <h2>How Checkov works</h2>
 
-        <div class="callout">
-            <p><strong>TL;DR:</strong> Generate your diagram in InfraSketch → click <strong>🛡 Security</strong> → paste <code>checkov -d . -o json</code> output → failing resources highlighted instantly. Free, no login, nothing leaves your browser.</p>
-        </div>
+        <p>Checkov performs static analysis — it reads your IaC files and evaluates rules against the configuration without actually deploying anything or connecting to a cloud account. For Terraform, it reads <code>.tf</code> files directly (not state files or plan output) and evaluates the configuration values you've written.</p>
 
-        <h2>Why "checkov diagram" matters</h2>
+        <p>Each check is a Python class or YAML specification that evaluates one or more properties of a resource. A check for S3 bucket encryption, for example, reads the <code>server_side_encryption_configuration</code> block of an <code>aws_s3_bucket</code> resource and verifies it's present and configured with AES-256 or aws:kms. If the block is absent or incorrectly configured, the check fails.</p>
 
-        <p>When Checkov reports that <code>CKV_AWS_18</code> failed on <code>aws_s3_bucket.access_logs</code>, your next question is always: "Where does this bucket sit in my architecture? What connects to it? Is it public-facing or internal?" The terminal output can't answer that. You have to mentally map resource names to your architecture.</p>
+        <p>The output lists each check result against each resource:</p>
 
-        <p>A visual overlay eliminates this mental overhead. You see the bucket in context — inside its VPC, connected to the CloudFront distribution, adjacent to the Lambda that writes to it. The security failure becomes spatially meaningful, not just a name on a list.</p>
+<pre>$ checkov -d .
 
-        <p>This matters even more when you're reviewing someone else's infrastructure. You can hand a reviewer a diagram link with security failures already highlighted, and they immediately understand scope without reading any code.</p>
+Check: CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
+  FAILED for resource: aws_s3_bucket.data_lake
+  File: /main.tf:1-12
 
-        <h2>Step-by-step: generate and overlay</h2>
+Check: CKV_AWS_52: "Ensure S3 bucket has MFA delete enabled"
+  FAILED for resource: aws_s3_bucket.data_lake
 
-        <ol class="step-list">
-            <li>
-                <strong>Run Checkov and save JSON output</strong>
-                <pre>checkov -d . -o json > checkov-results.json</pre>
-                <p>If you're scanning a specific file: <code>checkov -f main.tf -o json > checkov-results.json</code></p>
-                <p>For Kubernetes manifests: <code>checkov -d ./k8s -o json > checkov-results.json</code></p>
-            </li>
-            <li>
-                <strong>Generate your architecture diagram</strong>
-                <p>Open <a href="https://infrasketch.cloud">infrasketch.cloud</a>, paste your Terraform (or Kubernetes YAML, CloudFormation, etc.), and click <strong>Generate Diagram</strong>. Your resources appear as nodes with official cloud icons.</p>
-            </li>
-            <li>
-                <strong>Open the Security overlay</strong>
-                <p>In the export bar at the bottom, click the <strong>🛡 Security</strong> button. A modal opens with a textarea.</p>
-            </li>
-            <li>
-                <strong>Paste the Checkov JSON output</strong>
-                <p>Open <code>checkov-results.json</code>, copy its contents, paste into the textarea, and click <strong>Apply</strong>.</p>
-            </li>
-            <li>
-                <strong>Review the highlighted diagram</strong>
-                <p>Resources with failing checks get a red border ring and a red badge in the top-right corner showing the number of failing checks. Hover over any red badge to see the specific check IDs in a tooltip (e.g., <em>CKV_AWS_18, CKV_AWS_19, CKV_AWS_21</em>).</p>
-            </li>
-        </ol>
+Check: CKV_AWS_145: "Ensure that S3 buckets are encrypted with KMS by default"
+  PASSED for resource: aws_s3_bucket.data_lake</pre>
 
-        <p>The overlay is non-destructive — click <strong>Clear</strong> in the modal to remove all highlighting without regenerating the diagram. You can also close and re-apply with different Checkov output (e.g., after a targeted scan).</p>
+        <p>The check ID format (<code>CKV_AWS_18</code>) is consistent — you can reference it in skip annotations, baseline files, and CI configuration.</p>
 
-        <h2>What Checkov checks does InfraSketch cover?</h2>
+        <h2>Security frameworks and check sources</h2>
 
-        <p>InfraSketch maps Checkov's resource IDs (e.g., <code>aws_s3_bucket.my_bucket</code>) to diagram nodes using the <code>resource</code> field from each failed check in the JSON output. Any check that Checkov reports a failure on will be highlighted — there's no fixed list on InfraSketch's side.</p>
+        <p>Checkov's checks come from multiple sources:</p>
 
-        <p>That said, here are the most common AWS checks you'll see highlighted:</p>
+        <p><strong>CIS Benchmarks</strong> — The Center for Internet Security publishes hardening guides for cloud platforms. The CIS AWS Foundations Benchmark, for example, specifies requirements like multi-region CloudTrail logging, MFA on root accounts, and password policy requirements. Checkov implements many CIS controls as checks. When you see <code>CKV_AWS_*</code> checks, many of them correspond to specific CIS benchmark controls.</p>
 
-        <table class="check-table">
-            <thead>
-                <tr><th>Check ID</th><th>Resource Type</th><th>Description</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>CKV_AWS_18</td><td>S3 Bucket</td><td>Access logging enabled</td></tr>
-                <tr><td>CKV_AWS_19</td><td>S3 Bucket</td><td>Server-side encryption enabled</td></tr>
-                <tr><td>CKV_AWS_20</td><td>S3 Bucket</td><td>Bucket not publicly accessible</td></tr>
-                <tr><td>CKV_AWS_21</td><td>S3 Bucket</td><td>Versioning enabled</td></tr>
-                <tr><td>CKV_AWS_23</td><td>CloudFront</td><td>Minimum TLS 1.2 enforced</td></tr>
-                <tr><td>CKV_AWS_57</td><td>S3 Bucket</td><td>Block public ACLs</td></tr>
-                <tr><td>CKV_AWS_91</td><td>ALB</td><td>Access logging enabled</td></tr>
-                <tr><td>CKV_AWS_116</td><td>Lambda</td><td>Dead letter queue configured</td></tr>
-                <tr><td>CKV_AWS_149</td><td>Secrets Manager</td><td>KMS CMK used for encryption</td></tr>
-                <tr><td>CKV_K8S_14</td><td>Pod</td><td>Container does not run as root</td></tr>
-            </tbody>
-        </table>
+        <p><strong>NIST frameworks</strong> — Some checks map to NIST 800-53 and NIST CSF controls, used in US federal compliance requirements.</p>
 
-        <p>The same principle applies for Azure and GCP checks — as long as the resource name in the Checkov JSON matches the resource name in your IaC code, the overlay works.</p>
+        <p><strong>SOC 2</strong> — Checks relevant to Trust Services Criteria (security, availability, confidentiality). Useful for organizations pursuing SOC 2 Type II certification.</p>
 
-        <h2>Understanding the overlay: what the red badges mean</h2>
+        <p><strong>PCI DSS</strong> — Payment Card Industry Data Security Standard controls for organizations handling payment card data.</p>
 
-        <p>Each highlighted node shows a number badge in the top-right corner. That number is the count of failing checks for that specific resource. A badge showing <strong>5</strong> means Checkov found five distinct misconfigurations on that resource.</p>
+        <p><strong>Palo Alto's research</strong> — Many checks were developed by Palo Alto Networks' Prisma Cloud team (which acquired Bridgecrew, the original Checkov creator) based on real-world incident patterns.</p>
 
-        <p>Hover over the badge to see a tooltip listing the check IDs. For example:</p>
+        <p>You can filter checks by framework:</p>
 
-        <pre>aws_s3_bucket.raw_data
-CKV_AWS_18: Access logging not enabled
-CKV_AWS_19: Server-side encryption not configured
-CKV_AWS_20: Bucket is publicly readable
-CKV_AWS_21: Versioning not enabled
-CKV_AWS_57: Public ACLs not blocked</pre>
+<pre>checkov -d . --framework terraform --check-type cis_aws
+checkov -d . --framework kubernetes</pre>
 
-        <p>This tells you the full picture without leaving the diagram. A resource with a badge of 5 on a public-facing S3 bucket is an obvious priority. A badge of 1 on an internal Lambda with a missing dead-letter queue is much lower risk.</p>
+        <h2>Running Checkov</h2>
 
-        <div class="callout danger">
-            <p><strong>High-risk pattern to watch for:</strong> Any storage resource (S3, RDS, DynamoDB) with red borders that sits outside a VPC boundary in the diagram is likely exposed. Prioritize these above all else.</p>
-        </div>
+        <h3>Install and basic scan</h3>
 
-        <h2>Combining security and cost overlays</h2>
+<pre># Install via pip
+pip install checkov
 
-        <p>InfraSketch supports two overlays simultaneously: Checkov security (🛡) and Infracost cost (💰). You can apply both at once — security badges appear top-right, cost pills appear bottom-centre, so they don't overlap.</p>
+# Scan a directory of Terraform files
+checkov -d ./infrastructure
 
-        <p>This combination is especially useful for prioritization. A resource that's both expensive and misconfigured (red border + amber/red cost badge) is a double priority: it's costing you money <em>and</em> creating risk. A cheap misconfigured resource can be triaged differently.</p>
+# Scan a single file
+checkov -f main.tf
 
-        <p>To use both overlays:</p>
+# Output JSON for programmatic processing
+checkov -d . -o json > checkov-results.json
 
-        <ol>
-            <li>Generate the diagram</li>
-            <li>Apply Checkov overlay via 🛡 Security</li>
-            <li>Apply Infracost overlay via 💰 Cost (see the <a href="/blog/infracost-diagram-visualization.html">Infracost guide</a>)</li>
-            <li>Both overlays remain active — export as PNG or SVG to share</li>
-        </ol>
+# Output SARIF format (for GitHub Code Scanning integration)
+checkov -d . -o sarif > checkov-results.sarif</pre>
 
-        <h2>Using the overlay in pull request reviews</h2>
+        <h3>Targeting specific frameworks</h3>
 
-        <p>The most powerful workflow is combining the Checkov overlay with the <a href="/blog/github-action-terraform-diagram.html">InfraSketch GitHub Action</a>. The action auto-posts diagram links on every IaC PR. Reviewers can then manually apply the Checkov overlay on their local scan, or you can run Checkov in CI and include results in the PR comment.</p>
+<pre># Terraform only
+checkov -d . --framework terraform
 
-        <p>Here's a CI workflow that posts both the diagram link and the Checkov scan summary:</p>
+# Kubernetes only
+checkov -d . --framework kubernetes
 
-        <pre># .github/workflows/infrasketch-security.yml
-name: IaC Diagram + Security Scan
-on:
-  pull_request:
-    paths: ['**/*.tf', '**/*.yaml']
+# Multiple frameworks
+checkov -d . --framework terraform --framework kubernetes
+
+# CloudFormation
+checkov -d . --framework cloudformation</pre>
+
+        <h3>Skipping specific checks</h3>
+
+        <p>Not every check applies to every organization. You can skip checks globally or per-resource. Per-resource skips are inline annotations:</p>
+
+<pre>resource "aws_s3_bucket" "logs" {
+  bucket = "my-logs-bucket"
+
+  # checkov:skip=CKV_AWS_18:This bucket IS the access log destination
+  # checkov:skip=CKV_AWS_52:MFA delete not required for log buckets per policy INFRA-42
+}
+
+resource "aws_security_group_rule" "bastion_ssh" {
+  type        = "ingress"
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  # checkov:skip=CKV_AWS_25:Bastion host intentionally allows SSH from internet
+}</pre>
+
+        <p>The comment after the colon in the skip annotation is required — it forces the engineer to document why the skip is justified. Undocumented skips are caught by Checkov itself when you run with <code>--skip-check-comments</code> validation.</p>
+
+        <p>Global skips go on the command line:</p>
+
+<pre>checkov -d . --skip-check CKV_AWS_52,CKV_AWS_144</pre>
+
+        <h3>Baseline files</h3>
+
+        <p>A baseline file records the current set of failures so that CI only fails on <em>new</em> findings, not pre-existing ones. This is useful for brownfield codebases:</p>
+
+<pre># Generate a baseline from current failures
+checkov -d . --create-baseline
+
+# On subsequent runs, only new failures (not in baseline) fail the check
+checkov -d . --baseline .checkov.baseline</pre>
+
+        <h2>Common checks and what they mean</h2>
+
+        <h3>S3</h3>
+
+        <ul>
+            <li><strong>CKV_AWS_18</strong>: Access logging not enabled. S3 can log all GET/PUT requests to a separate bucket. Required for audit trails in regulated environments.</li>
+            <li><strong>CKV_AWS_19</strong>: Server-side encryption not enabled. S3 data should be encrypted at rest with AES-256 or KMS.</li>
+            <li><strong>CKV_AWS_20</strong>: Bucket doesn't block public ACLs. Public ACLs are a common source of data exposure incidents.</li>
+            <li><strong>CKV2_AWS_62</strong>: Event notifications not enabled. Notifications for object creation/deletion are useful for detecting unauthorized access patterns.</li>
+        </ul>
+
+        <h3>EC2 and security groups</h3>
+
+        <ul>
+            <li><strong>CKV_AWS_25</strong>: Security group allows ingress from 0.0.0.0/0 on SSH (port 22). Direct SSH access from the internet should be replaced with SSM Session Manager or a bastion with restricted CIDR.</li>
+            <li><strong>CKV_AWS_24</strong>: Security group allows ingress from 0.0.0.0/0 on RDP (port 3389).</li>
+            <li><strong>CKV_AWS_8</strong>: EC2 instance created without IMDSv2 enforcement. IMDSv2 prevents SSRF attacks from reaching the instance metadata endpoint.</li>
+            <li><strong>CKV_AWS_135</strong>: EC2 instance EBS volume not encrypted.</li>
+        </ul>
+
+        <h3>RDS</h3>
+
+        <ul>
+            <li><strong>CKV_AWS_17</strong>: RDS publicly accessible. Databases should not be directly reachable from the internet.</li>
+            <li><strong>CKV_AWS_16</strong>: RDS not encrypted at rest.</li>
+            <li><strong>CKV_AWS_133</strong>: RDS instance deletion protection not enabled. Prevents accidental <code>terraform destroy</code> or misconfigured automation from dropping production databases.</li>
+            <li><strong>CKV_AWS_129</strong>: RDS cluster does not have logging enabled (audit, error, slowquery logs).</li>
+        </ul>
+
+        <h3>IAM</h3>
+
+        <ul>
+            <li><strong>CKV_AWS_40</strong>: IAM policy attached directly to a user (should attach to a group or role instead).</li>
+            <li><strong>CKV_AWS_1</strong>: IAM policy allows <code>*</code> on all resources with admin actions. Overly broad policies.</li>
+            <li><strong>CKV_AWS_274</strong>: IAM policy allows <code>*</code> actions — wildcard actions on any resource.</li>
+        </ul>
+
+        <h3>Kubernetes</h3>
+
+        <ul>
+            <li><strong>CKV_K8S_6</strong>: Container running as root (<code>runAsNonRoot</code> not set to true).</li>
+            <li><strong>CKV_K8S_28</strong>: Container has no CPU or memory limits.</li>
+            <li><strong>CKV_K8S_30</strong>: Container has no read-only root filesystem.</li>
+            <li><strong>CKV_K8S_43</strong>: Image tag is <code>latest</code> or missing — leads to non-reproducible deployments.</li>
+        </ul>
+
+        <h2>Remediating findings</h2>
+
+        <p>Checkov output tells you what failed but not always how to fix it. The pattern for most remediations:</p>
+
+        <p><strong>Missing encryption at rest (S3, RDS, EBS):</strong></p>
+
+<pre># S3 encryption
+resource "aws_s3_bucket_server_side_encryption_configuration" "data" {
+  bucket = aws_s3_bucket.data.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+      kms_master_key_id = aws_kms_key.s3.arn
+    }
+  }
+}
+
+# RDS encryption (set at creation — cannot be added to existing instance)
+resource "aws_db_instance" "main" {
+  storage_encrypted = true
+  kms_key_id        = aws_kms_key.rds.arn
+  # ...
+}</pre>
+
+        <p><strong>Security group overly permissive:</strong></p>
+
+<pre># Before (fails CKV_AWS_25)
+resource "aws_security_group_rule" "ssh" {
+  cidr_blocks = ["0.0.0.0/0"]
+  from_port   = 22
+  to_port     = 22
+  # ...
+}
+
+# After — restrict to specific CIDR or use SSM instead
+resource "aws_security_group_rule" "ssh" {
+  cidr_blocks = ["10.0.0.0/8"]  # internal only
+  from_port   = 22
+  to_port     = 22
+  # ...
+}</pre>
+
+        <p><strong>IMDSv2 enforcement:</strong></p>
+
+<pre>resource "aws_instance" "app" {
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"  # enforces IMDSv2
+    http_put_response_hop_limit = 1
+  }
+  # ...
+}</pre>
+
+        <h2>CI/CD integration</h2>
+
+        <p>Checkov integrates into any CI system. The key decision: fail the pipeline on findings, or report them without blocking. Most teams start by reporting without blocking (to understand the current state), then enforce a zero-new-findings policy using baselines.</p>
+
+<pre># GitHub Actions example
+name: Security Scan
+on: [pull_request]
 
 jobs:
-  diagram:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pandey-raghvendra/infrasketch@v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
   checkov:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: bridgecrewio/checkov-action@master
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
         with:
           directory: .
           framework: terraform
-          output_format: github_failed_only</pre>
+          output_format: sarif
+          output_file_path: checkov.sarif
+          soft_fail: false  # fail the job on findings
 
-        <p>The diagram job posts a table with diagram links. The Checkov job posts inline PR annotations on the failing lines. Together, reviewers get both spatial context (which resources, where in the architecture) and precise line-level failures.</p>
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov.sarif</pre>
 
-        <h2>Supported IaC formats for the security overlay</h2>
+        <p>The SARIF upload sends results to GitHub Code Scanning, where findings appear as annotations on the PR diff — each finding is shown inline on the exact line of Terraform that caused it. This makes results easier to act on than reading terminal output.</p>
 
-        <p>The security overlay works with any diagram InfraSketch can generate. Checkov supports the same formats — so you can overlay results from any Checkov-compatible scan:</p>
+        <p>When a Checkov scan returns a list of failing resources by name, it can be useful to see those resources in context — where they sit in the architecture, what connects to them. <a href="/">InfraSketch</a> supports overlaying Checkov JSON results onto an architecture diagram: paste your Terraform into InfraSketch, generate the diagram, then paste the Checkov JSON output to highlight failing resources with their check counts directly on the diagram.</p>
 
-        <ul>
-            <li><strong>Terraform HCL</strong> — <code>checkov -d . --framework terraform -o json</code></li>
-            <li><strong>Terraform plan JSON</strong> — <code>checkov -f tfplan.json --framework terraform_plan -o json</code></li>
-            <li><strong>CloudFormation</strong> — <code>checkov -d . --framework cloudformation -o json</code></li>
-            <li><strong>Kubernetes YAML</strong> — <code>checkov -d ./k8s --framework kubernetes -o json</code></li>
-            <li><strong>Docker Compose</strong> — <code>checkov -f docker-compose.yml --framework dockerfile -o json</code></li>
-            <li><strong>Bicep / ARM</strong> — <code>checkov -f template.bicep --framework bicep -o json</code></li>
-        </ul>
+        <h2>Custom checks</h2>
 
-        <p>Paste the resulting JSON into InfraSketch's Security overlay after generating the diagram for that format.</p>
+        <p>Checkov supports custom checks in Python or YAML for organization-specific policies that aren't in the built-in library:</p>
 
-        <h2>Exporting diagrams with security overlays</h2>
+<pre># custom_checks/enforce_required_tags.yaml
+---
+metadata:
+  name: Ensure required tags are present
+  id: CKV_CUSTOM_1
+  category: GENERAL_SECURITY
 
-        <p>Once you've applied the Checkov overlay, you can export the diagram with the security highlighting preserved:</p>
+scope:
+  provider: terraform
 
-        <ul>
-            <li><strong>PNG (2× retina)</strong> — best for Confluence pages, Notion, Slack, or Jira tickets. Red borders and badges export cleanly.</li>
-            <li><strong>SVG</strong> — scalable, icons inlined. Good for design tools or documentation systems that support SVG.</li>
-            <li><strong>Share link</strong> — copies a URL that encodes your diagram state. The security overlay state is <em>not</em> included in the share link (the receiver needs to apply it themselves), but the diagram structure is preserved.</li>
-        </ul>
+definition:
+  and:
+    - cond_type: attribute
+      resource_types: [aws_instance, aws_rds_instance, aws_eks_cluster]
+      attribute: tags.Environment
+      operator: exists
+    - cond_type: attribute
+      resource_types: [aws_instance, aws_rds_instance, aws_eks_cluster]
+      attribute: tags.Team
+      operator: exists</pre>
 
-        <p>For PNG export: click <strong>Export PNG</strong> in the export bar. The overlay renders at full resolution. For documentation-heavy teams, this is the fastest way to attach a security-annotated architecture snapshot to a ticket or post-mortem.</p>
+<pre>checkov -d . --external-checks-dir ./custom_checks</pre>
 
-        <h2>Troubleshooting common issues</h2>
-
-        <h3>No resources highlighted after pasting Checkov output</h3>
-        <p>The overlay matches on the resource name exactly as it appears in your IaC code (e.g., <code>aws_s3_bucket.my_bucket</code>). If your diagram was generated from a Terraform plan JSON, resource names include a module path prefix (<code>module.storage.aws_s3_bucket.my_bucket</code>). InfraSketch strips common module prefixes during matching, but if resources still don't match, try:</p>
-        <ul>
-            <li>Regenerate the diagram from the same HCL files that Checkov scanned (not plan JSON)</li>
-            <li>Check the Checkov JSON for the exact <code>resource</code> field value and compare to node IDs in the diagram</li>
-            <li>Ensure you're pasting the full JSON (not just the summary section)</li>
-        </ul>
-
-        <h3>Checkov output is an array, not a single object</h3>
-        <p>When scanning multiple frameworks together, Checkov sometimes wraps results in a JSON array (<code>[{...}, {...}]</code>). InfraSketch handles both formats — array-wrapped and single-object — automatically.</p>
-
-        <h3>Only some resources are highlighted, not all failing ones</h3>
-        <p>This usually means some resources in the Checkov scan correspond to files that weren't included in the diagram. For example, if your diagram shows only the networking layer but Checkov scanned the whole codebase, compute-layer failures won't have matching nodes to highlight. Generate a diagram from the same scope as the Checkov scan.</p>
-
-        <h2>Frequently asked questions</h2>
-
-        <div class="faq-item">
-            <h3>Does InfraSketch send my Checkov output to any server?</h3>
-            <p>No. Everything runs in your browser. The Checkov JSON is parsed in JavaScript on your machine. Nothing is transmitted — no analytics, no logging, no server-side processing. Your security findings stay private.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Can I overlay Checkov results from a CI/CD pipeline?</h3>
-            <p>Yes. Run <code>checkov -d . -o json > checkov.json</code> as a CI step, download the artifact, and paste it into the InfraSketch security overlay. The process is identical whether you ran Checkov locally or in GitHub Actions, GitLab CI, or Jenkins.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Does the overlay work with Checkov's SARIF output?</h3>
-            <p>Not currently. InfraSketch parses Checkov's <code>-o json</code> format, which includes the <code>results.failed_checks</code> array with <code>resource</code> fields. SARIF is a different schema. Use <code>-o json</code> (not <code>-o sarif</code>) when generating output for InfraSketch.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Can I pass Checkov results while skipping certain checks?</h3>
-            <p>Yes — filter before scanning. Use <code>checkov --skip-check CKV_AWS_18,CKV_AWS_21 -d . -o json</code> to exclude checks you've accepted as known risks. Only the remaining failures appear in the JSON, so only those get highlighted.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Does the overlay work with custom Checkov policies?</h3>
-            <p>Yes. Custom policies that output the standard Checkov JSON format (with <code>results.failed_checks[].resource</code>) work identically to built-in checks. InfraSketch doesn't validate check IDs — it just reads the resource names and highlights them.</p>
-        </div>
-
-        <div class="faq-item">
-            <h3>Can I use this with Bridgecrew / Prisma Cloud results?</h3>
-            <p>Bridgecrew and Prisma Cloud use Checkov under the hood and can export in the same JSON format. As long as the output includes a <code>results.failed_checks</code> array with <code>resource</code> fields, InfraSketch can parse it.</p>
-        </div>
-
-        <div class="cta-box">
-            <h3>Try the security overlay now</h3>
-            <p>Generate your architecture diagram and overlay Checkov results — free, no login, nothing leaves your browser.</p>
-            <a href="https://infrasketch.cloud" class="btn">Open InfraSketch →</a>
-        </div>
-
-        <h2>Related guides</h2>
-        <ul>
-            <li><a href="/blog/infracost-diagram-visualization.html">Visualize Infracost results on your architecture diagram</a></li>
-            <li><a href="/blog/github-action-terraform-diagram.html">Auto-post architecture diagrams on IaC PRs with GitHub Actions</a></li>
-            <li><a href="/blog/terraform-diagram-generator.html">Terraform diagram generator — visualize HCL instantly</a></li>
-        </ul>
-
+        <p>YAML-based checks cover most use cases without writing Python. Python checks are needed for logic that requires evaluating multiple resources or complex conditions.</p>
 
         <h2>Related articles</h2>
         <ul>
-            <li><a href="/blog/infracost-diagram-visualization.html">Visualize Infracost Estimates on Your Architecture Diagram</a></li>
-            <li><a href="/blog/github-action-terraform-diagram.html">Auto-Post Architecture Diagrams on Every IaC Pull Request</a></li>
-            <li><a href="/blog/terraform-diagram-generator.html">Terraform Diagram Generator — Visualize HCL Architecture Instantly</a></li>
+            <li><a href="/blog/aws-iam-explained.html">AWS IAM Explained: Users, Roles, Policies, and Least Privilege</a></li>
+            <li><a href="/blog/terraform-visualization-best-practices.html">Terraform Visualization: 5 Ways to See What Your Code Actually Builds</a></li>
+            <li><a href="/blog/kubernetes-resource-management.html">Kubernetes Resource Management: Requests, Limits, and QoS Classes</a></li>
         </ul>
     </article>
 </div>
-<footer>
-    <div class="container">
-        <p>&copy; 2026 InfraSketch &middot; Built by <a href="https://github.com/pandey-raghvendra">Raghvendra Pandey</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p>
-    </div>
-</footer>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
 </body>
 </html>

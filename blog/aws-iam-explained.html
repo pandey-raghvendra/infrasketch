@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>AWS IAM Explained: Users, Roles, Policies, and Least Privilege — InfraSketch</title>
+    <meta name="description" content="A practical guide to AWS IAM — how users, roles, groups, policies, and trust relationships work, with Terraform examples for common patterns like EC2 instance profiles and cross-account access.">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/aws-iam-explained.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/aws-iam-explained.html">
+    <meta property="og:title" content="AWS IAM Explained: Users, Roles, Policies, and Least Privilege">
+    <meta property="og:description" content="A practical guide to AWS IAM — how users, roles, groups, policies, and trust relationships work, with Terraform examples for common patterns like EC2 instance profiles and cross-account access.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AWS IAM Explained: Users, Roles, Policies, and Least Privilege">
+    <meta name="twitter:description" content="A practical guide to AWS IAM — users, roles, groups, policies, and trust relationships with Terraform examples.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "AWS IAM Explained: Users, Roles, Policies, and Least Privilege",
+      "description": "A practical guide to AWS IAM — how users, roles, groups, policies, and trust relationships work, with Terraform examples for common patterns like EC2 instance profiles and cross-account access.",
+      "url": "https://infrasketch.cloud/blog/aws-iam-explained.html",
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "author": {"@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra"},
+      "publisher": {"@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": {"@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"}},
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}.cta-box{background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:12px;padding:28px;text-align:center;margin:40px 0}.cta-box h3{font-size:18px;margin-bottom:8px;color:var(--text)}.cta-box p{margin-bottom:16px;color:var(--text-muted)}.btn{display:inline-block;padding:10px 28px;background:var(--accent);color:var(--bg);border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s}.btn:hover{box-shadow:0 0 24px rgba(6,214,160,0.3);text-decoration:none}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">AWS</span>
+        <h1>AWS IAM Explained: Users, Roles, Policies, and Least Privilege</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 10 min read</div>
+    </div>
+    <article>
+        <p>AWS IAM (Identity and Access Management) is the authorization layer for everything in AWS. Every API call — whether from the console, CLI, an EC2 instance, or a Lambda function — is evaluated against IAM policy. Get it wrong and you either lock out legitimate services or leave your infrastructure open to lateral movement. Despite its importance, IAM is where most teams accumulate the most technical debt, usually in the form of overly broad policies that were "temporary" and became permanent.</p>
+
+        <p>This guide covers how IAM actually works — the principal model, how policies are evaluated, role assumption, and the patterns used most in production infrastructure.</p>
+
+        <h2>Principals: who is making the request</h2>
+
+        <p>Every IAM interaction starts with a principal — the entity making the API call. AWS has four types of principals:</p>
+
+        <p><strong>IAM users</strong> are long-lived identities with permanent credentials. They authenticate with a username/password for the console or an access key pair for the CLI/API. Creating IAM users for human access is legacy practice now — most organizations use SSO (AWS IAM Identity Center, formerly SSO) to federate human identities from an identity provider like Okta or Azure AD, then assume roles within AWS accounts. IAM users still make sense for service accounts that need permanent, programmatic API access, though roles are preferred even there when possible.</p>
+
+        <p><strong>IAM roles</strong> are identities that can be assumed. They don't have permanent credentials — instead, when a principal assumes a role, STS (Security Token Service) issues temporary credentials that expire (typically 1–12 hours). Roles are the preferred mechanism for granting AWS services access to other AWS services, for cross-account access, and for federated human access.</p>
+
+        <p><strong>IAM groups</strong> are collections of users. A group has policies attached to it; all users in the group inherit those permissions. Groups don't support role assumption — they're only for organizing users and applying policies in bulk.</p>
+
+        <p><strong>AWS service principals</strong> represent AWS services (EC2, Lambda, ECS, etc.) acting on your behalf. When you create an EC2 instance profile or a Lambda execution role, you're granting an AWS service the ability to assume that role. The service principal looks like <code>ec2.amazonaws.com</code> or <code>lambda.amazonaws.com</code>.</p>
+
+        <h2>Policies: what the principal is allowed to do</h2>
+
+        <p>Policies are JSON documents that specify what actions are allowed or denied on which resources under what conditions. IAM has six types of policies:</p>
+
+        <p><strong>Identity-based policies</strong> are attached directly to users, groups, or roles. They specify what that principal is allowed (or denied) to do.</p>
+
+        <p><strong>Resource-based policies</strong> are attached to resources (S3 buckets, SQS queues, KMS keys, Lambda functions, etc.) rather than to principals. They specify who is allowed to do what with that resource. S3 bucket policies are the most common example. Resource-based policies support cross-account access without role assumption — you can grant a principal in another account direct access to an S3 bucket.</p>
+
+        <p><strong>Permission boundaries</strong> cap the maximum permissions an IAM user or role can have. Even if an identity-based policy grants <code>s3:*</code>, if the permission boundary only allows <code>s3:GetObject</code>, only GetObject is allowed. This is useful for delegating IAM management — you can let teams create their own roles as long as those roles don't exceed the boundary.</p>
+
+        <p><strong>Service Control Policies (SCPs)</strong> apply to entire AWS Organizations accounts. An SCP can prevent all accounts in an OU from using specific regions or services regardless of what IAM policies in those accounts say. SCPs are a ceiling, not a floor — they don't grant permissions, they only restrict them.</p>
+
+        <p><strong>Session policies</strong> are optional policies passed at role assumption time via <code>sts:AssumeRole</code> or <code>sts:GetFederationToken</code>. They further restrict the permissions for that specific session without modifying the role itself.</p>
+
+        <p><strong>Endpoint policies</strong> restrict what specific VPC endpoints can access.</p>
+
+        <h2>How IAM evaluates a request</h2>
+
+        <p>When an API call arrives, IAM evaluates it through a multi-step decision tree. Understanding this order is essential for diagnosing access issues:</p>
+
+        <ol>
+            <li><strong>Explicit deny check</strong>: If any applicable policy (identity, resource, SCP, permission boundary) has an explicit <code>Deny</code> for the action, the request is denied immediately. Explicit denies always win.</li>
+            <li><strong>SCP check</strong>: If the account is in an Organization and an SCP doesn't allow the action, the request is denied regardless of IAM policies in the account.</li>
+            <li><strong>Resource-based policy check</strong>: If a resource-based policy explicitly allows the request (and there's no explicit deny), it's allowed. This is how cross-account access without role assumption works — the resource policy grants access to a principal in another account directly.</li>
+            <li><strong>Identity-based policy check</strong>: If an identity-based policy attached to the principal allows the action, it's allowed.</li>
+            <li><strong>Permission boundary check</strong>: If a permission boundary is set, the intersection of what the identity-based policy allows and what the boundary allows is the effective permission set.</li>
+            <li><strong>Default deny</strong>: If none of the above granted access, the request is denied. AWS defaults to deny-everything.</li>
+        </ol>
+
+        <p>The practical takeaway: cross-account access needs to be allowed in both the identity-based policy on the source side AND the resource-based policy on the target side. A common mistake is adding a resource-based policy without giving the source principal permission to assume the role or access the resource.</p>
+
+        <h2>Policy anatomy</h2>
+
+        <p>An IAM policy document is JSON with a <code>Statement</code> array. Each statement has an <code>Effect</code> (Allow or Deny), <code>Action</code> (which API operations), <code>Resource</code> (which ARNs), and optionally a <code>Condition</code> block:</p>
+
+<pre>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::my-company-artifacts/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::my-company-artifacts",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": ["releases/*"]
+        }
+      }
+    }
+  ]
+}</pre>
+
+        <p>The <code>Condition</code> block can restrict access by source IP, time of day, MFA status, required tags, and many other attributes. Conditions don't grant permissions — they further restrict when an Allow applies.</p>
+
+        <p>The <code>Resource</code> field is where least privilege is enforced. Instead of <code>"Resource": "*"</code>, use the actual ARN of the specific resource. For S3, <code>arn:aws:s3:::bucket-name</code> grants access to the bucket itself (for ListBucket), while <code>arn:aws:s3:::bucket-name/*</code> grants access to objects inside it (for GetObject, PutObject).</p>
+
+        <h2>Trust policies and role assumption</h2>
+
+        <p>Every IAM role has two components: an identity-based policy (what the role can do) and a trust policy (who can assume the role). The trust policy is a resource-based policy on the role itself.</p>
+
+<pre>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}</pre>
+
+        <p>This trust policy allows EC2 instances to assume the role. For human cross-account access, the principal would be an IAM role or user ARN from another account. For OIDC-based access (GitHub Actions, EKS pods via IRSA), the principal is an OIDC provider with a condition that matches the federated identity claim.</p>
+
+        <h2>Common patterns with Terraform</h2>
+
+        <h3>EC2 instance profile</h3>
+
+        <p>An instance profile is the mechanism that attaches an IAM role to an EC2 instance. When EC2 starts an instance with an instance profile, the instance metadata endpoint (<code>169.254.169.254</code> or IMDSv2 equivalent) provides temporary credentials for the attached role.</p>
+
+<pre>resource "aws_iam_role" "app_instance" {
+  name = "app-instance-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "app_instance" {
+  role = aws_iam_role.app_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "arn:aws:s3:::${var.config_bucket}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:app/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "app" {
+  name = "app-instance-profile"
+  role = aws_iam_role.app_instance.name
+}</pre>
+
+        <h3>Lambda execution role</h3>
+
+        <p>Lambda functions need a role with at minimum the <code>AWSLambdaBasicExecutionRole</code> managed policy (for CloudWatch Logs). Add only the additional permissions the function actually needs:</p>
+
+<pre>resource "aws_iam_role" "lambda_execution" {
+  name = "my-function-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
+  role       = aws_iam_role.lambda_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "lambda_specific" {
+  role = aws_iam_role.lambda_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+      Resource = aws_dynamodb_table.data.arn
+    }]
+  })
+}</pre>
+
+        <h3>IRSA — IAM Roles for Service Accounts (EKS)</h3>
+
+        <p>IRSA allows Kubernetes pods to assume IAM roles without sharing credentials at the node level. The trust policy uses the cluster's OIDC provider:</p>
+
+<pre>data "aws_iam_openid_connect_provider" "eks" {
+  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+resource "aws_iam_role" "pod_role" {
+  name = "my-app-pod-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = data.aws_iam_openid_connect_provider.eks.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${trimprefix(data.aws_iam_openid_connect_provider.eks.url, "https://")}:sub" =
+            "system:serviceaccount:${var.namespace}:${var.service_account_name}"
+        }
+      }
+    }]
+  })
+}</pre>
+
+        <p>The Kubernetes ServiceAccount is annotated with the role ARN. When a pod runs with that ServiceAccount, the EKS Pod Identity webhook injects environment variables that direct the AWS SDK to use WebIdentity tokens for authentication.</p>
+
+        <h3>Cross-account access</h3>
+
+        <p>Cross-account access requires granting permission on both sides. In the target account, create a role with a trust policy that allows the source account:</p>
+
+<pre># In the target account (account B)
+resource "aws_iam_role" "cross_account" {
+  name = "cross-account-access-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { AWS = "arn:aws:iam::${var.source_account_id}:root" }
+      Action    = "sts:AssumeRole"
+      Condition = {
+        StringEquals = {
+          "sts:ExternalId" = var.external_id  # prevents confused deputy attacks
+        }
+      }
+    }]
+  })
+}
+
+# In the source account (account A), grant the permission to assume
+resource "aws_iam_role_policy" "assume_cross_account" {
+  role = aws_iam_role.deployer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "sts:AssumeRole"
+      Resource = "arn:aws:iam::${var.target_account_id}:role/cross-account-access-role"
+    }]
+  })
+}</pre>
+
+        <h2>Implementing least privilege</h2>
+
+        <p>The principle of least privilege means granting only the permissions needed to perform a specific function and nothing more. In practice, it means:</p>
+
+        <ul>
+            <li><strong>Scope actions precisely</strong>: Use <code>s3:GetObject</code> not <code>s3:*</code>. Use <code>ec2:DescribeInstances</code> not <code>ec2:*</code>.</li>
+            <li><strong>Scope resources precisely</strong>: Use the specific resource ARN rather than <code>*</code>. For DynamoDB: <code>arn:aws:dynamodb:region:account:table/specific-table</code>, not <code>*</code>.</li>
+            <li><strong>Use conditions</strong>: Add conditions to restrict when permissions apply — source IP, MFA requirement, resource tags, etc.</li>
+            <li><strong>Avoid wildcard patterns in sensitive services</strong>: <code>iam:*</code>, <code>sts:*</code>, and <code>kms:*</code> are especially dangerous. Wildcard access to IAM means the principal can grant itself any permission.</li>
+        </ul>
+
+        <p>AWS's IAM Access Analyzer and the IAM Policy Simulator help audit existing policies. Access Analyzer also has a feature that generates least-privilege policies from CloudTrail logs — it observes what an identity actually calls over a period and generates a policy based on observed usage. This is the most practical approach for brownfield permissions: run the role in production, observe for 30–90 days, then generate a tight policy from actual usage.</p>
+
+        <h2>Common mistakes</h2>
+
+        <p><strong>AdministratorAccess on service roles.</strong> The policy <code>arn:aws:iam::aws:policy/AdministratorAccess</code> grants full access to everything in the account. Attaching this to a Lambda function or EC2 instance because "it needs to do a lot of things" is a security catastrophe waiting to happen. A compromised instance or function with AdministratorAccess can exfiltrate data, create new users, disable logging, or delete everything.</p>
+
+        <p><strong>Storing long-lived access keys in code or environment variables.</strong> Access keys associated with IAM users don't expire. If they leak (in a git commit, an S3 bucket, logs), they're valid indefinitely until rotated. Use IAM roles and instance metadata instead. For CI/CD, use OIDC federation (GitHub Actions OIDC, GitLab OIDC) rather than static keys.</p>
+
+        <p><strong>Shared IAM users across services or teams.</strong> One IAM user shared by multiple services means you can't audit which service made which API call, can't rotate credentials for one service without affecting others, and can't revoke access for one service without affecting all. Each service gets its own role.</p>
+
+        <p><strong>Permission boundaries not used for delegated IAM.</strong> If you let application teams create their own IAM roles, they can escalate their own privileges. A permission boundary constrains what roles they can create — the team can create roles, but those roles can't exceed what the permission boundary allows.</p>
+
+        <h2>Debugging access issues</h2>
+
+        <p>When an IAM error appears (<code>AccessDeniedException</code> or <code>is not authorized to perform: <action> on resource: <arn></code>), the debug workflow is:</p>
+
+        <ol>
+            <li>Identify the principal in the error — it's in the message as "User: arn:aws:iam::..."</li>
+            <li>Use the IAM Policy Simulator in the console to test whether that principal has the required permission</li>
+            <li>Check for explicit denies — SCPs, permission boundaries, resource policies</li>
+            <li>Check that resource-based policies allow the cross-account action if applicable</li>
+            <li>Enable CloudTrail data events if not already enabled — access denials are logged there with full context</li>
+        </ol>
+
+        <p>IAM is complex enough that AWS's documentation for specific services often lists exactly which IAM permissions are needed. The IAM actions reference at <code>docs.aws.amazon.com/service-authorization/latest/reference/</code> is the authoritative source for every service, action, resource type, and condition key.</p>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/aws-vpc-architecture-explained.html">AWS VPC Architecture Explained: From Simple to Production</a></li>
+            <li><a href="/blog/terraform-state-explained.html">Terraform State Explained: What It Is, How It Works, and Why It Breaks</a></li>
+            <li><a href="/blog/iac-tool-comparison.html">Terraform vs CDK vs Pulumi: Choosing Your IaC Tool</a></li>
+        </ul>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>

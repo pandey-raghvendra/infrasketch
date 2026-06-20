@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <title>Kubernetes Resource Management: Requests, Limits, and QoS Classes — InfraSketch</title>
+    <meta name="description" content="How Kubernetes resource requests and limits work — CPU throttling vs memory OOM-kill, QoS classes, LimitRange, ResourceQuota, and when to use VPA vs HPA for autoscaling.">
+    <link rel="canonical" href="https://infrasketch.cloud/blog/kubernetes-resource-management.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://infrasketch.cloud/blog/kubernetes-resource-management.html">
+    <meta property="og:title" content="Kubernetes Resource Management: Requests, Limits, and QoS Classes">
+    <meta property="og:description" content="How Kubernetes resource requests and limits work — CPU throttling vs memory OOM-kill, QoS classes, LimitRange, ResourceQuota, and when to use VPA vs HPA.">
+    <meta property="og:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="457">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Kubernetes Resource Management: Requests, Limits, and QoS Classes">
+    <meta name="twitter:description" content="How Kubernetes resource requests and limits work — CPU throttling, memory OOM-kill, QoS classes, LimitRange, and autoscaling.">
+    <meta name="twitter:image" content="https://infrasketch.cloud/assets/infrasketch-banner.jpeg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Kubernetes Resource Management: Requests, Limits, and QoS Classes",
+      "description": "How Kubernetes resource requests and limits work — CPU throttling vs memory OOM-kill, QoS classes, LimitRange, ResourceQuota, and when to use VPA vs HPA for autoscaling.",
+      "url": "https://infrasketch.cloud/blog/kubernetes-resource-management.html",
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "author": {"@type": "Person", "name": "Raghvendra Pandey", "url": "https://github.com/pandey-raghvendra"},
+      "publisher": {"@type": "Organization", "name": "InfraSketch", "url": "https://infrasketch.cloud", "logo": {"@type": "ImageObject", "url": "https://infrasketch.cloud/assets/infrasketch-logo.jpeg"}},
+      "image": "https://infrasketch.cloud/assets/infrasketch-banner.jpeg"
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0c0f1a;--bg-surface:#141829;--text:#e4e6ef;--text-muted:#7a7f99;--accent:#06d6a0;--accent-dim:rgba(6,214,160,0.1);--border:#1e2240;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.8}body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(6,214,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(6,214,160,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}.container{max-width:760px;margin:0 auto;padding:0 20px;position:relative;z-index:1}nav{padding:16px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-decoration:none;color:var(--text)}.logo-img{height:38px;width:auto;display:block;border-radius:4px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:var(--accent)}.article-header{padding:60px 0 32px}.article-header .tag{display:inline-block;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(6,214,160,0.2);border-radius:100px;color:var(--accent);font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:16px}.article-header h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}.article-header .meta{color:var(--text-muted);font-size:14px;font-family:var(--mono);padding-bottom:32px;border-bottom:1px solid var(--border)}article{padding:32px 0 60px}article h2{font-size:22px;font-weight:600;margin:40px 0 16px;color:var(--accent);letter-spacing:-0.3px}article h3{font-size:17px;font-weight:600;margin:28px 0 12px}article p{color:#b0b8d1;margin-bottom:18px;font-size:16px;line-height:1.9}article a{color:var(--accent);text-decoration:none}article a:hover{text-decoration:underline}article ul,article ol{color:#b0b8d1;margin:0 0 18px 24px;font-size:16px;line-height:1.9}article li{margin-bottom:8px}article code{font-family:var(--mono);background:rgba(6,214,160,0.08);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:14px}article pre{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:20px;margin:20px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;color:#b0b8d1}footer{padding:24px 0;border-top:1px solid var(--border);text-align:center}footer p{font-size:12px;font-family:var(--mono);color:var(--text-muted)}footer a{color:var(--accent);text-decoration:none}@media(max-width:640px){.nav-links{display:none}}
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="logo" aria-label="InfraSketch home"><img class="logo-img" src="/assets/infrasketch-logo.jpeg" alt="InfraSketch.cloud"></a>
+    <ul class="nav-links"><li><a href="/">Tool</a></li><li><a href="/blog/">Blog</a></li><li><a href="/about.html">About</a></li><li><a href="/contact.html">Contact</a></li></ul>
+</nav>
+<div class="container">
+    <div class="article-header">
+        <span class="tag">Kubernetes</span>
+        <h1>Kubernetes Resource Management: Requests, Limits, and QoS Classes</h1>
+        <div class="meta">By Raghvendra Pandey &middot; June 2026 &middot; 10 min read</div>
+    </div>
+    <article>
+        <p>Kubernetes resource management is one of those areas where small misconfigurations cause large, hard-to-diagnose problems in production. Pods that run fine in a test cluster randomly get OOM-killed in production. The cluster appears healthy by node utilization but pods are throttled and latency spikes. Deployments get stuck in Pending with <code>Insufficient cpu</code> even though the cluster isn't obviously full. Most of these issues trace back to misunderstood resource requests and limits.</p>
+
+        <p>This guide covers how requests and limits actually work in Kubernetes — including the important differences between CPU and memory behavior — and explains QoS classes, namespace quotas, and autoscaling.</p>
+
+        <h2>Requests and limits: what they actually mean</h2>
+
+        <p>Every container in a pod can specify two types of resource constraints: requests and limits.</p>
+
+        <p><strong>Requests</strong> are a guarantee. When Kubernetes schedules a pod, it finds a node with enough available capacity to satisfy the pod's total requested resources. The scheduler tracks <em>allocated</em> resources (sum of all pod requests), not actual utilization. This means a node can be at 20% actual CPU usage but fully scheduled if the sum of requests equals node capacity.</p>
+
+        <p><strong>Limits</strong> are a ceiling. A container cannot exceed its resource limit. What happens when it tries depends on the resource type — and this is where most confusion comes from.</p>
+
+<pre>resources:
+  requests:
+    memory: "128Mi"
+    cpu: "250m"
+  limits:
+    memory: "256Mi"
+    cpu: "500m"</pre>
+
+        <p>In this example: the scheduler finds a node with at least 250m CPU and 128Mi memory available. At runtime, the container can burst up to 500m CPU and 256Mi memory.</p>
+
+        <h2>CPU: throttled, not killed</h2>
+
+        <p>CPU is a compressible resource. When a container tries to use more CPU than its limit, the Linux kernel's CFS (Completely Fair Scheduler) throttles it — it gets fewer CPU time slices. The container keeps running, but slower. It does not die.</p>
+
+        <p>CPU is measured in millicores: <code>1000m</code> = 1 vCPU core. <code>250m</code> = 0.25 of one core. Fractional CPUs are valid: <code>cpu: "0.5"</code> equals <code>cpu: "500m"</code>.</p>
+
+        <p>CPU throttling is a common source of latency spikes that are invisible in node-level metrics. A container hitting its CPU limit doesn't show up as high CPU utilization — it shows up as elevated p95/p99 latency. If your application has latency problems and the nodes look healthy, check whether pods are being throttled:</p>
+
+<pre>kubectl top pod --containers  # shows actual CPU/memory usage
+# Compare against limits
+
+# More detailed view — throttling percentage
+kubectl exec -it &lt;pod&gt; -- cat /sys/fs/cgroup/cpu/cpu.stat
+# throttled_time shows cumulative nanoseconds throttled</pre>
+
+        <h2>Memory: OOM-killed</h2>
+
+        <p>Memory is an incompressible resource. When a container exceeds its memory limit, the Linux kernel OOM (Out of Memory) killer terminates it. In Kubernetes, this shows up as the pod entering a <code>CrashLoopBackOff</code> state with an exit code of <code>137</code> (SIGKILL from OOM).</p>
+
+        <p>The important distinction: memory requests set a guarantee that the scheduler uses for placement, but memory limits are enforced by cgroup memory limits at runtime. A container that slowly leaks memory will eventually hit its limit and be killed — even if the node has plenty of free memory.</p>
+
+<pre># Check if a pod was OOM-killed
+kubectl describe pod &lt;pod-name&gt;
+# Look for: OOMKilled in the Last State section
+# Exit Code: 137 = OOM kill
+# Exit Code: 1 = application crash
+
+# Check memory usage vs limits
+kubectl top pod --containers</pre>
+
+        <p>Setting memory limits equal to requests (or not setting limits at all) changes scheduling and eviction behavior significantly — more on this in the QoS section below.</p>
+
+        <h2>Units: CPU and memory notation</h2>
+
+        <ul>
+            <li><strong>CPU</strong>: <code>1</code>, <code>0.5</code>, <code>500m</code> (millicores). <code>1</code> = 1 vCPU/core/hyperthread.</li>
+            <li><strong>Memory</strong>: <code>128Mi</code> (mebibytes, base-2), <code>128M</code> (megabytes, base-10). Always use <code>Mi</code> for memory to avoid confusion — <code>1Mi</code> = 1,048,576 bytes, <code>1M</code> = 1,000,000 bytes. The difference compounds at large scales.</li>
+        </ul>
+
+        <h2>QoS classes</h2>
+
+        <p>Kubernetes assigns every pod one of three Quality of Service classes based on its resource configuration. QoS class determines the order in which pods are evicted when a node runs low on resources:</p>
+
+        <h3>Guaranteed</h3>
+
+        <p>Every container in the pod has both requests and limits set, and <strong>requests equal limits</strong> for both CPU and memory.</p>
+
+<pre>resources:
+  requests:
+    memory: "256Mi"
+    cpu: "500m"
+  limits:
+    memory: "256Mi"  # same as request
+    cpu: "500m"      # same as request</pre>
+
+        <p>Guaranteed pods are the last to be evicted. The node will evict BestEffort and Burstable pods before touching Guaranteed pods. This is the right QoS class for critical production workloads that cannot be interrupted.</p>
+
+        <p>The tradeoff: the container cannot burst beyond its request. If it needs 600m CPU momentarily, it gets throttled at 500m.</p>
+
+        <h3>Burstable</h3>
+
+        <p>At least one container has a request set, but either the limit is higher than the request, or limits aren't set on all containers. Most production workloads fall here.</p>
+
+<pre>resources:
+  requests:
+    memory: "128Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"  # limit > request: Burstable
+    cpu: "1000m"</pre>
+
+        <p>Burstable pods can use more resources than their request if the node has headroom. They're evicted after BestEffort pods but before Guaranteed pods. The eviction order within Burstable is based on how far each pod's usage exceeds its request — pods using the most above their request get evicted first.</p>
+
+        <h3>BestEffort</h3>
+
+        <p>No requests or limits are set on any container. These pods get whatever CPU/memory is left over after scheduled pods get their requests. They're the first to be evicted under pressure.</p>
+
+<pre>resources: {}  # or omitting resources entirely</pre>
+
+        <p>BestEffort is appropriate for batch jobs or non-critical background tasks where it's acceptable to be evicted. Never use BestEffort for production services — they can be evicted with no notice when any node comes under pressure.</p>
+
+        <h2>LimitRange: default limits per namespace</h2>
+
+        <p>If a container doesn't specify requests/limits, and there's no LimitRange, it runs without constraints. On a shared cluster, this can cause noisy-neighbor problems. LimitRange lets you set per-namespace defaults and constraints:</p>
+
+<pre>apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: production
+spec:
+  limits:
+  - type: Container
+    default:          # applied if no limit is specified
+      memory: "256Mi"
+      cpu: "500m"
+    defaultRequest:   # applied if no request is specified
+      memory: "128Mi"
+      cpu: "100m"
+    max:              # hard ceiling — containers cannot exceed this
+      memory: "2Gi"
+      cpu: "2"
+    min:              # must specify at least this much
+      memory: "64Mi"
+      cpu: "50m"</pre>
+
+        <p>LimitRange also applies to PersistentVolumeClaims (max/min storage size) and Pods as a whole (not just individual containers).</p>
+
+        <h2>ResourceQuota: namespace-level capacity caps</h2>
+
+        <p>ResourceQuota sets total resource caps for an entire namespace. This prevents any single team or application from consuming disproportionate cluster resources:</p>
+
+<pre>apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-quota
+  namespace: team-a
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: "8Gi"
+    limits.cpu: "8"
+    limits.memory: "16Gi"
+    pods: "50"
+    services: "10"
+    persistentvolumeclaims: "20"</pre>
+
+        <p>Once a namespace hits its quota, new pods that would exceed it are rejected. Operations fail with a clear error: <code>exceeded quota: team-quota, requested: requests.cpu=500m, used: requests.cpu=4, limited: requests.cpu=4</code>.</p>
+
+        <p>ResourceQuota combined with LimitRange enforces that every container has requests/limits set (because without them, the quota can't be tracked), and caps total namespace consumption.</p>
+
+        <h2>Horizontal Pod Autoscaler (HPA)</h2>
+
+        <p>HPA automatically scales the number of pod replicas based on observed metrics. The most common metric is CPU utilization relative to the request:</p>
+
+<pre>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60  # target 60% of request across all pods</pre>
+
+        <p>HPA requires metrics-server to be installed. It compares actual usage to the target utilization of the request. If your pods have no CPU request set, HPA can't calculate utilization and won't scale correctly.</p>
+
+        <p>Custom metrics (via the custom.metrics.k8s.io API) let HPA scale on application-level metrics: request rate, queue depth, active connections. KEDA (Kubernetes Event-Driven Autoscaling) extends this further to scale on events from external sources like SQS queue length, Kafka lag, or scheduled time windows.</p>
+
+        <h2>Vertical Pod Autoscaler (VPA)</h2>
+
+        <p>VPA automatically adjusts CPU and memory requests based on observed usage. It addresses the common problem of over-allocated requests that waste cluster capacity.</p>
+
+        <p>VPA has three modes:</p>
+        <ul>
+            <li><strong>Off</strong>: VPA only recommends new request values, doesn't apply them. Use this to get sizing recommendations without automatic changes.</li>
+            <li><strong>Initial</strong>: VPA sets requests only at pod creation time. Running pods aren't modified.</li>
+            <li><strong>Auto</strong>: VPA updates requests on running pods by evicting and recreating them. This can disrupt availability if not carefully managed.</li>
+        </ul>
+
+<pre>apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: api-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  updatePolicy:
+    updateMode: "Off"  # recommendation-only mode
+  resourcePolicy:
+    containerPolicies:
+    - containerName: api
+      minAllowed:
+        memory: "64Mi"
+      maxAllowed:
+        memory: "2Gi"</pre>
+
+        <p>HPA and VPA can conflict: HPA scales replicas based on current utilization, VPA changes the request that utilization is measured against. Running both in Auto mode on the same deployment requires KEDA or careful coordination. A common pattern: use VPA in recommendation-only mode to right-size requests, then use HPA for replica scaling.</p>
+
+        <h2>Common mistakes</h2>
+
+        <p><strong>No requests set.</strong> Without requests, the scheduler places pods anywhere, nodes become overcommitted, and under pressure pods with BestEffort QoS get evicted. Always set requests on production pods.</p>
+
+        <p><strong>Requests equal node capacity.</strong> If a pod requests 8 CPU and your nodes have 8 vCPUs, the pod can only be scheduled on an otherwise-empty node. Reserve 10–15% of node capacity for system pods (kubelet, kube-proxy, CNI agent, monitoring agents).</p>
+
+        <p><strong>Memory limit set much higher than request.</strong> A container that requests 128Mi but has no memory limit (or a very high limit) can consume all node memory and trigger eviction of other pods. Set memory limits at 2–4x the request, not uncapped.</p>
+
+        <p><strong>Setting CPU limit equal to CPU request.</strong> This forces Guaranteed QoS but also prevents CPU bursting. For latency-sensitive workloads that occasionally need extra CPU, this causes throttling. Use Burstable QoS for services that can tolerate occasional throttling; use Guaranteed only for services where predictability matters more than burst performance.</p>
+
+        <h2>Related articles</h2>
+        <ul>
+            <li><a href="/blog/kubernetes-networking-explained.html">Kubernetes Networking Explained: Pods, Services, Ingress, and Network Policies</a></li>
+            <li><a href="/blog/kubernetes-diagram-generator.html">Kubernetes Architecture Diagram Generator</a></li>
+            <li><a href="/blog/iac-tool-comparison.html">Terraform vs CDK vs Pulumi: Choosing Your IaC Tool</a></li>
+        </ul>
+    </article>
+</div>
+<footer><div class="container"><p>&copy; 2026 InfraSketch &middot; <a href="/blog/">Blog</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a></p></div></footer>
+</body>
+</html>
